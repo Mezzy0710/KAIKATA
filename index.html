@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cardmarket Cart Optimizer</title>
-    <link rel="stylesheet" href="./styles.css?v=20260509a">
+    <link rel="stylesheet" href="./styles.css?v=20260509c">
   </head>
   <body>
     <div class="app-shell">
@@ -17,16 +17,9 @@
             <p class="header-subtitle">Minimize total cost including card prices, dynamic shipping, and fees.</p>
           </div>
         </div>
-        <div class="header-status">
-          <div class="header-status-card">
-            <span>Recipient</span>
-            <strong id="recipientCountry">Germany</strong>
-          </div>
-          <div class="header-status-card">
-            <span>Shipping data</span>
-            <strong id="shippingDataStateText">Loading</strong>
-          </div>
-          <span id="shippingDataState" class="status-pill muted">Shipping data</span>
+        <div class="header-status-line">
+          <span id="recipientCountry">Germany</span>
+          <span id="shippingDataStatus" class="shipping-status">Shipping data loading…</span>
         </div>
       </header>
 
@@ -91,9 +84,9 @@
           </div>
 
           <div class="dashboard-column dashboard-column-side">
-            <details class="panel result-panel secondary-panel validation-details-panel">
-              <summary>Show validation details</summary>
-              <div class="secondary-details-body">
+            <details class="panel result-panel secondary-panel advanced-details-panel">
+              <summary>Advanced details</summary>
+              <div class="advanced-details-body">
                 <div class="compact-panel-footer">
                   <label class="toggle-row">
                     <input id="debugToggle" type="checkbox">
@@ -101,20 +94,12 @@
                   </label>
                 </div>
                 <section id="sellerReview" class="seller-review" aria-live="polite"></section>
-              </div>
-            </details>
-
-            <details class="panel result-panel secondary-panel assignment-panel">
-              <summary>Card assignment details</summary>
-              <div id="assignmentOutput" class="assignment-output secondary-details-body" aria-live="polite">
-                Selected seller assignments will appear here after optimization.
-              </div>
-            </details>
-
-            <details class="panel result-panel secondary-panel assumptions-panel">
-              <summary>Calculation details &amp; assumptions</summary>
-              <div id="assumptionsOutput" class="assumptions-output secondary-details-body" aria-live="polite">
-                Shipping thresholds, selected methods, and assumption notes appear here after optimization.
+                <div id="assignmentOutput" class="assignment-output" aria-live="polite">
+                  Selected seller assignments will appear here after optimization.
+                </div>
+                <div id="assumptionsOutput" class="assumptions-output" aria-live="polite">
+                  Shipping thresholds, selected methods, and assumption notes appear here after optimization.
+                </div>
               </div>
             </details>
           </div>
@@ -129,6 +114,6 @@
       </div>
     </template>
 
-    <script type="module" src="./src/app.mjs?v=20260509a"></script>
+    <script type="module" src="./src/app.mjs?v=20260509c"></script>
   </body>
 </html>

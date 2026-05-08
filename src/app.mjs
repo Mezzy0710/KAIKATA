@@ -38,8 +38,7 @@ const elements = {
   parseMessage: document.querySelector("#parseMessage"),
   inputEditor: document.querySelector("#inputEditor"),
   inputSummary: document.querySelector("#inputSummary"),
-  shippingDataState: document.querySelector("#shippingDataState"),
-  shippingDataStateText: document.querySelector("#shippingDataStateText"),
+  shippingDataStatus: document.querySelector("#shippingDataStatus"),
   optimizationState: document.querySelector("#optimizationState"),
   optimizationOutput: document.querySelector("#optimizationOutput"),
   emptyStateTemplate: document.querySelector("#emptyStateTemplate")
@@ -76,15 +75,13 @@ async function loadShippingData() {
       throw new Error(`HTTP ${response.status}`);
     }
     state.shippingData = await response.json();
-    elements.shippingDataState.textContent = "Shipping data loaded";
-    elements.shippingDataState.className = "status-pill good";
-    elements.shippingDataStateText.textContent = "Ready";
+    elements.shippingDataStatus.textContent = "Shipping data loaded";
+    elements.shippingDataStatus.className = "shipping-status loaded";
     render();
   } catch (error) {
     state.shippingData = null;
-    elements.shippingDataState.textContent = window.location.protocol === "file:" ? "Use localhost for shipping data" : "Shipping data missing";
-    elements.shippingDataState.className = "status-pill warning";
-    elements.shippingDataStateText.textContent = "Unavailable";
+    elements.shippingDataStatus.textContent = window.location.protocol === "file:" ? "Use localhost for shipping data" : "Shipping data missing";
+    elements.shippingDataStatus.className = "shipping-status missing";
     render();
   }
 }
@@ -114,7 +111,8 @@ function parseCurrentInput() {
     state.desiredQuantityByCard[group.cardName] = group.requiredQuantity;
   });
 
-  setMessage(`Parsed ${state.parsed.sellerCount} seller block(s), ${state.parsed.itemCount} seller offer(s), and ${offerGroups.length} card group(s).${warningText}`);
+  const totalCopies = getTotalCopies(offerGroups);
+  setMessage(`Parsed ${state.parsed.sellerCount} seller block(s), ${state.parsed.itemCount} seller offer(s), ${offerGroups.length} different card(s), and ${totalCopies} total copies.${warningText}`);
   elements.optimizationState.textContent = "Ready";
   elements.optimizationState.className = "status-pill info";
   render();
@@ -231,6 +229,11 @@ function renderOptimizationViews() {
   elements.optimizationOutput.innerHTML = recommendationsTemplate(state.optimizationResult);
   elements.assignmentOutput.innerHTML = assignmentTableTemplate(state.optimizationResult);
   elements.assumptionsOutput.innerHTML = assumptionsTemplate(state.optimizationResult);
+
+  const copyBtn = document.querySelector("#copyPlanButton");
+  if (copyBtn) {
+    copyBtn.addEventListener("click", () => copyBuyingPlan(state.optimizationResult));
+  }
 }
 
 function renderDesiredCards(offerGroups) {
@@ -247,7 +250,7 @@ function renderDesiredCards(offerGroups) {
     <details class="review-details desired-cards-section" open>
       <summary>
         <span>Review desired cards</span>
-        <span class="summary-meta">${selectedTotal} card group(s) · ${detectedTotal} cards selected</span>
+        <span class="summary-meta">${selectedTotal} different card(s) · ${detectedTotal} total copies selected</span>
       </summary>
       <div class="review-details-body">
         <p class="note-text">Quantities are inferred from the pasted cart. Adjust them before optimizing if needed.</p>
@@ -769,7 +772,7 @@ function optimizeCart(sellers, offerGroups) {
   }
 
   if (incompleteGroups.length) {
-    costNotes.push(`${incompleteGroups.length} card group(s) had no single seller offer with the full quantity.`);
+    costNotes.push(`${incompleteGroups.length} card(s) had no single seller offer with the full quantity.`);
   }
 
   if (countryWarnings.length) {
@@ -1008,14 +1011,13 @@ function optimizationSummaryTemplate(result) {
   const shippingTotal = result.shippingTotal;
   const trusteeTotal = result.trusteeTotal;
   const feeTotal = result.sellerCosts.reduce((sum, sellerCost) => sum + Number(sellerCost.cardmarketFeeValue || 0), 0);
-  const poolDifference = result.currentTotal - result.selectedTotal;
-  const poolDifferencePercent = result.currentTotal > 0 && Number.isFinite(result.selectedTotal)
-    ? `${((poolDifference / result.currentTotal) * 100).toFixed(1)}%`
-    : "0.0%";
   const warningEntries = buildResultWarnings(result);
   const warningBanner = warningEntries.length ? warningBannerTemplate(result, warningEntries) : "";
   const selectedCardGroups = result.selectedOffers.length;
-  const trusteeLabel = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact") ? "Fees / trustee estimate" : "Fees / trustee";
+  const totalCopies = result.selectedOffers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
+  const hasEstimatedTrustee = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
+  const trusteeLabel = hasEstimatedTrustee ? "Fees / trustee (estimated)" : "Fees / trustee";
+  const trusteeNote = "Verify at Cardmarket checkout";
 
   return `
     <div class="summary-hero-card">
@@ -1023,25 +1025,22 @@ function optimizationSummaryTemplate(result) {
         <span class="eyebrow">Best buying plan</span>
         <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
         <p>Buy the cards from the sellers below.</p>
-        <p class="summary-baseline-note">Reviewed offer pool includes duplicate alternatives and unused seller offers, so it is not a true savings baseline.</p>
-      </div>
-      <div class="summary-savings">
-        <span>Difference to reviewed offer pool</span>
-        <strong class="${poolDifference > 0.005 ? "good" : "muted"}">${escapeHtml(formatSavings(poolDifference))}</strong>
-        <small>${escapeHtml(poolDifferencePercent)} vs. reviewed pool</small>
       </div>
     </div>
     ${warningBanner}
     <div class="result-hero guided-metrics">
       <div class="guided-metric"><span>Optimized buying plan</span><strong>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</strong></div>
       <div class="guided-metric"><span>Sellers to use</span><strong>${escapeHtml(result.usedSellers.length)}</strong></div>
-      <div class="guided-metric"><span>Card groups selected</span><strong>${escapeHtml(selectedCardGroups)}</strong></div>
+      <div class="guided-metric"><span>Different cards</span><strong>${escapeHtml(selectedCardGroups)}</strong></div>
+      <div class="guided-metric"><span>Total copies</span><strong>${escapeHtml(totalCopies)}</strong></div>
       <div class="guided-metric"><span>Article value</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
       <div class="guided-metric muted-detail"><span>Shipping total</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
-      <div class="guided-metric muted-detail"><span>${escapeHtml(trusteeLabel)}</span><strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong></div>
-      <div class="guided-metric muted-detail"><span>Reviewed offer pool</span><strong>${escapeHtml(formatMoney(result.currentTotal))}</strong></div>
-      <div class="guided-metric muted-detail"><span>Difference to reviewed offer pool</span><strong class="${poolDifference > 0.005 ? "good" : "muted"}">${escapeHtml(formatSavings(poolDifference))}</strong></div>
-      <div class="guided-metric muted-detail"><span>Shipping fee data</span><strong>${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included in shipping rows" : formatEstimatedMoney(feeTotal))}</strong></div>
+      <div class="guided-metric muted-detail">
+        <span>${escapeHtml(trusteeLabel)}</span>
+        <strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong>
+        <small class="metric-note">${escapeHtml(trusteeNote)}</small>
+      </div>
+      ${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `<div class="guided-metric muted-detail"><span>Cardmarket fees</span><strong>${escapeHtml(formatEstimatedMoney(feeTotal))}</strong></div>`}
     </div>
   `;
 }
@@ -1051,8 +1050,11 @@ function recommendationsTemplate(result) {
   const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
 
   return `
+    <div class="recommendations-header">
+      <button class="ghost-button copy-plan-button" type="button" id="copyPlanButton">Copy buying plan</button>
+    </div>
     <div class="recommendation-grid">
-      ${result.usedSellers.map(({ seller, sellerIndex }) => sellerPlanTemplate(seller, sellerIndex, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
+      ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
     </div>
     <div class="drop-panel subdued-panel">
       <h3>Sellers not used</h3>
@@ -1066,31 +1068,25 @@ function recommendationsTemplate(result) {
 function warningBannerTemplate(result, warningEntries) {
   const criticalCount = warningEntries.filter((entry) => entry.severity === "critical").length;
   const warningCount = warningEntries.filter((entry) => entry.severity === "warning").length;
-  const infoCount = warningEntries.filter((entry) => entry.severity === "info").length;
   const highestSeverity = criticalCount ? "critical" : warningCount ? "warning" : "info";
-  const severityLabel = criticalCount ? "Critical" : warningCount ? "Warning" : "Info";
-  const usableLabel = criticalCount ? "Result may be incorrect until reviewed." : "The recommendation is usable, but review before buying.";
-  const summaryText = criticalCount
-    ? `${warningEntries.length} issue${warningEntries.length === 1 ? "" : "s"} found. Some costs or seller assignments may be incorrect.`
-    : `${warningEntries.length} warning${warningEntries.length === 1 ? "" : "s"} found. The recommendation is usable, but some costs are estimated.`;
+
+  const sectionTitle = criticalCount ? "Action required" : warningCount ? "Review before buying" : "Cost note";
+  const sectionBody = criticalCount
+    ? "Some seller costs or assignments could not be resolved. The buying plan may be incomplete."
+    : warningCount
+      ? "The buying plan is usable, but some costs are estimated. Verify the final Cardmarket checkout total before buying."
+      : "All costs are estimated. Verify the final Cardmarket checkout total before buying.";
 
   return `
     <div class="result-warning severity-${escapeAttribute(highestSeverity)}">
       <div class="result-warning-header">
-        <div>
-          <span class="status-pill ${highestSeverity === "critical" ? "warning" : highestSeverity === "warning" ? "warning" : "info"}">${escapeHtml(severityLabel)}</span>
-          <h3>${escapeHtml(summaryText)}</h3>
-          <p>${escapeHtml(usableLabel)} Review warnings before buying.</p>
+        <div class="result-warning-title-row">
+          <h3 class="result-warning-title">${escapeHtml(sectionTitle)}</h3>
         </div>
-        <div class="warning-meta">
-          <span>${escapeHtml(`${warningEntries.length} total`)}</span>
-          <span>${escapeHtml(`${criticalCount} critical`)}</span>
-          <span>${escapeHtml(`${warningCount} warning`)}</span>
-          <span>${escapeHtml(`${infoCount} info`)}</span>
-        </div>
+        <p class="result-warning-body">${escapeHtml(sectionBody)}</p>
       </div>
-      <details class="warning-details" ${highestSeverity === "critical" ? "open" : ""}>
-        <summary>Show warnings</summary>
+      <details class="warning-details" ${criticalCount ? "open" : ""}>
+        <summary>Show details</summary>
         <div class="warning-list">
           ${warningEntries.map((entry) => warningEntryTemplate(entry)).join("")}
         </div>
@@ -1101,16 +1097,16 @@ function warningBannerTemplate(result, warningEntries) {
 }
 
 function warningEntryTemplate(entry) {
+  const pillClass = entry.severity === "critical" ? "warning" : entry.severity === "warning" ? "warning" : "info";
   return `
     <article class="warning-item severity-${escapeAttribute(entry.severity)}">
       <div class="warning-item-header">
         <strong>${escapeHtml(entry.title)}</strong>
-        <span class="status-pill ${entry.severity === "critical" ? "warning" : entry.severity === "warning" ? "warning" : "info"}">${escapeHtml(entry.severity)}</span>
+        <span class="status-pill ${pillClass}">${escapeHtml(entry.severity)}</span>
       </div>
-      ${entry.affected ? `<p><strong>Affected:</strong> ${escapeHtml(entry.affected)}</p>` : ""}
-      <p><strong>What happened:</strong> ${escapeHtml(entry.whatHappened)}</p>
-      <p><strong>Why it matters:</strong> ${escapeHtml(entry.whyItMatters)}</p>
-      <p><strong>What to do:</strong> ${escapeHtml(entry.whatToDo)}</p>
+      ${entry.affected ? `<p class="warning-affected">Affects: ${escapeHtml(entry.affected)}</p>` : ""}
+      <p>${escapeHtml(entry.whatHappened)}</p>
+      <p class="warning-action"><strong>What to do:</strong> ${escapeHtml(entry.whatToDo)}</p>
     </article>
   `;
 }
@@ -1155,9 +1151,9 @@ function buildResultWarnings(result) {
   if (result.warnings.some((warning) => /card group\(s\) had no single seller offer/i.test(warning))) {
     entries.push({
       severity: "warning",
-      title: "Some card groups were reviewed with partial quantity coverage",
+      title: "Some cards had quantity coverage issues",
       affected: "",
-      whatHappened: "At least one card group did not have a single seller that covered the full reviewed quantity.",
+      whatHappened: "At least one card did not have a single seller that covered the full reviewed quantity.",
       whyItMatters: "The plan may rely on fallback offer grouping rather than a clean one-seller quantity match.",
       whatToDo: "Review the card assignment details before buying."
     });
@@ -1318,7 +1314,7 @@ function countryReviewRowTemplate(seller, sellerIndex) {
   `;
 }
 
-function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
+function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCost) {
   const cardTotal = sellerCost?.articleValue ?? offerSubtotal(offers);
   const shippingTotal = sellerCost?.shippingValue ?? 0;
   const feeTotal = sellerCost?.cardmarketFeeValue ?? 0;
@@ -1327,19 +1323,16 @@ function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
   const trackingLabel = sellerCost?.trackingStatus || seller.trackingStatus || "unknown";
   const shippingSourceClass = sellerCost?.source === "unresolved" ? "warning" : "good";
   const itemCount = offers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
+  const estimatedWeight = sellerCost?.estimatedWeight ?? estimateShipmentWeight(offers.length);
 
   return `
     <article class="recommendation-card premium-seller-card">
-      <header>
-        <div>
-          <div class="seller-info">
-            <span class="eyebrow">Buy from</span>
-            <h3>${escapeHtml(seller.sellerName)}</h3>
-          </div>
-          <div class="seller-badges">
-            <span class="status-pill info">${escapeHtml(seller.sellerCountry || "Unknown")}</span>
-            <span class="status-pill ${trackingLabel === "tracked" ? "good" : "muted"}">${escapeHtml(trackingLabel)}</span>
-            <span class="status-pill muted">${escapeHtml(`${itemCount} card${itemCount === 1 ? "" : "s"}`)}</span>
+      <header class="seller-card-header">
+        <div class="seller-number-badge">${escapeHtml(displayNumber)}</div>
+        <div class="seller-info-primary">
+          <h3>Buy from ${escapeHtml(seller.sellerName)}</h3>
+          <div class="seller-meta">
+            ${escapeHtml(seller.sellerCountry || "Unknown")} · ${escapeHtml(trackingLabel)} · ${escapeHtml(`${itemCount} card${itemCount === 1 ? "" : "s"}`)}
           </div>
         </div>
         <div class="seller-total">
@@ -1347,18 +1340,35 @@ function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
         </div>
       </header>
 
+      <div class="seller-cards-section">
+        <div class="seller-section-label">Cards to buy</div>
+        <table class="recommendation-table">
+          <tbody>
+            ${offers.map((offer) => `
+              <tr>
+                <td>${escapeHtml(offer.requiredQuantity || offer.quantity)}×</td>
+                <td>${escapeHtml(offer.cardName)}</td>
+                <td class="condition-cell">${escapeHtml(offer.condition)}</td>
+                <td class="price-cell">${escapeHtml(formatMoney(offer.unitPrice))}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+
       <div class="cost-breakdown">
+        <div class="seller-section-label">Cost breakdown</div>
         <div class="breakdown-item">
           <span>Cards</span>
           <strong>${escapeHtml(formatMoney(cardTotal))}</strong>
         </div>
         <div class="breakdown-item">
-          <span>Shipping <span class="label-muted">(est.)</span></span>
+          <span>Shipping</span>
           <strong>${escapeHtml(formatMoney(shippingTotal))}</strong>
         </div>
         ${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `
           <div class="breakdown-item">
-            <span>Fees <span class="label-muted">(est.)</span></span>
+            <span>Fees</span>
             <strong>${escapeHtml(formatMoney(feeTotal))}</strong>
           </div>
         `}
@@ -1369,44 +1379,23 @@ function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
         </div>
       </div>
 
-      <div class="shipping-detail ${shippingSourceClass}">
-        <span><strong>${escapeHtml(sellerCost?.sourceLabel || "Original pasted shipping")}</strong></span>
-        <span>${escapeHtml(shippingMethod)} · ${escapeHtml(trackingLabel)} · ~${escapeHtml(sellerCost?.estimatedWeight ?? estimateShipmentWeight(offers.length))}g</span>
-      </div>
-
-      ${sellerCost?.shippingDebug ? `
-        <details class="shipping-debug-section">
-          <summary>Shipping calculation trace</summary>
-          <div class="shipping-debug ${sellerCost.shippingDebug.trackedRequired ? "tracked-required" : ""}">
-            Order ${escapeHtml(formatMoney(sellerCost.shippingDebug.orderValue))} / ${escapeHtml(sellerCost.shippingDebug.cardCount)} card(s) / ${escapeHtml(`${sellerCost.shippingDebug.estimatedWeight}g`)}<br>
-            Tracking required: <strong>${sellerCost.shippingDebug.trackedRequired ? "yes" : "no"}</strong><br>
-            ${escapeHtml(sellerCost.shippingDebug.reason)}<br>
-            ${Number.isFinite(sellerCost.shippingDebug.basePrice) ? `Selected base price: ${escapeHtml(formatMoney(sellerCost.shippingDebug.basePrice))}. ` : ""}
-            ${sellerCost.shippingDebug.cardmarketFeeIncluded ? "Cardmarket shipping fee is already included in shipping_data.json." : ""}
-          </div>
-        </details>
-      ` : ""}
-
-      <table class="recommendation-table">
-        <thead>
-          <tr>
-            <th>Card</th>
-            <th>Qty</th>
-            <th>Cond.</th>
-            <th>Unit price</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${offers.map((offer) => `
-            <tr>
-              <td>${escapeHtml(offer.cardName)}</td>
-              <td>${escapeHtml(offer.requiredQuantity || offer.quantity)}</td>
-              <td>${escapeHtml(offer.condition)}</td>
-              <td>${escapeHtml(formatMoney(offer.unitPrice))}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
+      <details class="shipping-detail-section">
+        <summary class="shipping-detail-summary">
+          Shipping · ${escapeHtml(shippingMethod)} · ${escapeHtml(trackingLabel)} · ~${escapeHtml(estimatedWeight)}g
+        </summary>
+        <div class="shipping-detail-body">
+          <span class="status-pill ${shippingSourceClass} shipping-source-pill">${escapeHtml(sellerCost?.sourceLabel || "Original pasted shipping")}</span>
+          ${sellerCost?.shippingDebug ? `
+            <div class="shipping-debug ${sellerCost.shippingDebug.trackedRequired ? "tracked-required" : ""}">
+              Order ${escapeHtml(formatMoney(sellerCost.shippingDebug.orderValue))} / ${escapeHtml(sellerCost.shippingDebug.cardCount)} card(s) / ${escapeHtml(`${sellerCost.shippingDebug.estimatedWeight}g`)}<br>
+              Tracking required: <strong>${sellerCost.shippingDebug.trackedRequired ? "yes" : "no"}</strong><br>
+              ${escapeHtml(sellerCost.shippingDebug.reason)}<br>
+              ${Number.isFinite(sellerCost.shippingDebug.basePrice) ? `Base price: ${escapeHtml(formatMoney(sellerCost.shippingDebug.basePrice))}. ` : ""}
+              ${sellerCost.shippingDebug.cardmarketFeeIncluded ? "Cardmarket fee included in shipping data." : ""}
+            </div>
+          ` : ""}
+        </div>
+      </details>
     </article>
   `;
 }
@@ -1435,6 +1424,38 @@ function formatSavings(value) {
 
 function formatEstimatedMoney(value) {
   return Number.isFinite(Number(value)) ? formatMoney(value) : "Needs review";
+}
+
+async function copyBuyingPlan(result) {
+  const planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
+  const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
+
+  const lines = result.usedSellers.map(({ seller, sellerIndex }) => {
+    const offers = planBySeller.get(sellerIndex) || [];
+    const cost = costBySeller.get(sellerIndex);
+    const totalCost = cost?.totalCost ?? offerSubtotal(offers);
+    const shippingCost = cost?.shippingValue ?? 0;
+    const cardLines = offers.map((offer) =>
+      `  - ${offer.requiredQuantity || offer.quantity}× ${offer.cardName} — ${offer.condition} — ${formatMoney(offer.unitPrice)}`
+    ).join("\n");
+    return `Buy from ${seller.sellerName}\n${cardLines}\nShipping: ${formatMoney(shippingCost)}\nTotal: ${formatEstimatedMoney(totalCost)}`;
+  });
+
+  const text = lines.join("\n\n");
+  const btn = document.querySelector("#copyPlanButton");
+
+  try {
+    await navigator.clipboard.writeText(text);
+    if (btn) {
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.textContent = "Copy buying plan"; }, 2000);
+    }
+  } catch {
+    if (btn) {
+      btn.textContent = "Copy failed";
+      setTimeout(() => { btn.textContent = "Copy buying plan"; }, 2000);
+    }
+  }
 }
 
 function toReviewData() {
@@ -1524,6 +1545,10 @@ function buildOfferGroups(sellers) {
       lowestUnitPrice: Number.isFinite(group.lowestUnitPrice) ? group.lowestUnitPrice : 0
     }))
     .sort((a, b) => a.cardName.localeCompare(b.cardName));
+}
+
+function getTotalCopies(offerGroups) {
+  return offerGroups.reduce((sum, group) => sum + group.requiredQuantity, 0);
 }
 
 function normalizeOfferKey(cardName) {
