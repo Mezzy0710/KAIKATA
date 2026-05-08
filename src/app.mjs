@@ -38,8 +38,7 @@ const elements = {
   parseMessage: document.querySelector("#parseMessage"),
   inputEditor: document.querySelector("#inputEditor"),
   inputSummary: document.querySelector("#inputSummary"),
-  shippingDataState: document.querySelector("#shippingDataState"),
-  shippingDataStateText: document.querySelector("#shippingDataStateText"),
+  shippingDataStatus: document.querySelector("#shippingDataStatus"),
   optimizationState: document.querySelector("#optimizationState"),
   optimizationOutput: document.querySelector("#optimizationOutput"),
   emptyStateTemplate: document.querySelector("#emptyStateTemplate")
@@ -76,15 +75,13 @@ async function loadShippingData() {
       throw new Error(`HTTP ${response.status}`);
     }
     state.shippingData = await response.json();
-    elements.shippingDataState.textContent = "Shipping data loaded";
-    elements.shippingDataState.className = "status-pill good";
-    elements.shippingDataStateText.textContent = "Ready";
+    elements.shippingDataStatus.textContent = "Shipping data loaded";
+    elements.shippingDataStatus.className = "shipping-status loaded";
     render();
   } catch (error) {
     state.shippingData = null;
-    elements.shippingDataState.textContent = window.location.protocol === "file:" ? "Use localhost for shipping data" : "Shipping data missing";
-    elements.shippingDataState.className = "status-pill warning";
-    elements.shippingDataStateText.textContent = "Unavailable";
+    elements.shippingDataStatus.textContent = window.location.protocol === "file:" ? "Use localhost for shipping data" : "Shipping data missing";
+    elements.shippingDataStatus.className = "shipping-status missing";
     render();
   }
 }

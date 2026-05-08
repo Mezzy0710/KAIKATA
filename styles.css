@@ -129,34 +129,31 @@ h2 {
   text-transform: uppercase;
 }
 
-.header-status {
+.header-status-line {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.header-status-card {
-  min-width: 142px;
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: rgba(14, 21, 29, 0.82);
-  box-shadow: var(--shadow);
-}
-
-.header-status-card span {
-  display: block;
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
   color: var(--text-muted);
-  font-size: 0.74rem;
-  font-weight: 700;
-  text-transform: uppercase;
 }
 
-.header-status-card strong {
-  font-size: 0.96rem;
-  font-weight: 700;
+.header-status-line #recipientCountry {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.header-status-line #shippingDataStatus {
+  font-size: 0.88rem;
+}
+
+.header-status-line #shippingDataStatus.loaded {
+  color: #93e9b3;
+  font-weight: 500;
+}
+
+.header-status-line #shippingDataStatus.missing {
+  color: #f8c56e;
+  font-weight: 500;
 }
 
 .workspace {
