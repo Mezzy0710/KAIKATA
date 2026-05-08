@@ -4,116 +4,140 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cardmarket Cart Optimizer</title>
-    <link rel="stylesheet" href="./styles.css?v=20260509c">
+    <link rel="stylesheet" href="./styles.css?v=20260509d">
   </head>
   <body>
     <div class="app-shell">
       <header class="workspace-header page-header">
         <div class="brand">
-          <div class="brand-mark" aria-hidden="true">CM</div>
           <div>
-            <p class="eyebrow">Cardmarket Cost Intelligence</p>
             <h1>Cardmarket Cart Optimizer</h1>
             <p class="header-subtitle">Minimize total cost including card prices, dynamic shipping, and fees.</p>
           </div>
         </div>
-        <div class="header-status-line">
-          <span id="recipientCountry">Germany</span>
-          <span id="shippingDataStatus" class="shipping-status">Shipping data loading…</span>
-        </div>
       </header>
 
+      <nav class="stepper" id="appStepper" aria-label="Workflow steps">
+        <ol class="stepper-list">
+          <li class="stepper-item" data-step="1">
+            <div class="stepper-circle">
+              <span class="stepper-number">1</span>
+              <span class="stepper-check" aria-hidden="true">✓</span>
+            </div>
+            <div class="stepper-label">Paste cart</div>
+          </li>
+          <li class="stepper-line" data-from="1" aria-hidden="true"></li>
+          <li class="stepper-item" data-step="2">
+            <div class="stepper-circle">
+              <span class="stepper-number">2</span>
+              <span class="stepper-check" aria-hidden="true">✓</span>
+            </div>
+            <div class="stepper-label">Review quantities</div>
+          </li>
+          <li class="stepper-line" data-from="2" aria-hidden="true"></li>
+          <li class="stepper-item" data-step="3">
+            <div class="stepper-circle">
+              <span class="stepper-number">3</span>
+              <span class="stepper-check" aria-hidden="true">✓</span>
+            </div>
+            <div class="stepper-label">Buy from sellers</div>
+          </li>
+        </ol>
+      </nav>
+
       <main class="workspace">
-        <div class="dashboard-grid">
-          <div class="dashboard-column dashboard-column-main">
-            <section class="panel input-panel">
-              <div class="panel-heading panel-heading-stack">
-                <div>
-                  <p class="eyebrow">Step 1</p>
-                  <h2>Paste your Cardmarket cart content</h2>
-                </div>
-                <span id="optimizationState" class="status-pill muted">Waiting</span>
+        <div class="workspace-top-row">
+          <section class="panel input-panel">
+            <div class="panel-heading panel-heading-stack">
+              <div>
+                <p class="eyebrow">Step 1</p>
+                <h2>Paste your Cardmarket cart content</h2>
               </div>
-              <div id="inputEditor" class="input-editor">
-                <p class="panel-description">Copy the full Cardmarket shopping cart page content from desktop or mobile, then run optimization to validate parsing and compute the best seller mix.</p>
-                <label class="field-label" for="cartInput">Cardmarket cart content</label>
-                <textarea id="cartInput" spellcheck="false" placeholder="Paste the full Cardmarket shopping cart page content here"></textarea>
-                <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
-                <div class="button-row button-row-input">
-                  <button id="parseButton" class="primary-button" type="button">Optimize Cart</button>
-                  <button id="clearButton" class="ghost-button" type="button">Clear</button>
-                </div>
+              <span id="optimizationState" class="status-pill muted">Waiting</span>
+            </div>
+            <div id="inputEditor" class="input-editor">
+              <p class="panel-description">Paste your full Cardmarket shopping cart from desktop or mobile.</p>
+              <details class="how-it-works-toggle">
+                <summary>How does this work?</summary>
+                <p>The optimizer parses your pasted cart to detect sellers, cards, prices, and quantities. It validates the parsing, then computes the cheapest seller mix using dynamic shipping costs and trustee fees so you can compare it against your current cart total.</p>
+              </details>
+              <label class="field-label" for="cartInput">Cardmarket cart content</label>
+              <textarea id="cartInput" spellcheck="false" placeholder="Paste the full Cardmarket shopping cart page content here"></textarea>
+              <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
+              <div class="button-row button-row-input">
+                <button id="parseButton" class="primary-button" type="button">Optimize Cart</button>
+                <button id="clearButton" class="ghost-button" type="button">Clear</button>
               </div>
-              <div id="inputSummary" class="input-summary hidden" aria-live="polite"></div>
-            </section>
+            </div>
+            <div id="inputSummary" class="input-summary hidden" aria-live="polite"></div>
+          </section>
 
-            <section class="panel result-panel summary-panel">
-              <div class="panel-heading">
-                <div>
-                  <p class="eyebrow">Result</p>
-                  <h2>Optimization result</h2>
-                </div>
+          <section class="panel result-panel summary-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Result</p>
+                <h2>Optimization result</h2>
               </div>
-              <div id="optimizationSummary" class="summary-output" aria-live="polite">
-                Run optimization to compare the original cart against the recommended plan.
-              </div>
-            </section>
-
-            <section class="panel compact-panel validation-panel">
-              <div class="panel-heading">
-                <div>
-                  <p class="eyebrow">Step 2</p>
-                  <h2>Review desired quantities</h2>
-                </div>
-              </div>
-              <div id="desiredCardsReview" class="desired-cards-review" aria-live="polite"></div>
-            </section>
-
-            <section class="panel result-panel recommendation-panel">
-              <div class="panel-heading">
-                <div>
-                  <p class="eyebrow">Step 3</p>
-                  <h2>Buy from these sellers</h2>
-                </div>
-                <button id="runOptimizationButton" class="ghost-button run-button" type="button">Re-run Optimization</button>
-              </div>
-              <div id="optimizationOutput" class="optimization-output" aria-live="polite">
-                Optimize the pasted cart to review selected sellers and assigned cards.
-              </div>
-            </section>
-          </div>
-
-          <div class="dashboard-column dashboard-column-side">
-            <details class="panel result-panel secondary-panel advanced-details-panel">
-              <summary>Advanced details</summary>
-              <div class="advanced-details-body">
-                <div class="compact-panel-footer">
-                  <label class="toggle-row">
-                    <input id="debugToggle" type="checkbox">
-                    <span>Show raw parser blocks in validation review</span>
-                  </label>
-                </div>
-                <section id="sellerReview" class="seller-review" aria-live="polite"></section>
-                <div id="assignmentOutput" class="assignment-output" aria-live="polite">
-                  Selected seller assignments will appear here after optimization.
-                </div>
-                <div id="assumptionsOutput" class="assumptions-output" aria-live="polite">
-                  Shipping thresholds, selected methods, and assumption notes appear here after optimization.
-                </div>
-              </div>
-            </details>
-          </div>
+            </div>
+            <div id="optimizationSummary" class="summary-output" aria-live="polite"></div>
+          </section>
         </div>
+
+        <section class="panel compact-panel validation-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Step 2</p>
+              <h2>Review desired quantities</h2>
+            </div>
+          </div>
+          <div id="desiredCardsReview" class="desired-cards-review" aria-live="polite"></div>
+        </section>
+
+        <section class="panel result-panel recommendation-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Step 3</p>
+              <h2>Buy from these sellers</h2>
+            </div>
+            <button id="runOptimizationButton" class="primary-button run-button" type="button">Re-run Optimization</button>
+          </div>
+          <div id="optimizationOutput" class="optimization-output" aria-live="polite"></div>
+        </section>
+
+        <details class="panel result-panel secondary-panel advanced-details-panel">
+          <summary>
+            <span class="advanced-details-chevron" aria-hidden="true"></span>
+            <span class="advanced-details-summary-text">Advanced details</span>
+          </summary>
+          <div class="advanced-details-body">
+            <div class="compact-panel-footer">
+              <label class="toggle-row">
+                <input id="debugToggle" type="checkbox">
+                <span>Show raw parser blocks in validation review</span>
+              </label>
+            </div>
+            <section id="sellerReview" class="seller-review" aria-live="polite"></section>
+            <div id="assignmentOutput" class="assignment-output" aria-live="polite"></div>
+            <div id="assumptionsOutput" class="assumptions-output" aria-live="polite"></div>
+          </div>
+        </details>
       </main>
     </div>
 
     <template id="emptyStateTemplate">
-      <div class="empty-state">
+      <div class="empty-state-card">
+        <div class="empty-state-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="6" width="18" height="13" rx="2"></rect>
+            <path d="M3 10h18"></path>
+            <path d="M8 14h2M14 14h2"></path>
+          </svg>
+        </div>
         <h3>No offers yet</h3>
         <p>Paste a cart and parse it to review seller fixed costs and competing card offers.</p>
       </div>
     </template>
 
-    <script type="module" src="./src/app.mjs?v=20260509c"></script>
+    <script type="module" src="./src/app.mjs?v=20260509d"></script>
   </body>
 </html>
