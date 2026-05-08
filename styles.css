@@ -672,30 +672,53 @@ select {
   background: rgba(10, 15, 22, 0.92);
 }
 
-.recommendation-card header {
+.recommendations-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.copy-plan-button {
+  font-size: 0.84rem;
+}
+
+.seller-card-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   padding: 18px;
   border-bottom: 1px solid var(--line);
   background: rgba(13, 20, 28, 0.94);
 }
 
-.recommendation-header-copy {
-  display: grid;
-  gap: 10px;
+.seller-number-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0a0f16;
+  font-size: 0.88rem;
+  font-weight: 800;
 }
 
-.recommendation-card h3 {
-  font-size: 1.08rem;
+.seller-info-primary {
+  flex: 1;
+  min-width: 0;
+}
+
+.seller-info-primary h3 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
   font-weight: 700;
 }
 
-.seller-card-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.seller-meta {
+  color: var(--text-muted);
+  font-size: 0.84rem;
 }
 
 .seller-total {
@@ -703,24 +726,51 @@ select {
   font-size: 1.2rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.shipping-detail {
-  margin: 0;
-  padding: 0;
+.seller-cards-section {
+  padding: 14px 18px 0;
+}
+
+.seller-section-label {
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.shipping-detail-section {
+  margin: 0 18px 14px;
+  border: 1px solid rgba(141, 160, 179, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.shipping-detail-summary {
+  padding: 8px 12px;
+  cursor: pointer;
   color: var(--text-muted);
   font-size: 0.82rem;
-  line-height: 1.5;
+  list-style: none;
 }
 
-.shipping-detail strong {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--accent-strong);
+.shipping-detail-summary::-webkit-details-marker {
+  display: none;
 }
 
-.shipping-detail.warning strong {
-  color: #f8c56e;
+.shipping-detail-body {
+  padding: 10px 12px;
+  border-top: 1px solid rgba(141, 160, 179, 0.1);
+  background: rgba(9, 14, 20, 0.5);
+}
+
+.shipping-source-pill {
+  display: inline-flex;
+  margin-bottom: 8px;
+  font-size: 0.76rem;
 }
 
 .seller-card-listing {
@@ -814,6 +864,23 @@ select {
 .item-table td {
   color: var(--text-soft);
   font-size: 0.88rem;
+}
+
+.seller-cards-section .recommendation-table td:first-child {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  width: 28px;
+  white-space: nowrap;
+}
+
+.seller-cards-section .recommendation-table td.price-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.seller-cards-section .recommendation-table td.condition-cell {
+  color: var(--text-muted);
+  font-size: 0.84rem;
 }
 
 .assignment-table tbody tr,
@@ -1329,11 +1396,10 @@ select {
 .cost-breakdown {
   display: grid;
   gap: 8px;
-  padding: 12px;
+  padding: 14px 18px;
   background: rgba(17, 24, 32, 0.3);
-  border-radius: 6px;
-  margin: 12px 0;
   font-size: 0.9em;
+  border-top: 1px solid var(--line);
 }
 
 .breakdown-item {
