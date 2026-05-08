@@ -4,6 +4,23 @@ export const DESTINATION_COUNTRY = "Germany";
 export const ESTIMATED_CARD_WEIGHT_G = 1.8;
 export const TRACKED_VALUE_THRESHOLD = 25;
 export const SHIPPING_DATA_INCLUDES_CARDMARKET_FEE = true;
+export const TRUSTEE_VALUE_THRESHOLD = 25;
+export const DEFAULT_TRUSTEE_RATE = 0.0075;
+
+const TRUSTEE_RATE_MAP = {
+  letter_basic: 0.005,
+  letter_standard: 0.005,
+  letter_basic_tracked: 0.005,
+  letter_registered: 0.0075,
+  letter_signed: 0.0075,
+  parcel_standard: 0.0075,
+  parcel_tracked: 0.0075,
+  parcel_insured: 0.01,
+  parcel_priority: 0.01,
+  parcel_fast: 0.01,
+  parcel_international: 0.01,
+  parcel_international_tracked: 0.01
+};
 
 export function calculateShippingCost({ shippingRecords, country, cardCount, orderValue, destinationCountry = DESTINATION_COUNTRY }) {
   const trackedRequired = Number(orderValue || 0) >= TRACKED_VALUE_THRESHOLD;
@@ -104,6 +121,53 @@ export function estimateShipmentWeight(cardCount) {
   return Math.round(Math.max(0, Number(cardCount || 0) * ESTIMATED_CARD_WEIGHT_G) * 10) / 10;
 }
 
+export function calculateTrusteeFee({ articleValue, shippingMethod, tracked = false, sellerLifetimeSales = null }) {
+  const normalizedArticleValue = roundMoney(articleValue);
+  const hasLowSalesData = sellerLifetimeSales !== null && sellerLifetimeSales !== undefined && sellerLifetimeSales !== "" && Number.isFinite(Number(sellerLifetimeSales));
+  const lowSalesTrigger = hasLowSalesData && Number(sellerLifetimeSales) < 5;
+  const valueTrigger = normalizedArticleValue >= TRUSTEE_VALUE_THRESHOLD;
+  const applies = valueTrigger || lowSalesTrigger;
+  const methodCategory = classifyTrusteeMethod(shippingMethod, tracked);
+  const rate = TRUSTEE_RATE_MAP[methodCategory] ?? DEFAULT_TRUSTEE_RATE;
+
+  if (!applies) {
+    return {
+      applies: false,
+      fee: 0,
+      rawFee: 0,
+      rate,
+      methodCategory,
+      articleValue: normalizedArticleValue,
+      valueTrigger,
+      lowSalesTrigger,
+      sellerLifetimeSales: hasLowSalesData ? Number(sellerLifetimeSales) : null,
+      salesTriggerEvaluated: hasLowSalesData,
+      reason: hasLowSalesData
+        ? "Trustee not applied: article value below EUR 25.00 and seller has at least 5 completed sales."
+        : "Trustee not applied: article value below EUR 25.00 and seller lifetime sales are unknown."
+    };
+  }
+
+  const rawFee = normalizedArticleValue * rate;
+  const fee = Math.ceil(rawFee * 100) / 100;
+
+  return {
+    applies: true,
+    fee: roundMoney(fee),
+    rawFee,
+    rate,
+    methodCategory,
+    articleValue: normalizedArticleValue,
+    valueTrigger,
+    lowSalesTrigger,
+    sellerLifetimeSales: hasLowSalesData ? Number(sellerLifetimeSales) : null,
+    salesTriggerEvaluated: hasLowSalesData,
+    reason: valueTrigger
+      ? "Trustee applied because article value is at least EUR 25.00."
+      : "Trustee applied because seller has fewer than 5 completed sales."
+  };
+}
+
 export function recordIsTracked(record) {
   return record?.tracked === true || record?.tracked === "tracked";
 }
@@ -158,4 +222,60 @@ function normalizeCountryForLookup(value) {
 
 function roundMoney(value) {
   return Math.round(Number(value || 0) * 100) / 100;
+}
+
+function classifyTrusteeMethod(method, tracked) {
+  const text = normalizeMethodText(method);
+  const letterLike = /\b(letter|brief|brievenbus|mail|raccomandata|einschreiben|lettera)\b/.test(text);
+  const parcelLike = /\b(parcel|paket|paeckchen|packet|colissimo|minibox|delivery|dpd|dhl|gls|dao|paq|package)\b/.test(text);
+  const internationalLike = /\b(international|internacional|internationale|internazionale|int)\b/.test(text);
+  const insuredLike = /\b(insured|insurance|versicher|assicur|secure|secur|seguro|ad valorem|wert)\b/.test(text);
+  const priorityLike = /\b(priority|express|expres|expr[eè]s|fast)\b/.test(text);
+  const signedLike = /\b(signed|signature|signed for)\b/.test(text);
+  const registeredLike = /\b(registered|regist|raccomandata|einschreiben|suivie)\b/.test(text);
+
+  if (parcelLike) {
+    if (insuredLike) {
+      return "parcel_insured";
+    }
+    if (priorityLike) {
+      return "parcel_priority";
+    }
+    if (internationalLike && tracked) {
+      return "parcel_international_tracked";
+    }
+    if (internationalLike) {
+      return "parcel_international";
+    }
+    if (tracked) {
+      return "parcel_tracked";
+    }
+    return "parcel_standard";
+  }
+
+  if (letterLike || !parcelLike) {
+    if (signedLike) {
+      return "letter_signed";
+    }
+    if (registeredLike) {
+      return "letter_registered";
+    }
+    if (tracked) {
+      return "letter_basic_tracked";
+    }
+    if (text.includes("standard") || text.includes("basic")) {
+      return "letter_standard";
+    }
+    return "letter_basic";
+  }
+
+  return "default";
+}
+
+function normalizeMethodText(method) {
+  return String(method || "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }

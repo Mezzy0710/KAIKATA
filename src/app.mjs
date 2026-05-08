@@ -1,5 +1,10 @@
 import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260508i";
-import { calculateShippingCost, estimateShipmentWeight, SHIPPING_DATA_INCLUDES_CARDMARKET_FEE } from "./shipping.mjs?v=20260508i";
+import {
+  calculateShippingCost,
+  calculateTrusteeFee,
+  estimateShipmentWeight,
+  SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
+} from "./shipping.mjs?v=20260508j";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
@@ -590,6 +595,8 @@ function optimizeCart(sellers, offerGroups) {
     selectedTotal: score.total,
     cardTotal: score.cardTotal,
     fixedTotal: score.fixedTotal,
+    trusteeTotal: score.trusteeTotal,
+    shippingTotal: score.shippingTotal,
     sellerCosts: score.sellerCosts,
     savings,
     usedSellers,
@@ -662,11 +669,15 @@ function scoreSelection(selection, sellers, shippingRecords) {
   const sellerCosts = estimateSelectedSellerCosts(selection, sellers, shippingRecords);
   const cardTotal = selection.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1) * Number(offer.unitPrice || 0), 0);
   const fixedTotal = sellerCosts.reduce((sum, cost) => sum + cost.totalCost, 0);
+  const shippingTotal = sellerCosts.reduce((sum, cost) => sum + (Number.isFinite(cost.shippingValue) ? cost.shippingValue : 0), 0);
+  const trusteeTotal = sellerCosts.reduce((sum, cost) => sum + (Number.isFinite(cost.trusteeFeeValue) ? cost.trusteeFeeValue : 0), 0);
 
   return {
     total: cardTotal + fixedTotal,
     cardTotal,
     fixedTotal,
+    shippingTotal,
+    trusteeTotal,
     sellerCount: sellerCosts.length,
     sellerCosts
   };
@@ -711,6 +722,14 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
     cardCount: quantity,
     orderValue: articleValue
   });
+  const trusteeMethod = shippingResult.ok ? shippingResult.method : seller.shippingMethod;
+  const trusteeTracked = shippingResult.ok ? shippingResult.tracked : seller.trackingStatus === "tracked";
+  const trusteeResult = calculateTrusteeFee({
+    articleValue,
+    shippingMethod: trusteeMethod,
+    tracked: trusteeTracked,
+    sellerLifetimeSales: seller.sellerLifetimeSales ?? seller.completedSales ?? null
+  });
 
   if (!shippingResult.ok) {
     return {
@@ -723,13 +742,18 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
       shippingMethod: seller.shippingMethod || "Unknown shipping",
       trackingStatus: shippingResult.tracked ? "tracked" : "untracked",
       cardmarketFeeValue: 0,
+      trusteeFeeValue: trusteeResult.fee,
+      trusteeRate: trusteeResult.rate,
+      trusteeMethodCategory: trusteeResult.methodCategory,
       shippingValue: Number.POSITIVE_INFINITY,
       totalCost: Number.POSITIVE_INFINITY,
-      shippingDebug: shippingResult
+      shippingDebug: shippingResult,
+      trusteeDebug: trusteeResult
     };
   }
 
   const shippingValue = roundMoney(shippingResult.cost);
+  const trusteeFeeValue = roundMoney(trusteeResult.fee);
 
   return {
     sellerIndex,
@@ -741,9 +765,13 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
     shippingMethod: shippingResult.method,
     trackingStatus: shippingResult.tracked ? "tracked" : "untracked",
     cardmarketFeeValue: shippingResult.cardmarketFeeValue,
+    trusteeFeeValue,
+    trusteeRate: trusteeResult.rate,
+    trusteeMethodCategory: trusteeResult.methodCategory,
     shippingValue,
-    totalCost: shippingValue,
-    shippingDebug: shippingResult
+    totalCost: roundMoney(shippingValue + trusteeFeeValue),
+    shippingDebug: shippingResult,
+    trusteeDebug: trusteeResult
   };
 }
 
@@ -769,7 +797,8 @@ function estimateCurrentTotal(sellers) {
 
 function optimizationSummaryTemplate(result) {
   const cardValue = result.cardTotal;
-  const shippingTotal = result.sellerCosts.reduce((sum, sellerCost) => sum + (Number.isFinite(sellerCost.shippingValue) ? sellerCost.shippingValue : 0), 0);
+  const shippingTotal = result.shippingTotal;
+  const trusteeTotal = result.trusteeTotal;
   const feeTotal = result.sellerCosts.reduce((sum, sellerCost) => sum + Number(sellerCost.cardmarketFeeValue || 0), 0);
   const savingsPercent = result.currentTotal > 0 && Number.isFinite(result.selectedTotal)
     ? `${((result.savings / result.currentTotal) * 100).toFixed(1)}%`
@@ -803,7 +832,8 @@ function optimizationSummaryTemplate(result) {
       <div><span>Sellers used</span><strong>${escapeHtml(result.usedSellers.length)}</strong></div>
       <div><span>Article value</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
       <div><span>Shipping total</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
-      <div><span>Trustee / fees</span><strong>${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included" : formatEstimatedMoney(feeTotal))}</strong></div>
+      <div><span>Trustee total</span><strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong></div>
+      <div><span>Shipping fee data</span><strong>${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included in shipping rows" : formatEstimatedMoney(feeTotal))}</strong></div>
     </div>
   `;
 }
@@ -883,6 +913,7 @@ function assumptionsTemplate(result) {
 function assumptionsCardTemplate(result, sellerCost) {
   const seller = result.usedSellers.find((entry) => entry.sellerIndex === sellerCost.sellerIndex)?.seller;
   const shippingDebug = sellerCost.shippingDebug;
+  const trusteeDebug = sellerCost.trusteeDebug;
 
   return `
     <article class="assumption-card">
@@ -895,6 +926,8 @@ function assumptionsCardTemplate(result, sellerCost) {
         <li>Weight estimate: ${escapeHtml(`${sellerCost.estimatedWeight}g`)}</li>
         <li>Tracking: ${escapeHtml(sellerCost.trackingStatus)}</li>
         <li>Method: ${escapeHtml(sellerCost.shippingMethod || "Unknown")}</li>
+        <li>Trustee: ${escapeHtml(trusteeDebug?.applies ? `${formatMoney(sellerCost.trusteeFeeValue)} at ${(trusteeDebug.rate * 100).toFixed(2)}%` : "Not applied")}</li>
+        <li>Trustee trigger: ${escapeHtml(trusteeDebug?.reason || "Not evaluated")}</li>
         <li>Cardmarket fee handling: ${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included in shipping data" : "Added separately")}</li>
       </ul>
     </article>
@@ -975,7 +1008,7 @@ function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
       <dl class="seller-metric-grid">
         <div><dt>Cards</dt><dd>${escapeHtml(formatMoney(cardTotal))}</dd></div>
         <div><dt>Shipping</dt><dd>${escapeHtml(formatEstimatedMoney(sellerCost?.shippingValue ?? fixedCost))}</dd></div>
-        <div><dt>CM fee</dt><dd>${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included" : formatEstimatedMoney(sellerCost?.cardmarketFeeValue ?? 0))}</dd></div>
+        <div><dt>Trustee</dt><dd>${escapeHtml(formatEstimatedMoney(sellerCost?.trusteeFeeValue ?? 0))}</dd></div>
         <div><dt>Method</dt><dd>${escapeHtml(shippingMethod)}</dd></div>
       </dl>
       <p class="shipping-detail ${shippingSourceClass}">

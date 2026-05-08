@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { buildShippingIndex } from "../src/parser.mjs";
-import { calculateShippingCost, estimateShipmentWeight, SHIPPING_DATA_INCLUDES_CARDMARKET_FEE } from "../src/shipping.mjs";
+import {
+  calculateShippingCost,
+  calculateTrusteeFee,
+  estimateShipmentWeight,
+  SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
+} from "../src/shipping.mjs";
 
 const shippingData = JSON.parse(await readFile(new URL("../shipping_data.json", import.meta.url), "utf8"));
 const shippingRecords = buildShippingIndex(shippingData);
@@ -71,6 +76,36 @@ assert.equal(twoCards.tracked, false);
 assert.equal(twoCards.method, "Standardbrief");
 assert.equal(twoCards.cost, 1.25);
 
+const trusteeAtThreshold = calculateTrusteeFee({
+  articleValue: 25,
+  shippingMethod: "Standardbrief",
+  tracked: false
+});
+
+assert.equal(trusteeAtThreshold.applies, true);
+assert.equal(trusteeAtThreshold.fee, 0.13);
+assert.equal(trusteeAtThreshold.methodCategory, "letter_standard");
+
+const trusteeBelowThreshold = calculateTrusteeFee({
+  articleValue: 24.99,
+  shippingMethod: "Standardbrief",
+  tracked: false
+});
+
+assert.equal(trusteeBelowThreshold.applies, false);
+assert.equal(trusteeBelowThreshold.fee, 0);
+
+const trusteeLowSales = calculateTrusteeFee({
+  articleValue: 10,
+  shippingMethod: "Registered Letter",
+  tracked: true,
+  sellerLifetimeSales: 3
+});
+
+assert.equal(trusteeLowSales.applies, true);
+assert.equal(trusteeLowSales.fee, 0.08);
+assert.equal(trusteeLowSales.methodCategory, "letter_registered");
+
 console.log(JSON.stringify({
   italyAtThreshold: {
     method: italyAtThreshold.method,
@@ -87,6 +122,10 @@ console.log(JSON.stringify({
     oldShippingB: simulatedMove.oldShippingB,
     newShippingA: simulatedMove.newShippingA,
     newShippingB: simulatedMove.newShippingB
+  },
+  trustee: {
+    threshold: trusteeAtThreshold.fee,
+    lowSales: trusteeLowSales.fee
   },
   shippingDataIncludesCardmarketFee: SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
 }, null, 2));
