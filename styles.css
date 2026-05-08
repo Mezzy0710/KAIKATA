@@ -1187,6 +1187,97 @@ select {
   color: var(--text-muted);
 }
 
+/* Review sections for warnings and notes */
+.review-section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  background: var(--bg-panel);
+}
+
+.review-section.action-required {
+  border-color: rgba(189, 110, 102, 0.5);
+  background: rgba(189, 110, 102, 0.06);
+}
+
+.review-section.review-before-buying {
+  border-color: rgba(184, 111, 77, 0.5);
+  background: rgba(184, 111, 77, 0.06);
+}
+
+.review-section.cost-note {
+  border-color: rgba(111, 158, 212, 0.5);
+  background: rgba(111, 158, 212, 0.06);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.review-header h3 {
+  margin: 4px 0 4px 0;
+  font-size: 0.95rem;
+}
+
+.review-header p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.review-count {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.review-items {
+  display: grid;
+  gap: 12px;
+}
+
+.review-card {
+  padding: 12px;
+  border-left: 3px solid;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.review-card.action-card {
+  border-left-color: var(--red);
+}
+
+.review-card.warning-card {
+  border-left-color: var(--copper);
+}
+
+.review-card.info-card {
+  border-left-color: var(--blue);
+}
+
+.review-card strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.review-card p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
 @media (max-width: 900px) {
   body {
     min-width: 0;

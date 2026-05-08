@@ -134,11 +134,12 @@ function renderSummary(sellers, itemCount, offerGroups, parsedTotal) {
   const trusteeTotal = sellers.reduce((sum, seller) => sum + Number(seller.trusteeValue || 0), 0);
   const shippingTotal = sellers.reduce((sum, seller) => sum + Number(seller.shippingValue || 0), 0);
   const competitiveCards = offerGroups.filter((group) => group.sellerCount > 1).length;
+  const totalCopies = offerGroups.reduce((sum, group) => sum + group.requiredQuantity, 0);
 
   elements.summaryStrip.innerHTML = [
     summaryCard("Sellers", sellers.length),
-    summaryCard("Card groups", offerGroups.length),
-    summaryCard("Seller offers", itemCount),
+    summaryCard("Different cards", offerGroups.length),
+    summaryCard("Total copies", totalCopies),
     summaryCard("Competitive cards", competitiveCards),
     summaryCard("Fixed costs", formatMoney(shippingTotal + trusteeTotal)),
     summaryCard("Needs country review", ambiguousCount + unknownCountryCount)
@@ -885,6 +886,10 @@ function optimizationResultTemplate(result) {
   const savingsClass = result.savings > 0.005 ? "good" : "muted";
   const planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
   const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
+  const hasActionRequired = result.warnings.length > 0;
+  const hasWarnings = result.countryWarnings.length > 0;
+  const hasCostNotes = result.costNotes.length > 0;
+  const totalItems = (result.warnings.length || 0) + (result.costNotes.length || 0) + (result.countryWarnings.length || 0);
 
   return `
     <div class="result-hero">
@@ -897,7 +902,7 @@ function optimizationResultTemplate(result) {
         <strong class="muted">${escapeHtml(formatMoney(result.currentTotal))}</strong>
       </div>
       <div>
-        <span>Difference</span>
+        <span>Difference to reviewed offer pool</span>
         <strong class="${savingsClass}">${escapeHtml(formatSavings(result.savings))}</strong>
       </div>
       <div>
@@ -905,29 +910,39 @@ function optimizationResultTemplate(result) {
         <strong>${escapeHtml(result.usedSellers.length)}</strong>
       </div>
     </div>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">The reviewed offer pool includes duplicate alternatives and unused seller offers, so it is not a true savings baseline.</p>
 
-    ${result.warnings.length > 0 ? resultWarningBanner(result.warnings) : ""}
-    ${result.costNotes.length > 0 ? resultCostNoteBanner(result.costNotes) : ""}
-
-    ${(result.warnings.length || result.costNotes.length || result.countryWarnings.length) ? `
-      <details class="result-details-section">
-        <summary>Review details</summary>
-        <div class="result-details-body">
+    ${totalItems > 0 ? `
+      <div class="review-section ${hasActionRequired ? "action-required" : hasWarnings ? "review-before-buying" : "cost-note"}">
+        <div class="review-header">
+          <div>
+            <span class="status-pill ${hasActionRequired ? "warning" : hasWarnings ? "warning" : "info"}">${escapeHtml(hasActionRequired ? "Action required" : hasWarnings ? "Review before buying" : "Cost note")}</span>
+            <h3>${escapeHtml(hasActionRequired ? "Result may be incomplete or incorrect" : hasWarnings ? "Some seller details need your review" : "Transparent cost assumptions")}</h3>
+            <p>${escapeHtml(hasActionRequired ? "Fix the issues below before buying." : hasWarnings ? "Verify seller details before buying." : "Review these cost notes for transparency.")}</p>
+          </div>
+          <div class="review-count">${escapeHtml(totalItems)} item${totalItems === 1 ? "" : "s"} to review</div>
+        </div>
+        <div class="review-items">
           ${result.warnings.map((warning) => `
-            <div class="result-detail-card critical">
-              <strong>Action required</strong>
+            <div class="review-card action-card">
+              <strong>⚠️ Action required</strong>
               <p>${escapeHtml(warning)}</p>
             </div>
           `).join("")}
+          ${result.countryWarnings.map(({ seller }) => `
+            <div class="review-card warning-card">
+              <strong>🔍 Review before buying</strong>
+              <p><strong>${escapeHtml(seller.sellerName)}</strong> — Country or shipping method needs confirmation.</p>
+            </div>
+          `).join("")}
           ${result.costNotes.map((note) => `
-            <div class="result-detail-card info">
-              <strong>Cost note</strong>
+            <div class="review-card info-card">
+              <strong>ℹ️ Cost note</strong>
               <p>${escapeHtml(note)}</p>
             </div>
           `).join("")}
-          ${result.countryWarnings.length ? countryReviewTemplate(result.countryWarnings) : ""}
         </div>
-      </details>
+      </div>
     ` : ""}
 
     <div class="recommendation-grid">
@@ -985,18 +1000,20 @@ function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
   const trackingLabel = sellerCost?.trackingStatus || seller.trackingStatus || "unknown";
   const shippingSourceClass = sellerCost?.source === "unresolved" ? "warning" : "good";
   const shippingDebug = sellerCost?.shippingDebug;
+  const totalQuantity = offers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
 
   return `
     <article class="recommendation-card">
       <header>
         <div>
           <div class="seller-info">
-            <span class="eyebrow">Selected seller</span>
-            <h3>${escapeHtml(seller.sellerName)}</h3>
+            <span class="eyebrow">Buy from</span>
+            <h3>${sellerIndex + 1}. ${escapeHtml(seller.sellerName)}</h3>
           </div>
           <div class="seller-badges">
             <span class="status-pill info">${escapeHtml(seller.sellerCountry || "Unknown")}</span>
-            <span class="status-pill muted">${offers.length} card(s)</span>
+            <span class="status-pill ${trackingLabel === "tracked" ? "good" : "muted"}">${escapeHtml(trackingLabel)}</span>
+            <span class="status-pill muted">${escapeHtml(`${totalQuantity} card${totalQuantity === 1 ? "" : "s"}`)}</span>
           </div>
         </div>
         <div class="seller-total">
