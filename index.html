@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cardmarket Cart Optimizer</title>
-    <link rel="stylesheet" href="./styles.css?v=20260508k">
+    <link rel="stylesheet" href="./styles.css?v=20260508m">
   </head>
   <body>
     <div class="app-shell">
@@ -41,13 +41,28 @@
                 </div>
                 <span id="optimizationState" class="status-pill muted">Waiting</span>
               </div>
-              <p class="panel-description">Copy the full Cardmarket shopping cart page content from desktop or mobile, then run optimization to validate parsing and compute the best seller mix.</p>
-              <label class="field-label" for="cartInput">Cardmarket cart content</label>
-              <textarea id="cartInput" spellcheck="false" placeholder="Paste the full Cardmarket shopping cart page content here"></textarea>
-              <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
-              <div class="button-row button-row-input">
-                <button id="parseButton" class="primary-button" type="button">Optimize Cart</button>
-                <button id="clearButton" class="ghost-button" type="button">Clear</button>
+              <div id="inputEditor" class="input-editor">
+                <p class="panel-description">Copy the full Cardmarket shopping cart page content from desktop or mobile, then run optimization to validate parsing and compute the best seller mix.</p>
+                <label class="field-label" for="cartInput">Cardmarket cart content</label>
+                <textarea id="cartInput" spellcheck="false" placeholder="Paste the full Cardmarket shopping cart page content here"></textarea>
+                <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
+                <div class="button-row button-row-input">
+                  <button id="parseButton" class="primary-button" type="button">Optimize Cart</button>
+                  <button id="clearButton" class="ghost-button" type="button">Clear</button>
+                </div>
+              </div>
+              <div id="inputSummary" class="input-summary hidden" aria-live="polite"></div>
+            </section>
+
+            <section class="panel result-panel summary-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Result</p>
+                  <h2>Optimization result</h2>
+                </div>
+              </div>
+              <div id="optimizationSummary" class="summary-output" aria-live="polite">
+                Run optimization to compare the original cart against the recommended plan.
               </div>
             </section>
 
@@ -55,23 +70,17 @@
               <div class="panel-heading">
                 <div>
                   <p class="eyebrow">Step 2</p>
-                  <h2>Validation status</h2>
+                  <h2>Parsing status</h2>
                 </div>
               </div>
               <div id="summaryStrip" class="summary-strip" aria-live="polite"></div>
-              <div class="compact-panel-footer">
-                <label class="toggle-row">
-                  <input id="debugToggle" type="checkbox">
-                  <span>Show raw parser blocks in validation review</span>
-                </label>
-              </div>
             </section>
 
             <section class="panel result-panel recommendation-panel">
               <div class="panel-heading">
                 <div>
-                  <p class="eyebrow">Step 4</p>
-                  <h2>Recommended purchases by seller</h2>
+                  <p class="eyebrow">Step 3</p>
+                  <h2>Buy from these sellers</h2>
                 </div>
                 <button id="runOptimizationButton" class="ghost-button run-button" type="button">Re-run Optimization</button>
               </div>
@@ -82,43 +91,32 @@
           </div>
 
           <div class="dashboard-column dashboard-column-side">
-            <section class="panel result-panel summary-panel">
-              <div class="panel-heading">
-                <div>
-                  <p class="eyebrow">Step 3</p>
-                  <h2>Optimization summary</h2>
+            <details class="panel result-panel secondary-panel validation-details-panel">
+              <summary>Show validation details</summary>
+              <div class="secondary-details-body">
+                <div class="compact-panel-footer">
+                  <label class="toggle-row">
+                    <input id="debugToggle" type="checkbox">
+                    <span>Show raw parser blocks in validation review</span>
+                  </label>
                 </div>
+                <section id="sellerReview" class="seller-review" aria-live="polite"></section>
               </div>
-              <div id="optimizationSummary" class="summary-output" aria-live="polite">
-                Run optimization to compare the original cart against the recommended plan.
-              </div>
-            </section>
+            </details>
 
-            <section class="panel result-panel assignment-panel">
-              <div class="panel-heading">
-                <div>
-                  <p class="eyebrow">Step 5</p>
-                  <h2>Card assignment table</h2>
-                </div>
-              </div>
-              <div id="assignmentOutput" class="assignment-output" aria-live="polite">
+            <details class="panel result-panel secondary-panel assignment-panel">
+              <summary>Card assignment details</summary>
+              <div id="assignmentOutput" class="assignment-output secondary-details-body" aria-live="polite">
                 Selected seller assignments will appear here after optimization.
               </div>
-            </section>
+            </details>
 
-            <section class="panel result-panel assumptions-panel">
-              <div class="panel-heading">
-                <div>
-                  <p class="eyebrow">Details</p>
-                  <h2>Calculation details &amp; assumptions</h2>
-                </div>
-              </div>
-              <div id="assumptionsOutput" class="assumptions-output" aria-live="polite">
+            <details class="panel result-panel secondary-panel assumptions-panel">
+              <summary>Calculation details &amp; assumptions</summary>
+              <div id="assumptionsOutput" class="assumptions-output secondary-details-body" aria-live="polite">
                 Shipping thresholds, selected methods, and assumption notes appear here after optimization.
               </div>
-            </section>
-
-            <section id="sellerReview" class="seller-review" aria-live="polite"></section>
+            </details>
           </div>
         </div>
       </main>
@@ -131,6 +129,6 @@
       </div>
     </template>
 
-    <script type="module" src="./src/app.mjs?v=20260508k"></script>
+    <script type="module" src="./src/app.mjs?v=20260508m"></script>
   </body>
 </html>

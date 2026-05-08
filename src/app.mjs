@@ -1,10 +1,10 @@
-import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260508k";
+import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260508m";
 import {
   calculateShippingCost,
   calculateTrusteeFee,
   estimateShipmentWeight,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
-} from "./shipping.mjs?v=20260508k";
+} from "./shipping.mjs?v=20260508m";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
@@ -14,7 +14,8 @@ const state = {
   shippingData: null,
   parsed: parseCart(""),
   optimizationResult: null,
-  showDebug: false
+  showDebug: false,
+  inputCollapsed: false
 };
 
 const elements = {
@@ -22,6 +23,7 @@ const elements = {
   parseButton: document.querySelector("#parseButton"),
   loadSampleButton: document.querySelector("#loadSampleButton"),
   clearButton: document.querySelector("#clearButton"),
+  editCartButton: document.querySelector("#editCartButton"),
   debugToggle: document.querySelector("#debugToggle"),
   runOptimizationButton: document.querySelector("#runOptimizationButton"),
   sellerReview: document.querySelector("#sellerReview"),
@@ -31,6 +33,8 @@ const elements = {
   assumptionsOutput: document.querySelector("#assumptionsOutput"),
   recipientCountry: document.querySelector("#recipientCountry"),
   parseMessage: document.querySelector("#parseMessage"),
+  inputEditor: document.querySelector("#inputEditor"),
+  inputSummary: document.querySelector("#inputSummary"),
   shippingDataState: document.querySelector("#shippingDataState"),
   shippingDataStateText: document.querySelector("#shippingDataStateText"),
   optimizationState: document.querySelector("#optimizationState"),
@@ -108,6 +112,7 @@ function clearInput() {
   elements.cartInput.value = "";
   state.parsed = parseCart("");
   state.optimizationResult = null;
+  state.inputCollapsed = false;
   elements.optimizationState.textContent = "Waiting";
   elements.optimizationState.className = "status-pill muted";
   setMessage("No cart parsed yet.");
@@ -127,27 +132,63 @@ function render() {
 
   elements.recipientCountry.textContent = "Germany";
 
+  renderInputState(sellers, parsedTotal);
   renderSummary(sellers, itemCount, offerGroups, parsedTotal);
   renderSellers(sellers, offerGroups);
   renderOptimizationViews();
+}
+
+function renderInputState(sellers, parsedTotal) {
+  const canCollapse = state.inputCollapsed && state.optimizationResult && sellers.length;
+  elements.inputEditor.classList.toggle("hidden", Boolean(canCollapse));
+  elements.inputSummary.classList.toggle("hidden", !canCollapse);
+
+  if (!canCollapse) {
+    elements.inputSummary.innerHTML = "";
+    return;
+  }
+
+  elements.inputSummary.innerHTML = `
+    <div class="input-summary-card">
+      <div class="input-summary-copy">
+        <span class="status-pill good">Cart parsed successfully</span>
+        <h3>Ready to review your buying plan</h3>
+        <p>${escapeHtml(`${sellers.length} seller${sellers.length === 1 ? "" : "s"} found, ${state.parsed.itemCount} offer${state.parsed.itemCount === 1 ? "" : "s"} parsed, original total ${formatMoney(parsedTotal)}.`)}</p>
+      </div>
+      <div class="button-row input-summary-actions">
+        <button id="editCartButton" class="ghost-button" type="button">Edit pasted cart</button>
+        <button id="clearButtonCompact" class="ghost-button" type="button">Clear</button>
+      </div>
+    </div>
+  `;
+
+  elements.editCartButton = document.querySelector("#editCartButton");
+  if (elements.editCartButton) {
+    elements.editCartButton.addEventListener("click", () => {
+      state.inputCollapsed = false;
+      render();
+    });
+  }
+
+  const compactClear = document.querySelector("#clearButtonCompact");
+  if (compactClear) {
+    compactClear.addEventListener("click", clearInput);
+  }
 }
 
 function renderSummary(sellers, itemCount, offerGroups, parsedTotal) {
   const ambiguousCount = sellers.filter((seller) => seller.countryInference?.ambiguous).length;
   const unknownCountryCount = sellers.filter((seller) => !seller.sellerCountry || seller.sellerCountry === "Unknown").length;
   const pricedOfferCount = sellers.reduce((sum, seller) => sum + seller.items.filter((item) => Number.isFinite(Number(item.price))).length, 0);
-  const competitiveCards = offerGroups.filter((group) => group.sellerCount > 1).length;
   const warningCount = ambiguousCount + unknownCountryCount + state.parsed.warnings.length;
 
   elements.summaryStrip.innerHTML = [
-    summaryCard("Sellers found", sellers.length, sellers.length ? "good" : "muted"),
-    summaryCard("Cards parsed", itemCount, itemCount ? "good" : "muted"),
+    summaryCard(sellers.length ? "Parsed successfully" : "Waiting for cart", sellers.length ? "Ready" : "Idle", sellers.length ? "good" : "muted"),
+    summaryCard("Sellers", sellers.length, sellers.length ? "good" : "muted"),
+    summaryCard("Offers", itemCount, itemCount ? "good" : "muted"),
     summaryCard("Prices found", pricedOfferCount, pricedOfferCount ? "good" : "muted"),
-    summaryCard("Recipient", "Germany", "info"),
     summaryCard("Shipping data", state.shippingData ? "Ready" : "Missing", state.shippingData ? "good" : "warning"),
-    summaryCard("Warnings", warningCount || "Clear", warningCount ? "warning" : "good"),
-    summaryCard("Competitive cards", competitiveCards, competitiveCards ? "info" : "muted"),
-    summaryCard("Parsed total", formatMoney(parsedTotal), parsedTotal ? "info" : "muted")
+    summaryCard("Warnings", warningCount || "Clear", warningCount ? "warning" : "good")
   ].join("");
 }
 
@@ -522,9 +563,10 @@ function runOptimizationPlaceholder() {
   }
 
   state.optimizationResult = optimizeCart(sellers, offerGroups);
+  state.inputCollapsed = true;
   elements.optimizationState.textContent = state.optimizationResult.statusLabel;
   elements.optimizationState.className = state.optimizationResult.warnings.length ? "status-pill warning" : "status-pill good";
-  renderOptimizationViews();
+  render();
   elements.optimizationSummary.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -533,8 +575,7 @@ function updateOptimizationPreview() {
   elements.optimizationState.textContent = "Changed";
   elements.optimizationState.className = "status-pill warning";
   const sellers = state.parsed.sellers;
-  renderSummary(sellers, state.parsed.itemCount, buildOfferGroups(sellers), sellers.reduce((sum, seller) => sum + Number(seller.total || 0), 0));
-  renderOptimizationViews();
+  render();
 }
 
 function optimizeCart(sellers, offerGroups) {
@@ -824,7 +865,7 @@ function optimizationSummaryTemplate(result) {
       <div class="summary-hero-copy">
         <span class="eyebrow">Optimization result</span>
         <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
-        <p>${escapeHtml(Number.isFinite(result.savings) && result.savings > 0 ? "Lowest total found from the current reviewed seller pool." : "Current reviewed allocation is already the best plan found.")}</p>
+        <p>Buy the cards from the sellers below.</p>
       </div>
       <div class="summary-savings">
         <span>Savings</span>
@@ -833,14 +874,15 @@ function optimizationSummaryTemplate(result) {
       </div>
     </div>
     ${warningBanner}
-    <div class="result-hero premium-metrics">
-      <div><span>Original total</span><strong>${escapeHtml(formatMoney(result.currentTotal))}</strong></div>
-      <div><span>Optimized total</span><strong>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</strong></div>
-      <div><span>Sellers used</span><strong>${escapeHtml(result.usedSellers.length)}</strong></div>
-      <div><span>Article value</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
-      <div><span>Shipping total</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
-      <div><span>Trustee total ${result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact") ? "(estimated)" : ""}</span><strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong></div>
-      <div><span>Shipping fee data</span><strong>${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included in shipping rows" : formatEstimatedMoney(feeTotal))}</strong></div>
+    <div class="result-hero guided-metrics">
+      <div class="guided-metric"><span>Optimized total</span><strong>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</strong></div>
+      <div class="guided-metric"><span>Savings</span><strong class="${result.savings > 0.005 ? "good" : "muted"}">${escapeHtml(formatSavings(result.savings))}</strong></div>
+      <div class="guided-metric"><span>Sellers to use</span><strong>${escapeHtml(result.usedSellers.length)}</strong></div>
+      <div class="guided-metric"><span>Original total</span><strong>${escapeHtml(formatMoney(result.currentTotal))}</strong></div>
+      <div class="guided-metric muted-detail"><span>Shipping total</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
+      <div class="guided-metric muted-detail"><span>Trustee total ${result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact") ? "(estimated)" : ""}</span><strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong></div>
+      <div class="guided-metric muted-detail"><span>Article value</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
+      <div class="guided-metric muted-detail"><span>Shipping fee data</span><strong>${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included in shipping rows" : formatEstimatedMoney(feeTotal))}</strong></div>
     </div>
   `;
 }
@@ -853,7 +895,7 @@ function recommendationsTemplate(result) {
     <div class="recommendation-grid">
       ${result.usedSellers.map(({ seller, sellerIndex }) => sellerPlanTemplate(seller, sellerIndex, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
     </div>
-    <div class="drop-panel">
+    <div class="drop-panel subdued-panel">
       <h3>Sellers not used</h3>
       ${result.droppedSellers.length
         ? `<p>${result.droppedSellers.map(({ seller }) => escapeHtml(seller.sellerName)).join(", ")}</p>`
@@ -908,12 +950,9 @@ function assignmentRowTemplate(offer, result) {
 
 function assumptionsTemplate(result) {
   return `
-    <details class="calculation-details" ${result.warnings.length ? "open" : ""}>
-      <summary>Calculation details &amp; assumptions</summary>
-      <div class="assumptions-list">
-        ${result.sellerCosts.map((sellerCost) => assumptionsCardTemplate(result, sellerCost)).join("")}
-      </div>
-    </details>
+    <div class="assumptions-list">
+      ${result.sellerCosts.map((sellerCost) => assumptionsCardTemplate(result, sellerCost)).join("")}
+    </div>
   `;
 }
 
@@ -1003,7 +1042,7 @@ function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
     <article class="recommendation-card premium-seller-card">
       <header>
         <div class="recommendation-header-copy">
-          <span class="eyebrow">Buy from this seller</span>
+          <span class="eyebrow">Buy from</span>
           <h3>${escapeHtml(seller.sellerName)}</h3>
           <div class="seller-card-badges">
             <span class="status-pill info">${escapeHtml(seller.sellerCountry || "Unknown")}</span>
@@ -1013,40 +1052,28 @@ function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
         </div>
         <strong class="seller-total">${escapeHtml(formatEstimatedMoney(cardTotal + fixedCost))}</strong>
       </header>
-      <dl class="seller-metric-grid">
-        <div><dt>Cards</dt><dd>${escapeHtml(formatMoney(cardTotal))}</dd></div>
-        <div><dt>Shipping</dt><dd>${escapeHtml(formatEstimatedMoney(sellerCost?.shippingValue ?? fixedCost))}</dd></div>
-        <div><dt>${escapeHtml(sellerCost?.trusteeSource === "parsed_exact" ? "Trustee" : "Trustee est.")}</dt><dd>${escapeHtml(formatEstimatedMoney(sellerCost?.trusteeFeeValue ?? 0))}</dd></div>
-        <div><dt>Method</dt><dd>${escapeHtml(shippingMethod)}</dd></div>
-      </dl>
-      <p class="shipping-detail ${shippingSourceClass}">
-        <strong>${escapeHtml(sellerCost?.sourceLabel || "Original pasted shipping")}</strong>
-        ${escapeHtml(shippingMethod)} - ${escapeHtml(trackingLabel)} - ${escapeHtml(`${sellerCost?.estimatedWeight ?? estimateShipmentWeight(offers.length)}g est.`)}
-      </p>
-      <p class="shipping-detail ${sellerCost?.trusteeSource === "parsed_exact" ? "good" : "warning"}">
-        <strong>${escapeHtml(sellerCost?.trusteeSource === "parsed_exact" ? "Parsed trustee" : "Estimated trustee")}</strong>
-        ${escapeHtml(sellerCost?.trusteeSource === "parsed_exact" ? "Matches the original parsed seller state." : "Calculated from the trustee rule because no exact parsed trustee state match was available.")}
-      </p>
-      <table class="recommendation-table">
-        <thead>
-          <tr>
-            <th>Card</th>
-            <th>Qty</th>
-            <th>Cond.</th>
-            <th>Unit</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${offers.map((offer) => `
-            <tr>
-              <td>${escapeHtml(offer.cardName)}</td>
-              <td>${escapeHtml(offer.requiredQuantity || offer.quantity)}</td>
-              <td>${escapeHtml(offer.condition)}</td>
-              <td>${escapeHtml(formatMoney(offer.unitPrice))}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
+      <ul class="seller-card-listing">
+        ${offers.map((offer) => `
+          <li class="seller-card-item">
+            <div>
+              <strong>${escapeHtml(offer.cardName)}</strong>
+              <span>${escapeHtml(`${offer.requiredQuantity || offer.quantity}x · ${offer.condition}`)}</span>
+            </div>
+            <span>${escapeHtml(formatMoney(offer.unitPrice))}</span>
+          </li>
+        `).join("")}
+      </ul>
+      <div class="seller-card-footer">
+        <div class="seller-card-costs">
+          <span>Cards ${escapeHtml(formatMoney(cardTotal))}</span>
+          <span>Shipping ${escapeHtml(formatEstimatedMoney(sellerCost?.shippingValue ?? fixedCost))}</span>
+          <span>${escapeHtml(sellerCost?.trusteeSource === "parsed_exact" ? "Trustee" : "Trustee est.")} ${escapeHtml(formatEstimatedMoney(sellerCost?.trusteeFeeValue ?? 0))}</span>
+        </div>
+        <p class="shipping-detail ${shippingSourceClass}">
+          <strong>${escapeHtml(shippingMethod)}</strong>
+          ${escapeHtml(`${trackingLabel} · ${sellerCost?.estimatedWeight ?? estimateShipmentWeight(offers.length)}g est.`)}
+        </p>
+      </div>
     </article>
   `;
 }
