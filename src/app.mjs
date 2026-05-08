@@ -197,14 +197,16 @@ function renderSummary(sellers, itemCount, offerGroups, parsedTotal) {
   const pricedOfferCount = sellers.reduce((sum, seller) => sum + seller.items.filter((item) => Number.isFinite(Number(item.price))).length, 0);
   const warningCount = ambiguousCount + unknownCountryCount + state.parsed.warnings.length;
 
-  elements.summaryStrip.innerHTML = [
-    summaryCard(sellers.length ? "Parsed successfully" : "Waiting for cart", sellers.length ? "Ready" : "Idle", sellers.length ? "good" : "muted"),
-    summaryCard("Sellers", sellers.length, sellers.length ? "good" : "muted"),
-    summaryCard("Offers", itemCount, itemCount ? "good" : "muted"),
-    summaryCard("Prices found", pricedOfferCount, pricedOfferCount ? "good" : "muted"),
-    summaryCard("Shipping data", state.shippingData ? "Ready" : "Missing", state.shippingData ? "good" : "warning"),
-    summaryCard("Warnings", warningCount ? `${warningCount} to review` : "Clear", warningCount ? "warning" : "good")
-  ].join("");
+  if (elements.summaryStrip) {
+    elements.summaryStrip.innerHTML = [
+      summaryCard(sellers.length ? "Parsed successfully" : "Waiting for cart", sellers.length ? "Ready" : "Idle", sellers.length ? "good" : "muted"),
+      summaryCard("Sellers", sellers.length, sellers.length ? "good" : "muted"),
+      summaryCard("Offers", itemCount, itemCount ? "good" : "muted"),
+      summaryCard("Prices found", pricedOfferCount, pricedOfferCount ? "good" : "muted"),
+      summaryCard("Shipping data", state.shippingData ? "Ready" : "Missing", state.shippingData ? "good" : "warning"),
+      summaryCard("Warnings", warningCount ? `${warningCount} to review` : "Clear", warningCount ? "warning" : "good")
+    ].join("");
+  }
 }
 
 function summaryCard(label, value, tone = "muted") {
