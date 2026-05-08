@@ -4,7 +4,7 @@ const MONEY_WITH_CURRENCY_RE = /(?:EUR\s*)?\d{1,3}(?:[.\s]\d{3})*(?:[,.]\d{2})?\
 const FIELD_LABELS = {
   shippingMethod: /^(shipping method|shipment method|delivery method|shipping option|shipment option|postage method)\b/i,
   shippingValue: /^(shipping cost|shipment cost|shipping price|shipping value|postage|delivery cost|shipping)\b/i,
-  trackingStatus: /^(tracking status|tracking|tracked|trackable|no tracking)\b/i,
+  trackingStatus: /^(tracking status|tracking|tracked|trackable|no tracking)\s*:?\s*$/i,
   articleValue: /^(article value|articles value|value of articles|item value|goods value|article total|articles)\b/i,
   trusteeValue: /^(trustee service fee|trustee service|trustee fee|trustee)\b/i,
   total: /^(grand total|order total|shipment total|seller total|total)\b/i,
@@ -20,6 +20,9 @@ const SELLER_MARKER_RE = /^(seller|vendor|seller name|shop)\b\s*:?\s*(.*)$/i;
 const GENERIC_METHOD_TOKENS = new Set([
   "brief",
   "international",
+  "internacional",
+  "internationale",
+  "internazionale",
   "letter",
   "mail",
   "online",
@@ -614,7 +617,7 @@ function parseSellerBlock(block, sellerIndex, shippingIndex) {
 function parseShippingSelection(lines) {
   const start = lines.findIndex((line) => /^select shipping method\b/i.test(line));
   const candidates = start >= 0 ? lines.slice(start + 1, start + 8) : lines;
-  const selected = candidates.find((line) => /\(.+?(?:\u20ac|EUR).*\)|(?:\u20ac|EUR)/i.test(line) && !isAnyFieldLabel(line));
+  const selected = candidates.find((line) => isShippingMethodSelectionLine(line));
 
   if (!selected) {
     return { method: "", price: null, trackingText: "", usedIndexes: [] };
@@ -629,6 +632,14 @@ function parseShippingSelection(lines) {
     trackingText: selected,
     usedIndexes: [start, selectedIndex].filter((index) => index >= 0)
   };
+}
+
+function isShippingMethodSelectionLine(line) {
+  if (!/\(.+?(?:\u20ac|EUR).*\)|(?:\u20ac|EUR)/i.test(line)) {
+    return false;
+  }
+
+  return !/^(estimated arrival date|trustee service|yes|no|use trustee service|information on our trustee service\.?)$/i.test(line);
 }
 
 function captureContentsField(lines) {
@@ -748,19 +759,22 @@ function parseCardmarketSinglesRows(lines) {
 
   for (let index = tableStart + 1; index < lines.length; index += 1) {
     const line = lines[index];
-    const quantityMatch = line.match(/^(\d+)x\s+(.+)/i);
-    if (!quantityMatch) {
+    const sameLineMatch = line.match(/^(\d+)x\s+(.+)/i);
+    const splitLineMatch = !sameLineMatch && line.match(/^(\d+)x$/i) && lines[index + 1] ? cleanupValue(lines[index + 1]) : "";
+
+    if (!sameLineMatch && !splitLineMatch) {
       continue;
     }
 
-    const quantity = Number.parseInt(quantityMatch[1], 10);
-    const cardName = cleanupValue(quantityMatch[2]);
-    const group = [line];
+    const quantity = Number.parseInt((sameLineMatch?.[1] || line.match(/^(\d+)x$/i)?.[1]), 10);
+    const cardName = cleanupValue(sameLineMatch?.[2] || splitLineMatch);
+    const group = sameLineMatch ? [line] : [line, lines[index + 1]];
     let condition = "";
     let price = null;
-    let endIndex = index;
+    let endIndex = sameLineMatch ? index : index + 1;
+    const scanStart = sameLineMatch ? index + 1 : index + 2;
 
-    for (let offset = index + 1; offset < Math.min(lines.length, index + 10); offset += 1) {
+    for (let offset = scanStart; offset < Math.min(lines.length, scanStart + 10); offset += 1) {
       const candidate = lines[offset];
 
       if (/^summary$/i.test(candidate) || /^magic the gathering singles\b/i.test(candidate)) {
