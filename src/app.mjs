@@ -1064,31 +1064,25 @@ function recommendationsTemplate(result) {
 function warningBannerTemplate(result, warningEntries) {
   const criticalCount = warningEntries.filter((entry) => entry.severity === "critical").length;
   const warningCount = warningEntries.filter((entry) => entry.severity === "warning").length;
-  const infoCount = warningEntries.filter((entry) => entry.severity === "info").length;
   const highestSeverity = criticalCount ? "critical" : warningCount ? "warning" : "info";
-  const severityLabel = criticalCount ? "Critical" : warningCount ? "Warning" : "Info";
-  const usableLabel = criticalCount ? "Result may be incorrect until reviewed." : "The recommendation is usable, but review before buying.";
-  const summaryText = criticalCount
-    ? `${warningEntries.length} issue${warningEntries.length === 1 ? "" : "s"} found. Some costs or seller assignments may be incorrect.`
-    : `${warningEntries.length} warning${warningEntries.length === 1 ? "" : "s"} found. The recommendation is usable, but some costs are estimated.`;
+
+  const sectionTitle = criticalCount ? "Action required" : warningCount ? "Review before buying" : "Cost note";
+  const sectionBody = criticalCount
+    ? "Some seller costs or assignments could not be resolved. The buying plan may be incomplete."
+    : warningCount
+      ? "The buying plan is usable, but some costs are estimated. Verify the final Cardmarket checkout total before buying."
+      : "All costs are estimated. Verify the final Cardmarket checkout total before buying.";
 
   return `
     <div class="result-warning severity-${escapeAttribute(highestSeverity)}">
       <div class="result-warning-header">
-        <div>
-          <span class="status-pill ${highestSeverity === "critical" ? "warning" : highestSeverity === "warning" ? "warning" : "info"}">${escapeHtml(severityLabel)}</span>
-          <h3>${escapeHtml(summaryText)}</h3>
-          <p>${escapeHtml(usableLabel)} Review warnings before buying.</p>
+        <div class="result-warning-title-row">
+          <h3 class="result-warning-title">${escapeHtml(sectionTitle)}</h3>
         </div>
-        <div class="warning-meta">
-          <span>${escapeHtml(`${warningEntries.length} total`)}</span>
-          <span>${escapeHtml(`${criticalCount} critical`)}</span>
-          <span>${escapeHtml(`${warningCount} warning`)}</span>
-          <span>${escapeHtml(`${infoCount} info`)}</span>
-        </div>
+        <p class="result-warning-body">${escapeHtml(sectionBody)}</p>
       </div>
-      <details class="warning-details" ${highestSeverity === "critical" ? "open" : ""}>
-        <summary>Show warnings</summary>
+      <details class="warning-details" ${criticalCount ? "open" : ""}>
+        <summary>Show details</summary>
         <div class="warning-list">
           ${warningEntries.map((entry) => warningEntryTemplate(entry)).join("")}
         </div>
@@ -1099,16 +1093,16 @@ function warningBannerTemplate(result, warningEntries) {
 }
 
 function warningEntryTemplate(entry) {
+  const pillClass = entry.severity === "critical" ? "warning" : entry.severity === "warning" ? "warning" : "info";
   return `
     <article class="warning-item severity-${escapeAttribute(entry.severity)}">
       <div class="warning-item-header">
         <strong>${escapeHtml(entry.title)}</strong>
-        <span class="status-pill ${entry.severity === "critical" ? "warning" : entry.severity === "warning" ? "warning" : "info"}">${escapeHtml(entry.severity)}</span>
+        <span class="status-pill ${pillClass}">${escapeHtml(entry.severity)}</span>
       </div>
-      ${entry.affected ? `<p><strong>Affected:</strong> ${escapeHtml(entry.affected)}</p>` : ""}
-      <p><strong>What happened:</strong> ${escapeHtml(entry.whatHappened)}</p>
-      <p><strong>Why it matters:</strong> ${escapeHtml(entry.whyItMatters)}</p>
-      <p><strong>What to do:</strong> ${escapeHtml(entry.whatToDo)}</p>
+      ${entry.affected ? `<p class="warning-affected">Affects: ${escapeHtml(entry.affected)}</p>` : ""}
+      <p>${escapeHtml(entry.whatHappened)}</p>
+      <p class="warning-action"><strong>What to do:</strong> ${escapeHtml(entry.whatToDo)}</p>
     </article>
   `;
 }
