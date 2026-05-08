@@ -111,7 +111,8 @@ function parseCurrentInput() {
     state.desiredQuantityByCard[group.cardName] = group.requiredQuantity;
   });
 
-  setMessage(`Parsed ${state.parsed.sellerCount} seller block(s), ${state.parsed.itemCount} seller offer(s), and ${offerGroups.length} card group(s).${warningText}`);
+  const totalCopies = getTotalCopies(offerGroups);
+  setMessage(`Parsed ${state.parsed.sellerCount} seller block(s), ${state.parsed.itemCount} seller offer(s), ${offerGroups.length} different card(s), and ${totalCopies} total copies.${warningText}`);
   elements.optimizationState.textContent = "Ready";
   elements.optimizationState.className = "status-pill info";
   render();
@@ -244,7 +245,7 @@ function renderDesiredCards(offerGroups) {
     <details class="review-details desired-cards-section" open>
       <summary>
         <span>Review desired cards</span>
-        <span class="summary-meta">${selectedTotal} card group(s) · ${detectedTotal} cards selected</span>
+        <span class="summary-meta">${selectedTotal} different card(s) · ${detectedTotal} total copies selected</span>
       </summary>
       <div class="review-details-body">
         <p class="note-text">Quantities are inferred from the pasted cart. Adjust them before optimizing if needed.</p>
@@ -766,7 +767,7 @@ function optimizeCart(sellers, offerGroups) {
   }
 
   if (incompleteGroups.length) {
-    costNotes.push(`${incompleteGroups.length} card group(s) had no single seller offer with the full quantity.`);
+    costNotes.push(`${incompleteGroups.length} card(s) had no single seller offer with the full quantity.`);
   }
 
   if (countryWarnings.length) {
@@ -1032,7 +1033,7 @@ function optimizationSummaryTemplate(result) {
     <div class="result-hero guided-metrics">
       <div class="guided-metric"><span>Optimized buying plan</span><strong>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</strong></div>
       <div class="guided-metric"><span>Sellers to use</span><strong>${escapeHtml(result.usedSellers.length)}</strong></div>
-      <div class="guided-metric"><span>Card groups selected</span><strong>${escapeHtml(selectedCardGroups)}</strong></div>
+      <div class="guided-metric"><span>Different cards</span><strong>${escapeHtml(selectedCardGroups)}</strong></div>
       <div class="guided-metric"><span>Article value</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
       <div class="guided-metric muted-detail"><span>Shipping total</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
       <div class="guided-metric muted-detail"><span>${escapeHtml(trusteeLabel)}</span><strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong></div>
@@ -1152,9 +1153,9 @@ function buildResultWarnings(result) {
   if (result.warnings.some((warning) => /card group\(s\) had no single seller offer/i.test(warning))) {
     entries.push({
       severity: "warning",
-      title: "Some card groups were reviewed with partial quantity coverage",
+      title: "Some cards had quantity coverage issues",
       affected: "",
-      whatHappened: "At least one card group did not have a single seller that covered the full reviewed quantity.",
+      whatHappened: "At least one card did not have a single seller that covered the full reviewed quantity.",
       whyItMatters: "The plan may rely on fallback offer grouping rather than a clean one-seller quantity match.",
       whatToDo: "Review the card assignment details before buying."
     });
@@ -1521,6 +1522,10 @@ function buildOfferGroups(sellers) {
       lowestUnitPrice: Number.isFinite(group.lowestUnitPrice) ? group.lowestUnitPrice : 0
     }))
     .sort((a, b) => a.cardName.localeCompare(b.cardName));
+}
+
+function getTotalCopies(offerGroups) {
+  return offerGroups.reduce((sum, group) => sum + group.requiredQuantity, 0);
 }
 
 function normalizeOfferKey(cardName) {
