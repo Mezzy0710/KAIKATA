@@ -1011,14 +1011,13 @@ function optimizationSummaryTemplate(result) {
   const shippingTotal = result.shippingTotal;
   const trusteeTotal = result.trusteeTotal;
   const feeTotal = result.sellerCosts.reduce((sum, sellerCost) => sum + Number(sellerCost.cardmarketFeeValue || 0), 0);
-  const poolDifference = result.currentTotal - result.selectedTotal;
-  const poolDifferencePercent = result.currentTotal > 0 && Number.isFinite(result.selectedTotal)
-    ? `${((poolDifference / result.currentTotal) * 100).toFixed(1)}%`
-    : "0.0%";
   const warningEntries = buildResultWarnings(result);
   const warningBanner = warningEntries.length ? warningBannerTemplate(result, warningEntries) : "";
   const selectedCardGroups = result.selectedOffers.length;
-  const trusteeLabel = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact") ? "Fees / trustee estimate" : "Fees / trustee";
+  const totalCopies = result.selectedOffers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
+  const hasEstimatedTrustee = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
+  const trusteeLabel = hasEstimatedTrustee ? "Fees / trustee (estimated)" : "Fees / trustee";
+  const trusteeNote = "Verify at Cardmarket checkout";
 
   return `
     <div class="summary-hero-card">
@@ -1026,12 +1025,6 @@ function optimizationSummaryTemplate(result) {
         <span class="eyebrow">Best buying plan</span>
         <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
         <p>Buy the cards from the sellers below.</p>
-        <p class="summary-baseline-note">Reviewed offer pool includes duplicate alternatives and unused seller offers, so it is not a true savings baseline.</p>
-      </div>
-      <div class="summary-savings">
-        <span>Difference to reviewed offer pool</span>
-        <strong class="${poolDifference > 0.005 ? "good" : "muted"}">${escapeHtml(formatSavings(poolDifference))}</strong>
-        <small>${escapeHtml(poolDifferencePercent)} vs. reviewed pool</small>
       </div>
     </div>
     ${warningBanner}
@@ -1039,12 +1032,15 @@ function optimizationSummaryTemplate(result) {
       <div class="guided-metric"><span>Optimized buying plan</span><strong>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</strong></div>
       <div class="guided-metric"><span>Sellers to use</span><strong>${escapeHtml(result.usedSellers.length)}</strong></div>
       <div class="guided-metric"><span>Different cards</span><strong>${escapeHtml(selectedCardGroups)}</strong></div>
+      <div class="guided-metric"><span>Total copies</span><strong>${escapeHtml(totalCopies)}</strong></div>
       <div class="guided-metric"><span>Article value</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
       <div class="guided-metric muted-detail"><span>Shipping total</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
-      <div class="guided-metric muted-detail"><span>${escapeHtml(trusteeLabel)}</span><strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong></div>
-      <div class="guided-metric muted-detail"><span>Reviewed offer pool</span><strong>${escapeHtml(formatMoney(result.currentTotal))}</strong></div>
-      <div class="guided-metric muted-detail"><span>Difference to reviewed offer pool</span><strong class="${poolDifference > 0.005 ? "good" : "muted"}">${escapeHtml(formatSavings(poolDifference))}</strong></div>
-      <div class="guided-metric muted-detail"><span>Shipping fee data</span><strong>${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included in shipping rows" : formatEstimatedMoney(feeTotal))}</strong></div>
+      <div class="guided-metric muted-detail">
+        <span>${escapeHtml(trusteeLabel)}</span>
+        <strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong>
+        <small class="metric-note">${escapeHtml(trusteeNote)}</small>
+      </div>
+      ${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `<div class="guided-metric muted-detail"><span>Cardmarket fees</span><strong>${escapeHtml(formatEstimatedMoney(feeTotal))}</strong></div>`}
     </div>
   `;
 }

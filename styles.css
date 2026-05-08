@@ -662,14 +662,31 @@ select {
 
 .recommendation-grid {
   display: grid;
-  gap: 14px;
+  gap: 22px;
+}
+
+.metric-note {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.advanced-details-body {
+  display: grid;
+  gap: 24px;
+  padding: 0 18px 18px;
 }
 
 .premium-seller-card {
   overflow: hidden;
-  border: 1px solid rgba(141, 160, 179, 0.12);
+  border: 1.5px solid rgba(141, 160, 179, 0.2);
   border-radius: 20px;
   background: rgba(10, 15, 22, 0.92);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.28);
 }
 
 .recommendations-header {
