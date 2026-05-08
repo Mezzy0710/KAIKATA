@@ -405,23 +405,37 @@ function matchSellerNames(sellers, cartOverview) {
   }
 
   const unusedOverview = [...cartOverview];
+  const overviewNames = new Set(cartOverview.map((entry) => entry.sellerName).filter(Boolean));
 
   sellers.forEach((seller) => {
-    if (seller.sellerName && !/^Seller \d+$/i.test(seller.sellerName)) {
-      return;
-    }
-
     const exactTotalIndex = unusedOverview.findIndex((entry) => seller.total !== null && Math.abs(entry.total - seller.total) < 0.005);
     const overviewIndex = exactTotalIndex >= 0 ? exactTotalIndex : 0;
     const overviewEntry = unusedOverview.splice(overviewIndex, 1)[0];
 
-    if (overviewEntry?.sellerName) {
+    if (overviewEntry?.sellerName && shouldReplaceSellerName(seller.sellerName, overviewEntry.sellerName, overviewNames, exactTotalIndex >= 0)) {
       seller.sellerName = overviewEntry.sellerName;
       seller.sellerNameSource = exactTotalIndex >= 0 ? "cart_overview_total" : "cart_overview_order";
     }
   });
 
   return sellers;
+}
+
+function shouldReplaceSellerName(currentName, overviewName, overviewNames, hasExactTotalMatch) {
+  const normalizedCurrent = cleanupValue(currentName);
+  if (!normalizedCurrent || /^Seller \d+$/i.test(normalizedCurrent)) {
+    return true;
+  }
+
+  if (normalizedCurrent === overviewName) {
+    return false;
+  }
+
+  if (hasExactTotalMatch && !overviewNames.has(normalizedCurrent)) {
+    return true;
+  }
+
+  return false;
 }
 
 function splitSellerBlocks(lines) {

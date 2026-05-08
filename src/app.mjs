@@ -1,10 +1,10 @@
-import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260508i";
+import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260508k";
 import {
   calculateShippingCost,
   calculateTrusteeFee,
   estimateShipmentWeight,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
-} from "./shipping.mjs?v=20260508j";
+} from "./shipping.mjs?v=20260508k";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
@@ -730,6 +730,10 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
     tracked: trusteeTracked,
     sellerLifetimeSales: seller.sellerLifetimeSales ?? seller.completedSales ?? null
   });
+  const exactParsedTrustee = exactParsedTrusteeValue(seller, articleValue, quantity, trusteeMethod, trusteeTracked);
+  const trusteeFeeValue = roundMoney(exactParsedTrustee ?? trusteeResult.fee);
+  const trusteeSource = exactParsedTrustee !== null ? "parsed_exact" : "estimated_rule";
+  const trusteeSourceLabel = exactParsedTrustee !== null ? "Exact from parsed cart" : "Estimated from trustee rule";
 
   if (!shippingResult.ok) {
     return {
@@ -742,9 +746,11 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
       shippingMethod: seller.shippingMethod || "Unknown shipping",
       trackingStatus: shippingResult.tracked ? "tracked" : "untracked",
       cardmarketFeeValue: 0,
-      trusteeFeeValue: trusteeResult.fee,
+      trusteeFeeValue,
       trusteeRate: trusteeResult.rate,
       trusteeMethodCategory: trusteeResult.methodCategory,
+      trusteeSource,
+      trusteeSourceLabel,
       shippingValue: Number.POSITIVE_INFINITY,
       totalCost: Number.POSITIVE_INFINITY,
       shippingDebug: shippingResult,
@@ -753,7 +759,6 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
   }
 
   const shippingValue = roundMoney(shippingResult.cost);
-  const trusteeFeeValue = roundMoney(trusteeResult.fee);
 
   return {
     sellerIndex,
@@ -768,6 +773,8 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
     trusteeFeeValue,
     trusteeRate: trusteeResult.rate,
     trusteeMethodCategory: trusteeResult.methodCategory,
+    trusteeSource,
+    trusteeSourceLabel,
     shippingValue,
     totalCost: roundMoney(shippingValue + trusteeFeeValue),
     shippingDebug: shippingResult,
@@ -832,7 +839,7 @@ function optimizationSummaryTemplate(result) {
       <div><span>Sellers used</span><strong>${escapeHtml(result.usedSellers.length)}</strong></div>
       <div><span>Article value</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
       <div><span>Shipping total</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
-      <div><span>Trustee total</span><strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong></div>
+      <div><span>Trustee total ${result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact") ? "(estimated)" : ""}</span><strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong></div>
       <div><span>Shipping fee data</span><strong>${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included in shipping rows" : formatEstimatedMoney(feeTotal))}</strong></div>
     </div>
   `;
@@ -927,6 +934,7 @@ function assumptionsCardTemplate(result, sellerCost) {
         <li>Tracking: ${escapeHtml(sellerCost.trackingStatus)}</li>
         <li>Method: ${escapeHtml(sellerCost.shippingMethod || "Unknown")}</li>
         <li>Trustee: ${escapeHtml(trusteeDebug?.applies ? `${formatMoney(sellerCost.trusteeFeeValue)} at ${(trusteeDebug.rate * 100).toFixed(2)}%` : "Not applied")}</li>
+        <li>Trustee source: ${escapeHtml(sellerCost.trusteeSourceLabel || "Estimated from trustee rule")}</li>
         <li>Trustee trigger: ${escapeHtml(trusteeDebug?.reason || "Not evaluated")}</li>
         <li>Cardmarket fee handling: ${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included in shipping data" : "Added separately")}</li>
       </ul>
@@ -1008,12 +1016,16 @@ function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
       <dl class="seller-metric-grid">
         <div><dt>Cards</dt><dd>${escapeHtml(formatMoney(cardTotal))}</dd></div>
         <div><dt>Shipping</dt><dd>${escapeHtml(formatEstimatedMoney(sellerCost?.shippingValue ?? fixedCost))}</dd></div>
-        <div><dt>Trustee</dt><dd>${escapeHtml(formatEstimatedMoney(sellerCost?.trusteeFeeValue ?? 0))}</dd></div>
+        <div><dt>${escapeHtml(sellerCost?.trusteeSource === "parsed_exact" ? "Trustee" : "Trustee est.")}</dt><dd>${escapeHtml(formatEstimatedMoney(sellerCost?.trusteeFeeValue ?? 0))}</dd></div>
         <div><dt>Method</dt><dd>${escapeHtml(shippingMethod)}</dd></div>
       </dl>
       <p class="shipping-detail ${shippingSourceClass}">
         <strong>${escapeHtml(sellerCost?.sourceLabel || "Original pasted shipping")}</strong>
         ${escapeHtml(shippingMethod)} - ${escapeHtml(trackingLabel)} - ${escapeHtml(`${sellerCost?.estimatedWeight ?? estimateShipmentWeight(offers.length)}g est.`)}
+      </p>
+      <p class="shipping-detail ${sellerCost?.trusteeSource === "parsed_exact" ? "good" : "warning"}">
+        <strong>${escapeHtml(sellerCost?.trusteeSource === "parsed_exact" ? "Parsed trustee" : "Estimated trustee")}</strong>
+        ${escapeHtml(sellerCost?.trusteeSource === "parsed_exact" ? "Matches the original parsed seller state." : "Calculated from the trustee rule because no exact parsed trustee state match was available.")}
       </p>
       <table class="recommendation-table">
         <thead>
@@ -1158,6 +1170,42 @@ function normalizeOfferKey(cardName) {
   return String(cardName || "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function exactParsedTrusteeValue(seller, articleValue, quantity, shippingMethod, tracked) {
+  const parsedTrusteeValue = Number(seller.trusteeValue);
+  if (!Number.isFinite(parsedTrusteeValue)) {
+    return null;
+  }
+
+  const parsedArticleValue = Number(seller.articleValue);
+  const parsedQuantity = seller.items.reduce((sum, item) => sum + Number(item.quantity || 1), 0);
+  if (Math.abs(parsedArticleValue - articleValue) > 0.005 || parsedQuantity !== quantity) {
+    return null;
+  }
+
+  const parsedMethod = normalizeMethodForComparison(seller.shippingMethod);
+  const selectedMethod = normalizeMethodForComparison(shippingMethod);
+  if (parsedMethod && selectedMethod && parsedMethod !== selectedMethod) {
+    return null;
+  }
+
+  const parsedTracked = seller.trackingStatus || "unknown";
+  const selectedTracked = tracked ? "tracked" : "untracked";
+  if (parsedTracked !== "unknown" && parsedTracked !== selectedTracked) {
+    return null;
+  }
+
+  return roundMoney(parsedTrusteeValue);
+}
+
+function normalizeMethodForComparison(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/\bmax weight\b.*$/i, "")
     .replace(/\s+/g, " ")
     .trim();
 }
