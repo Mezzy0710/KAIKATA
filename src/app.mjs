@@ -1,10 +1,10 @@
-import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260508n";
+import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260509d";
 import {
   calculateShippingCost,
   calculateTrusteeFee,
   estimateShipmentWeight,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
-} from "./shipping.mjs?v=20260508n";
+} from "./shipping.mjs?v=20260509d";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
@@ -75,13 +75,17 @@ async function loadShippingData() {
       throw new Error(`HTTP ${response.status}`);
     }
     state.shippingData = await response.json();
-    elements.shippingDataStatus.textContent = "Shipping data loaded";
-    elements.shippingDataStatus.className = "shipping-status loaded";
+    if (elements.shippingDataStatus) {
+      elements.shippingDataStatus.textContent = "Shipping data loaded";
+      elements.shippingDataStatus.className = "shipping-status loaded";
+    }
     render();
   } catch (error) {
     state.shippingData = null;
-    elements.shippingDataStatus.textContent = window.location.protocol === "file:" ? "Use localhost for shipping data" : "Shipping data missing";
-    elements.shippingDataStatus.className = "shipping-status missing";
+    if (elements.shippingDataStatus) {
+      elements.shippingDataStatus.textContent = window.location.protocol === "file:" ? "Use localhost for shipping data" : "Shipping data missing";
+      elements.shippingDataStatus.className = "shipping-status missing";
+    }
     render();
   }
 }
@@ -142,13 +146,46 @@ function render() {
   const offerGroups = buildOfferGroups(sellers);
   const parsedTotal = sellers.reduce((sum, seller) => sum + Number(seller.total || 0), 0);
 
-  elements.recipientCountry.textContent = "Germany";
+  if (elements.recipientCountry) {
+    elements.recipientCountry.textContent = "Germany";
+  }
 
+  renderStepper(sellers);
   renderInputState(sellers, parsedTotal);
   renderSummary(sellers, itemCount, offerGroups, parsedTotal);
   renderDesiredCards(offerGroups);
   renderSellers(sellers, offerGroups);
   renderOptimizationViews();
+}
+
+function renderStepper(sellers) {
+  const stepper = document.querySelector("#appStepper");
+  if (!stepper) return;
+
+  const hasParsedData = sellers.length > 0;
+  const hasResult = !!state.optimizationResult;
+
+  let activeStep = 1;
+  if (hasResult) {
+    activeStep = 3;
+  } else if (hasParsedData) {
+    activeStep = 2;
+  }
+
+  stepper.querySelectorAll(".stepper-item").forEach((item) => {
+    const step = Number(item.dataset.step);
+    item.classList.remove("active", "done");
+    if (step < activeStep) {
+      item.classList.add("done");
+    } else if (step === activeStep) {
+      item.classList.add("active");
+    }
+  });
+
+  stepper.querySelectorAll(".stepper-line").forEach((line) => {
+    const fromStep = Number(line.dataset.from);
+    line.classList.toggle("done", fromStep < activeStep);
+  });
 }
 
 function renderInputState(sellers, parsedTotal) {
@@ -1265,20 +1302,51 @@ function assumptionsCardTemplate(result, sellerCost) {
   `;
 }
 
+function emptyStateBlockTemplate({ icon, title, body }) {
+  return `
+    <div class="empty-state-card">
+      <div class="empty-state-icon" aria-hidden="true">${icon}</div>
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(body)}</p>
+    </div>
+  `;
+}
+
+const ICON_CHART = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-4"></path></svg>`;
+const ICON_CART = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path></svg>`;
+const ICON_LIST = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 8h10M7 12h10M7 16h6"></path></svg>`;
+const ICON_INFO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
+
 function summaryEmptyState() {
-  return `<p class="result-empty">Run optimization to compare the current cart against the recommended seller mix.</p>`;
+  return emptyStateBlockTemplate({
+    icon: ICON_CHART,
+    title: "No optimization yet",
+    body: "Paste your Cardmarket cart and click Optimize to see the cheapest seller mix."
+  });
 }
 
 function recommendationsEmptyState() {
-  return `<p class="result-empty">Recommended seller cards will appear here after optimization.</p>`;
+  return emptyStateBlockTemplate({
+    icon: ICON_CART,
+    title: "No buying plan yet",
+    body: "Recommended sellers and assigned cards will appear here after optimization."
+  });
 }
 
 function assignmentEmptyState() {
-  return `<p class="result-empty">Selected seller assignments will appear here after optimization.</p>`;
+  return emptyStateBlockTemplate({
+    icon: ICON_LIST,
+    title: "No assignments yet",
+    body: "The chosen seller for each card will be listed here after optimization."
+  });
 }
 
 function assumptionsEmptyState() {
-  return `<p class="result-empty">Shipping thresholds, selected methods, and calculation assumptions will appear here after optimization.</p>`;
+  return emptyStateBlockTemplate({
+    icon: ICON_INFO,
+    title: "No assumptions yet",
+    body: "Shipping thresholds, selected methods, and calculation notes will appear here after optimization."
+  });
 }
 
 function countryReviewTemplate(countryWarnings) {
