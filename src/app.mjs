@@ -15,7 +15,9 @@ const state = {
   parsed: parseCart(""),
   optimizationResult: null,
   showDebug: false,
-  inputCollapsed: false
+  inputCollapsed: false,
+  desiredQuantityByCard: {},
+  optimizationStale: false
 };
 
 const elements = {
@@ -26,6 +28,7 @@ const elements = {
   editCartButton: document.querySelector("#editCartButton"),
   debugToggle: document.querySelector("#debugToggle"),
   runOptimizationButton: document.querySelector("#runOptimizationButton"),
+  desiredCardsReview: document.querySelector("#desiredCardsReview"),
   sellerReview: document.querySelector("#sellerReview"),
   summaryStrip: document.querySelector("#summaryStrip"),
   optimizationSummary: document.querySelector("#optimizationSummary"),
@@ -56,6 +59,8 @@ function boot() {
     render();
   });
   elements.runOptimizationButton.addEventListener("click", runOptimizationPlaceholder);
+  elements.desiredCardsReview.addEventListener("change", handleDesiredQuantityChange);
+  elements.desiredCardsReview.addEventListener("click", handleDesiredQuantityClick);
   elements.sellerReview.addEventListener("change", handleReviewChange);
   elements.sellerReview.addEventListener("click", handleReviewClick);
   elements.optimizationOutput.addEventListener("change", handleReviewChange);
@@ -100,8 +105,15 @@ async function loadSampleCart() {
 function parseCurrentInput() {
   state.parsed = parseCart(elements.cartInput.value, state.shippingData);
   state.optimizationResult = null;
+  state.optimizationStale = true;
   const warningText = state.parsed.warnings.length ? ` ${state.parsed.warnings.join(" ")}` : "";
   const offerGroups = buildOfferGroups(state.parsed.sellers);
+
+  state.desiredQuantityByCard = {};
+  offerGroups.forEach((group) => {
+    state.desiredQuantityByCard[group.cardName] = group.requiredQuantity;
+  });
+
   setMessage(`Parsed ${state.parsed.sellerCount} seller block(s), ${state.parsed.itemCount} seller offer(s), and ${offerGroups.length} card group(s).${warningText}`);
   elements.optimizationState.textContent = "Ready";
   elements.optimizationState.className = "status-pill info";
@@ -113,6 +125,8 @@ function clearInput() {
   state.parsed = parseCart("");
   state.optimizationResult = null;
   state.inputCollapsed = false;
+  state.desiredQuantityByCard = {};
+  state.optimizationStale = false;
   elements.optimizationState.textContent = "Waiting";
   elements.optimizationState.className = "status-pill muted";
   setMessage("No cart parsed yet.");
@@ -134,6 +148,7 @@ function render() {
 
   renderInputState(sellers, parsedTotal);
   renderSummary(sellers, itemCount, offerGroups, parsedTotal);
+  renderDesiredCards(offerGroups);
   renderSellers(sellers, offerGroups);
   renderOptimizationViews();
 }
@@ -214,6 +229,75 @@ function renderOptimizationViews() {
   elements.optimizationOutput.innerHTML = recommendationsTemplate(state.optimizationResult);
   elements.assignmentOutput.innerHTML = assignmentTableTemplate(state.optimizationResult);
   elements.assumptionsOutput.innerHTML = assumptionsTemplate(state.optimizationResult);
+}
+
+function renderDesiredCards(offerGroups) {
+  elements.desiredCardsReview.innerHTML = "";
+
+  if (!offerGroups.length) {
+    return;
+  }
+
+  const detectedTotal = Object.values(state.desiredQuantityByCard).reduce((sum, qty) => sum + qty, 0);
+  const selectedTotal = Object.values(state.desiredQuantityByCard).filter(qty => qty > 0).length;
+
+  elements.desiredCardsReview.insertAdjacentHTML("beforeend", `
+    <details class="review-details desired-cards-section" open>
+      <summary>
+        <span>Review desired cards</span>
+        <span class="summary-meta">${selectedTotal} card group(s) · ${detectedTotal} cards selected</span>
+      </summary>
+      <div class="review-details-body">
+        <p class="note-text">Quantities are inferred from the pasted cart. Adjust them before optimizing if needed.</p>
+        ${desiredCardsTableTemplate(offerGroups)}
+      </div>
+    </details>
+  `);
+}
+
+function desiredCardsTableTemplate(offerGroups) {
+  return `
+    <section class="panel desired-cards-panel">
+      <div class="desired-cards-wrap">
+        <table class="desired-cards-table">
+          <thead>
+            <tr>
+              <th>Card</th>
+              <th>Desired qty</th>
+              <th>Offers found</th>
+              <th>Best price</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${offerGroups.map(desiredCardRowTemplate).join("")}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
+function desiredCardRowTemplate(group) {
+  const desiredQty = state.desiredQuantityByCard[group.cardName] || group.requiredQuantity;
+  const availableQty = Math.max(...group.offers.map(o => o.quantity), 0);
+  const isAvailable = availableQty >= desiredQty;
+  const statusLabel = desiredQty === 0 ? "Excluded" : isAvailable ? "Ready" : "Insufficient";
+  const statusClass = desiredQty === 0 ? "muted" : isAvailable ? "good" : "warning";
+
+  return `
+    <tr data-card-name="${escapeAttribute(group.cardName)}">
+      <td>${escapeHtml(group.cardName)}</td>
+      <td class="qty-cell">
+        <button class="qty-button" data-action="decrement-qty" title="Decrease quantity" aria-label="Decrease ${group.cardName} quantity">−</button>
+        <input class="qty-input" type="number" data-card-qty min="0" step="1" value="${desiredQty}" aria-label="Desired quantity for ${group.cardName}">
+        <button class="qty-button" data-action="increment-qty" title="Increase quantity" aria-label="Increase ${group.cardName} quantity">+</button>
+      </td>
+      <td>${escapeHtml(group.sellerCount)}</td>
+      <td>${escapeHtml(formatMoney(group.lowestUnitPrice))}</td>
+      <td><span class="status-pill ${statusClass}">${escapeHtml(statusLabel)}</span></td>
+    </tr>
+  `;
 }
 
 function renderSellers(sellers, offerGroups) {
@@ -550,6 +634,41 @@ function handleReviewClick(event) {
   }
 }
 
+function handleDesiredQuantityChange(event) {
+  if (event.target.dataset.cardQty !== undefined) {
+    const row = event.target.closest("[data-card-name]");
+    if (!row) return;
+    const cardName = row.dataset.cardName;
+    const value = Math.max(0, Number.parseInt(event.target.value, 10) || 0);
+    state.desiredQuantityByCard[cardName] = value;
+    state.optimizationStale = true;
+    updateOptimizationPreview();
+  }
+}
+
+function handleDesiredQuantityClick(event) {
+  const row = event.target.closest("[data-card-name]");
+  if (!row) return;
+
+  const cardName = row.dataset.cardName;
+  const action = event.target.dataset.action;
+  const input = row.querySelector("[data-card-qty]");
+
+  if (action === "increment-qty") {
+    const current = state.desiredQuantityByCard[cardName] || 0;
+    state.desiredQuantityByCard[cardName] = current + 1;
+    state.optimizationStale = true;
+    input.value = state.desiredQuantityByCard[cardName];
+    updateOptimizationPreview();
+  } else if (action === "decrement-qty") {
+    const current = state.desiredQuantityByCard[cardName] || 0;
+    state.desiredQuantityByCard[cardName] = Math.max(0, current - 1);
+    state.optimizationStale = true;
+    input.value = state.desiredQuantityByCard[cardName];
+    updateOptimizationPreview();
+  }
+}
+
 function runOptimizationPlaceholder() {
   const sellers = state.parsed.sellers || [];
   const offerGroups = buildOfferGroups(sellers);
@@ -562,6 +681,7 @@ function runOptimizationPlaceholder() {
     return;
   }
 
+  state.optimizationStale = false;
   state.optimizationResult = optimizeCart(sellers, offerGroups);
   state.inputCollapsed = true;
   elements.optimizationState.textContent = state.optimizationResult.statusLabel;
@@ -572,24 +692,49 @@ function runOptimizationPlaceholder() {
 
 function updateOptimizationPreview() {
   state.optimizationResult = null;
-  elements.optimizationState.textContent = "Changed";
+  elements.optimizationState.textContent = "Needs update";
   elements.optimizationState.className = "status-pill warning";
+  elements.optimizationOutput.innerHTML = `
+    <div class="result-stale-notice">
+      <p><strong>Buying plan needs update</strong></p>
+      <p>You changed desired quantities after the last optimization.</p>
+      <button id="rerunOptimizationButton" class="primary-button" type="button">Re-run optimization</button>
+    </div>
+  `;
   const sellers = state.parsed.sellers;
-  render();
+  const offerGroups = buildOfferGroups(sellers);
+  renderSummary(sellers, state.parsed.itemCount, offerGroups, sellers.reduce((sum, seller) => sum + Number(seller.total || 0), 0));
+
+  document.getElementById("rerunOptimizationButton")?.addEventListener("click", runOptimizationPlaceholder);
+  elements.assignmentOutput.innerHTML = assignmentEmptyState();
+  elements.assumptionsOutput.innerHTML = assumptionsEmptyState();
 }
 
 function optimizeCart(sellers, offerGroups) {
   const shippingRecords = buildShippingIndex(state.shippingData);
   const groups = offerGroups.map((group) => {
-    const validOffers = group.offers.filter((offer) => offer.quantity >= group.requiredQuantity);
+    const desiredQty = state.desiredQuantityByCard[group.cardName] ?? group.requiredQuantity;
+    if (desiredQty === 0) {
+      return {
+        ...group,
+        requiredQuantity: 0,
+        desiredQuantity: 0,
+        candidates: []
+      };
+    }
+    const validOffers = group.offers.filter((offer) => offer.quantity >= desiredQty);
     return {
       ...group,
+      requiredQuantity: desiredQty,
+      desiredQuantity: desiredQty,
       candidates: (validOffers.length ? validOffers : group.offers)
-        .map((offer) => ({ ...offer, requiredQuantity: group.requiredQuantity }))
+        .map((offer) => ({ ...offer, requiredQuantity: desiredQty }))
         .sort((a, b) => a.unitPrice - b.unitPrice)
     };
   });
   const warnings = [];
+  const costNotes = [];
+  const insufficientGroups = groups.filter((group) => group.desiredQuantity > 0 && !group.offers.some((offer) => offer.quantity >= group.desiredQuantity));
   const incompleteGroups = groups.filter((group) => !group.offers.some((offer) => offer.quantity >= group.requiredQuantity));
   const initialOffers = buildInitialAssignment(groups, sellers, shippingRecords);
   const optimization = optimizeBySellerMoves(initialOffers, groups, sellers, shippingRecords);
@@ -610,25 +755,34 @@ function optimizeCart(sellers, offerGroups) {
   });
   const unresolvedShippingCosts = score.sellerCosts.filter((cost) => !Number.isFinite(cost.totalCost));
 
+  if (insufficientGroups.length) {
+    insufficientGroups.forEach((group) => {
+      const maxAvailable = Math.max(...group.offers.map(o => o.quantity));
+      warnings.push(`⚠️ ${group.cardName}: only ${maxAvailable} available, but desired quantity is ${group.desiredQuantity}.`);
+    });
+  }
+
   if (!shippingRecords.length) {
-    warnings.push("Shipping table unavailable: optimization cannot price dynamic shipping.");
+    costNotes.push("Shipping table unavailable: optimization cannot price dynamic shipping.");
   }
 
   if (incompleteGroups.length) {
-    warnings.push(`${incompleteGroups.length} card group(s) had no single seller offer with the full reviewed quantity.`);
+    costNotes.push(`${incompleteGroups.length} card group(s) had no single seller offer with the full quantity.`);
   }
 
   if (countryWarnings.length) {
-    warnings.push(`${countryWarnings.length} selected seller(s) still need country/shipping review.`);
+    costNotes.push(`${countryWarnings.length} selected seller(s) still need country/shipping review.`);
   }
 
   if (unresolvedShippingCosts.length) {
-    warnings.push(`${unresolvedShippingCosts.length} selected seller(s) have no valid dynamic shipping row. Review country and shipping data.`);
+    costNotes.push(`${unresolvedShippingCosts.length} selected seller(s) have no valid dynamic shipping row. Review country and shipping data.`);
   }
 
   if (optimization.iterations >= MAX_OPTIMIZATION_ITERATIONS) {
-    warnings.push("Optimization stopped at the 50-iteration safety limit.");
+    costNotes.push("Optimization stopped at the 50-iteration safety limit.");
   }
+
+  costNotes.push("Trustee fees and final checkout total are estimated. Verify at Cardmarket before purchasing.");
 
   return {
     statusLabel: unresolvedShippingCosts.length || countryWarnings.length
@@ -646,8 +800,10 @@ function optimizeCart(sellers, offerGroups) {
     droppedSellers,
     selectedOffers,
     warnings,
+    costNotes,
     countryWarnings,
-    iterations: optimization.iterations
+    iterations: optimization.iterations,
+    insufficientGroups
   };
 }
 
@@ -1162,7 +1318,9 @@ function countryReviewRowTemplate(seller, sellerIndex) {
 
 function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
   const cardTotal = sellerCost?.articleValue ?? offerSubtotal(offers);
-  const fixedCost = sellerCost?.totalCost ?? sellerFixedCost(seller);
+  const shippingTotal = sellerCost?.shippingValue ?? 0;
+  const feeTotal = sellerCost?.cardmarketFeeValue ?? 0;
+  const totalCost = sellerCost?.totalCost ?? (cardTotal + shippingTotal + feeTotal);
   const shippingMethod = sellerCost?.shippingMethod || seller.shippingMethod || "Unknown shipping";
   const trackingLabel = sellerCost?.trackingStatus || seller.trackingStatus || "unknown";
   const shippingSourceClass = sellerCost?.source === "unresolved" ? "warning" : "good";
@@ -1171,39 +1329,82 @@ function sellerPlanTemplate(seller, sellerIndex, offers, sellerCost) {
   return `
     <article class="recommendation-card premium-seller-card">
       <header>
-        <div class="recommendation-header-copy">
-          <span class="eyebrow">Buy from</span>
-          <h3>${escapeHtml(seller.sellerName)}</h3>
-          <div class="seller-card-badges">
+        <div>
+          <div class="seller-info">
+            <span class="eyebrow">Buy from</span>
+            <h3>${escapeHtml(seller.sellerName)}</h3>
+          </div>
+          <div class="seller-badges">
             <span class="status-pill info">${escapeHtml(seller.sellerCountry || "Unknown")}</span>
             <span class="status-pill ${trackingLabel === "tracked" ? "good" : "muted"}">${escapeHtml(trackingLabel)}</span>
             <span class="status-pill muted">${escapeHtml(`${itemCount} card${itemCount === 1 ? "" : "s"}`)}</span>
           </div>
         </div>
-        <strong class="seller-total">${escapeHtml(formatEstimatedMoney(cardTotal + fixedCost))}</strong>
-      </header>
-      <ul class="seller-card-listing">
-        ${offers.map((offer) => `
-          <li class="seller-card-item">
-            <div>
-              <strong>${escapeHtml(offer.cardName)}</strong>
-              <span>${escapeHtml(`${offer.requiredQuantity || offer.quantity}x · ${offer.condition}`)}</span>
-            </div>
-            <span>${escapeHtml(formatMoney(offer.unitPrice))}</span>
-          </li>
-        `).join("")}
-      </ul>
-      <div class="seller-card-footer">
-        <div class="seller-card-costs">
-          <span>Cards ${escapeHtml(formatMoney(cardTotal))}</span>
-          <span>Shipping ${escapeHtml(formatEstimatedMoney(sellerCost?.shippingValue ?? fixedCost))}</span>
-          <span>${escapeHtml(sellerCost?.trusteeSource === "parsed_exact" ? "Trustee" : "Trustee est.")} ${escapeHtml(formatEstimatedMoney(sellerCost?.trusteeFeeValue ?? 0))}</span>
+        <div class="seller-total">
+          <strong>${escapeHtml(formatEstimatedMoney(totalCost))}</strong>
         </div>
-        <p class="shipping-detail ${shippingSourceClass}">
-          <strong>${escapeHtml(shippingMethod)}</strong>
-          ${escapeHtml(`${trackingLabel} · ${sellerCost?.estimatedWeight ?? estimateShipmentWeight(offers.length)}g est.`)}
-        </p>
+      </header>
+
+      <div class="cost-breakdown">
+        <div class="breakdown-item">
+          <span>Cards</span>
+          <strong>${escapeHtml(formatMoney(cardTotal))}</strong>
+        </div>
+        <div class="breakdown-item">
+          <span>Shipping <span class="label-muted">(est.)</span></span>
+          <strong>${escapeHtml(formatMoney(shippingTotal))}</strong>
+        </div>
+        ${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `
+          <div class="breakdown-item">
+            <span>Fees <span class="label-muted">(est.)</span></span>
+            <strong>${escapeHtml(formatMoney(feeTotal))}</strong>
+          </div>
+        `}
+        <div class="breakdown-divider"></div>
+        <div class="breakdown-item breakdown-total">
+          <span>Total</span>
+          <strong>${escapeHtml(formatEstimatedMoney(totalCost))}</strong>
+        </div>
       </div>
+
+      <div class="shipping-detail ${shippingSourceClass}">
+        <span><strong>${escapeHtml(sellerCost?.sourceLabel || "Original pasted shipping")}</strong></span>
+        <span>${escapeHtml(shippingMethod)} · ${escapeHtml(trackingLabel)} · ~${escapeHtml(sellerCost?.estimatedWeight ?? estimateShipmentWeight(offers.length))}g</span>
+      </div>
+
+      ${sellerCost?.shippingDebug ? `
+        <details class="shipping-debug-section">
+          <summary>Shipping calculation trace</summary>
+          <div class="shipping-debug ${sellerCost.shippingDebug.trackedRequired ? "tracked-required" : ""}">
+            Order ${escapeHtml(formatMoney(sellerCost.shippingDebug.orderValue))} / ${escapeHtml(sellerCost.shippingDebug.cardCount)} card(s) / ${escapeHtml(`${sellerCost.shippingDebug.estimatedWeight}g`)}<br>
+            Tracking required: <strong>${sellerCost.shippingDebug.trackedRequired ? "yes" : "no"}</strong><br>
+            ${escapeHtml(sellerCost.shippingDebug.reason)}<br>
+            ${Number.isFinite(sellerCost.shippingDebug.basePrice) ? `Selected base price: ${escapeHtml(formatMoney(sellerCost.shippingDebug.basePrice))}. ` : ""}
+            ${sellerCost.shippingDebug.cardmarketFeeIncluded ? "Cardmarket shipping fee is already included in shipping_data.json." : ""}
+          </div>
+        </details>
+      ` : ""}
+
+      <table class="recommendation-table">
+        <thead>
+          <tr>
+            <th>Card</th>
+            <th>Qty</th>
+            <th>Cond.</th>
+            <th>Unit price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${offers.map((offer) => `
+            <tr>
+              <td>${escapeHtml(offer.cardName)}</td>
+              <td>${escapeHtml(offer.requiredQuantity || offer.quantity)}</td>
+              <td>${escapeHtml(offer.condition)}</td>
+              <td>${escapeHtml(formatMoney(offer.unitPrice))}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
     </article>
   `;
 }
