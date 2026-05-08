@@ -1,10 +1,10 @@
-import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260508m";
+import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260508n";
 import {
   calculateShippingCost,
   calculateTrusteeFee,
   estimateShipmentWeight,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
-} from "./shipping.mjs?v=20260508m";
+} from "./shipping.mjs?v=20260508n";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
@@ -188,7 +188,7 @@ function renderSummary(sellers, itemCount, offerGroups, parsedTotal) {
     summaryCard("Offers", itemCount, itemCount ? "good" : "muted"),
     summaryCard("Prices found", pricedOfferCount, pricedOfferCount ? "good" : "muted"),
     summaryCard("Shipping data", state.shippingData ? "Ready" : "Missing", state.shippingData ? "good" : "warning"),
-    summaryCard("Warnings", warningCount || "Clear", warningCount ? "warning" : "good")
+    summaryCard("Warnings", warningCount ? `${warningCount} to review` : "Clear", warningCount ? "warning" : "good")
   ].join("");
 }
 
@@ -631,7 +631,9 @@ function optimizeCart(sellers, offerGroups) {
   }
 
   return {
-    statusLabel: Number.isFinite(score.total) && savings > 0.005 ? "Savings found" : "Best plan",
+    statusLabel: unresolvedShippingCosts.length || countryWarnings.length
+      ? "Needs review"
+      : "Best plan ready",
     currentTotal,
     selectedTotal: score.total,
     cardTotal: score.cardTotal,
@@ -848,40 +850,39 @@ function optimizationSummaryTemplate(result) {
   const shippingTotal = result.shippingTotal;
   const trusteeTotal = result.trusteeTotal;
   const feeTotal = result.sellerCosts.reduce((sum, sellerCost) => sum + Number(sellerCost.cardmarketFeeValue || 0), 0);
-  const savingsPercent = result.currentTotal > 0 && Number.isFinite(result.selectedTotal)
-    ? `${((result.savings / result.currentTotal) * 100).toFixed(1)}%`
+  const poolDifference = result.currentTotal - result.selectedTotal;
+  const poolDifferencePercent = result.currentTotal > 0 && Number.isFinite(result.selectedTotal)
+    ? `${((poolDifference / result.currentTotal) * 100).toFixed(1)}%`
     : "0.0%";
-  const warningBanner = result.warnings.length
-    ? `
-      <div class="result-warning">
-        ${result.warnings.map((warning) => `<p>${escapeHtml(warning)}</p>`).join("")}
-        ${result.countryWarnings.length ? countryReviewTemplate(result.countryWarnings) : ""}
-      </div>
-    `
-    : "";
+  const warningEntries = buildResultWarnings(result);
+  const warningBanner = warningEntries.length ? warningBannerTemplate(result, warningEntries) : "";
+  const selectedCardGroups = result.selectedOffers.length;
+  const trusteeLabel = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact") ? "Fees / trustee estimate" : "Fees / trustee";
 
   return `
     <div class="summary-hero-card">
       <div class="summary-hero-copy">
-        <span class="eyebrow">Optimization result</span>
+        <span class="eyebrow">Best buying plan</span>
         <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
         <p>Buy the cards from the sellers below.</p>
+        <p class="summary-baseline-note">Reviewed offer pool includes duplicate alternatives and unused seller offers, so it is not a true savings baseline.</p>
       </div>
       <div class="summary-savings">
-        <span>Savings</span>
-        <strong class="${result.savings > 0.005 ? "good" : "muted"}">${escapeHtml(formatSavings(result.savings))}</strong>
-        <small>${escapeHtml(savingsPercent)} vs. original</small>
+        <span>Difference to reviewed offer pool</span>
+        <strong class="${poolDifference > 0.005 ? "good" : "muted"}">${escapeHtml(formatSavings(poolDifference))}</strong>
+        <small>${escapeHtml(poolDifferencePercent)} vs. reviewed pool</small>
       </div>
     </div>
     ${warningBanner}
     <div class="result-hero guided-metrics">
-      <div class="guided-metric"><span>Optimized total</span><strong>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</strong></div>
-      <div class="guided-metric"><span>Savings</span><strong class="${result.savings > 0.005 ? "good" : "muted"}">${escapeHtml(formatSavings(result.savings))}</strong></div>
+      <div class="guided-metric"><span>Optimized buying plan</span><strong>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</strong></div>
       <div class="guided-metric"><span>Sellers to use</span><strong>${escapeHtml(result.usedSellers.length)}</strong></div>
-      <div class="guided-metric"><span>Original total</span><strong>${escapeHtml(formatMoney(result.currentTotal))}</strong></div>
+      <div class="guided-metric"><span>Card groups selected</span><strong>${escapeHtml(selectedCardGroups)}</strong></div>
+      <div class="guided-metric"><span>Article value</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
       <div class="guided-metric muted-detail"><span>Shipping total</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
-      <div class="guided-metric muted-detail"><span>Trustee total ${result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact") ? "(estimated)" : ""}</span><strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong></div>
-      <div class="guided-metric muted-detail"><span>Article value</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
+      <div class="guided-metric muted-detail"><span>${escapeHtml(trusteeLabel)}</span><strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong></div>
+      <div class="guided-metric muted-detail"><span>Reviewed offer pool</span><strong>${escapeHtml(formatMoney(result.currentTotal))}</strong></div>
+      <div class="guided-metric muted-detail"><span>Difference to reviewed offer pool</span><strong class="${poolDifference > 0.005 ? "good" : "muted"}">${escapeHtml(formatSavings(poolDifference))}</strong></div>
       <div class="guided-metric muted-detail"><span>Shipping fee data</span><strong>${escapeHtml(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "Included in shipping rows" : formatEstimatedMoney(feeTotal))}</strong></div>
     </div>
   `;
@@ -902,6 +903,135 @@ function recommendationsTemplate(result) {
         : "<p>Every parsed seller contributes to the current best result.</p>"}
     </div>
   `;
+}
+
+function warningBannerTemplate(result, warningEntries) {
+  const criticalCount = warningEntries.filter((entry) => entry.severity === "critical").length;
+  const warningCount = warningEntries.filter((entry) => entry.severity === "warning").length;
+  const infoCount = warningEntries.filter((entry) => entry.severity === "info").length;
+  const highestSeverity = criticalCount ? "critical" : warningCount ? "warning" : "info";
+  const severityLabel = criticalCount ? "Critical" : warningCount ? "Warning" : "Info";
+  const usableLabel = criticalCount ? "Result may be incorrect until reviewed." : "The recommendation is usable, but review before buying.";
+  const summaryText = criticalCount
+    ? `${warningEntries.length} issue${warningEntries.length === 1 ? "" : "s"} found. Some costs or seller assignments may be incorrect.`
+    : `${warningEntries.length} warning${warningEntries.length === 1 ? "" : "s"} found. The recommendation is usable, but some costs are estimated.`;
+
+  return `
+    <div class="result-warning severity-${escapeAttribute(highestSeverity)}">
+      <div class="result-warning-header">
+        <div>
+          <span class="status-pill ${highestSeverity === "critical" ? "warning" : highestSeverity === "warning" ? "warning" : "info"}">${escapeHtml(severityLabel)}</span>
+          <h3>${escapeHtml(summaryText)}</h3>
+          <p>${escapeHtml(usableLabel)} Review warnings before buying.</p>
+        </div>
+        <div class="warning-meta">
+          <span>${escapeHtml(`${warningEntries.length} total`)}</span>
+          <span>${escapeHtml(`${criticalCount} critical`)}</span>
+          <span>${escapeHtml(`${warningCount} warning`)}</span>
+          <span>${escapeHtml(`${infoCount} info`)}</span>
+        </div>
+      </div>
+      <details class="warning-details" ${highestSeverity === "critical" ? "open" : ""}>
+        <summary>Show warnings</summary>
+        <div class="warning-list">
+          ${warningEntries.map((entry) => warningEntryTemplate(entry)).join("")}
+        </div>
+      </details>
+      ${result.countryWarnings.length ? countryReviewTemplate(result.countryWarnings) : ""}
+    </div>
+  `;
+}
+
+function warningEntryTemplate(entry) {
+  return `
+    <article class="warning-item severity-${escapeAttribute(entry.severity)}">
+      <div class="warning-item-header">
+        <strong>${escapeHtml(entry.title)}</strong>
+        <span class="status-pill ${entry.severity === "critical" ? "warning" : entry.severity === "warning" ? "warning" : "info"}">${escapeHtml(entry.severity)}</span>
+      </div>
+      ${entry.affected ? `<p><strong>Affected:</strong> ${escapeHtml(entry.affected)}</p>` : ""}
+      <p><strong>What happened:</strong> ${escapeHtml(entry.whatHappened)}</p>
+      <p><strong>Why it matters:</strong> ${escapeHtml(entry.whyItMatters)}</p>
+      <p><strong>What to do:</strong> ${escapeHtml(entry.whatToDo)}</p>
+    </article>
+  `;
+}
+
+function buildResultWarnings(result) {
+  const entries = [];
+
+  if (!Number.isFinite(result.selectedTotal)) {
+    entries.push({
+      severity: "critical",
+      title: "Some selected seller costs could not be priced",
+      affected: result.sellerCosts.filter((sellerCost) => !Number.isFinite(sellerCost.totalCost)).map((sellerCost) => sellerNameForCost(result, sellerCost)).join(", "),
+      whatHappened: "The app could not find a valid dynamic shipping row for one or more selected sellers.",
+      whyItMatters: "The optimized total may be too low or incomplete.",
+      whatToDo: "Review the seller country and shipping method before buying."
+    });
+  }
+
+  if (result.countryWarnings.length) {
+    entries.push({
+      severity: "warning",
+      title: "Some seller country or shipping matches still need review",
+      affected: result.countryWarnings.map(({ seller }) => seller.sellerName).join(", "),
+      whatHappened: "The parser could not confidently match country or shipping for some selected sellers.",
+      whyItMatters: "Shipping and trustee costs may be estimated from incomplete seller data.",
+      whatToDo: "Open the warning details and confirm country and shipping before buying."
+    });
+  }
+
+  const estimatedTrusteeSellers = result.sellerCosts.filter((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
+  if (estimatedTrusteeSellers.length) {
+    entries.push({
+      severity: "info",
+      title: "Some trustee fees are estimated",
+      affected: estimatedTrusteeSellers.map((sellerCost) => sellerNameForCost(result, sellerCost)).join(", "),
+      whatHappened: "The app used the trustee rule instead of an exact parsed trustee value for some selected sellers.",
+      whyItMatters: "Final Cardmarket trustee fees may differ slightly when the optimized seller mix changes.",
+      whatToDo: "Treat trustee as an estimate and verify the final checkout total on Cardmarket."
+    });
+  }
+
+  if (result.warnings.some((warning) => /card group\(s\) had no single seller offer/i.test(warning))) {
+    entries.push({
+      severity: "warning",
+      title: "Some card groups were reviewed with partial quantity coverage",
+      affected: "",
+      whatHappened: "At least one card group did not have a single seller that covered the full reviewed quantity.",
+      whyItMatters: "The plan may rely on fallback offer grouping rather than a clean one-seller quantity match.",
+      whatToDo: "Review the card assignment details before buying."
+    });
+  }
+
+  if (result.warnings.some((warning) => /Shipping table unavailable/i.test(warning))) {
+    entries.push({
+      severity: "critical",
+      title: "Shipping table unavailable",
+      affected: "All selected sellers",
+      whatHappened: "The optimization could not load the shipping data table.",
+      whyItMatters: "Shipping-sensitive totals may be incorrect.",
+      whatToDo: "Reload the page with shipping data available before trusting the result."
+    });
+  }
+
+  if (result.warnings.some((warning) => /50-iteration safety limit/i.test(warning))) {
+    entries.push({
+      severity: "info",
+      title: "Optimization stopped at the safety limit",
+      affected: "",
+      whatHappened: "The move-based optimizer hit its iteration cap and then stopped.",
+      whyItMatters: "The current plan may still be usable, but the search was not exhaustive.",
+      whatToDo: "Treat the result as a strong candidate and review it before buying."
+    });
+  }
+
+  return entries;
+}
+
+function sellerNameForCost(result, sellerCost) {
+  return result.usedSellers.find((entry) => entry.sellerIndex === sellerCost.sellerIndex)?.seller?.sellerName || `Seller ${sellerCost.sellerIndex + 1}`;
 }
 
 function assignmentTableTemplate(result) {
