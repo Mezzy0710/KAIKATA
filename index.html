@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cardmarket Cart Optimizer</title>
+    <link rel="stylesheet" href="./styles.css?v=20260508g">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">CM</div>
+          <div>
+            <p class="eyebrow">Version 1</p>
+            <h1>Cart Optimizer</h1>
+          </div>
+        </div>
+
+        <section class="panel input-panel">
+          <div class="panel-heading">
+            <h2>Input</h2>
+            <span id="shippingDataState" class="status-pill muted">Shipping data</span>
+          </div>
+          <label class="field-label" for="cartInput">Cardmarket cart text</label>
+          <textarea id="cartInput" spellcheck="false" placeholder="Paste mobile or desktop cart text"></textarea>
+          <div class="button-row">
+            <button id="parseButton" class="primary-button" type="button">Parse Cart</button>
+            <button id="loadSampleButton" class="ghost-button" type="button">Load Sample</button>
+            <button id="clearButton" class="ghost-button" type="button">Clear</button>
+          </div>
+        </section>
+
+        <section class="panel compact-panel">
+          <h2>Review State</h2>
+          <div class="metric-list">
+            <div>
+              <span>Sellers</span>
+              <strong id="sellerCount">0</strong>
+            </div>
+            <div>
+              <span>Offers</span>
+              <strong id="itemCount">0</strong>
+            </div>
+            <div>
+              <span>Parsed total</span>
+              <strong id="parsedTotal">EUR 0.00</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel compact-panel">
+          <h2>Debug</h2>
+          <label class="toggle-row">
+            <input id="debugToggle" type="checkbox" checked>
+            <span>Keep raw blocks visible</span>
+          </label>
+          <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">Offer Consolidation Review</p>
+            <h2>Cart Optimization Inputs</h2>
+          </div>
+          <button id="runOptimizationButton" class="primary-button run-button" type="button">Run Optimization</button>
+        </header>
+
+        <section id="summaryStrip" class="summary-strip" aria-live="polite"></section>
+
+        <section class="panel result-panel">
+          <div class="panel-heading">
+            <h2>Recommendation</h2>
+            <span id="optimizationState" class="status-pill muted">Waiting</span>
+          </div>
+          <div id="optimizationOutput" class="optimization-output" aria-live="polite">
+            Parse a cart, review anything ambiguous, then run optimization to see which sellers to keep.
+          </div>
+        </section>
+
+        <section id="sellerReview" class="seller-review" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <template id="emptyStateTemplate">
+      <div class="empty-state">
+        <h3>No offers yet</h3>
+        <p>Paste a cart and parse it to review seller fixed costs and competing card offers.</p>
+      </div>
+    </template>
+
+    <script type="module" src="./src/app.mjs?v=20260508g"></script>
+  </body>
+</html>
