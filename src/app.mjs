@@ -71,7 +71,7 @@ function boot() {
 
 async function loadShippingData() {
   try {
-    const response = await fetch("/shipping_data.json", { cache: "no-store" });
+    const response = await fetch("./shipping_data.json", { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
@@ -91,7 +91,7 @@ async function loadShippingData() {
 
 async function loadSampleCart() {
   try {
-    const response = await fetch("/sample-cart-mobile.txt", { cache: "no-store" });
+    const response = await fetch("./sample-cart-mobile.txt", { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
