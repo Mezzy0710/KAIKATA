@@ -28,6 +28,61 @@ assert.match(appSource, /Fees \/ trustee \(estimated\)/, "Estimated trustee valu
 assert.match(appSource, /Why it matters:/, "Warning details should explain why the issue matters.");
 assert.match(appSource, /What to do:/, "Warning details should explain what to do next.");
 assert.match(appSource, /Affects:/, "Warning details should show affected seller/card when available.");
+assert.match(appSource, /Scryfall ref/, "The UI should render visible Scryfall reference wording.");
+assert.match(appSource, /Vs Scryfall/, "The UI should render visible Scryfall delta wording.");
+
+__testing.state.desiredQuantityByCard = { "Arcane Signet": 1 };
+__testing.state.scryallLookupInProgress = false;
+__testing.state.priceReferences = {
+  [__testing.normalizeReferenceKey("Arcane Signet")]: {
+    price: 0.8,
+    currency: "EUR",
+    source: "Scryfall",
+    error: false
+  }
+};
+
+const desiredCardsHtml = __testing.desiredCardsTableTemplate([{
+  cardName: "Arcane Signet",
+  requiredQuantity: 1,
+  sellerCount: 4,
+  lowestUnitPrice: 0.85,
+  offers: [{ quantity: 1 }]
+}]);
+assert.match(desiredCardsHtml, /Scryfall ref/);
+assert.match(desiredCardsHtml, /Vs Scryfall/);
+assert.match(desiredCardsHtml, /EUR 0\.80/, "Rendered desired card rows should show the fetched Scryfall price.");
+assert.match(desiredCardsHtml, /reference-delta-badge/, "Rendered desired card rows should show a visible delta badge.");
+
+const sellerPlanHtml = __testing.sellerPlanTemplate(
+  { sellerName: "ItalianValue", sellerCountry: "Italy", shippingMethod: "Posta", trackingStatus: "untracked" },
+  0,
+  1,
+  [{ cardName: "Rhystic Study", requiredQuantity: 1, quantity: 1, condition: "Excellent", unitPrice: 24.8 }],
+  {
+    articleValue: 24.8,
+    shippingValue: 4.05,
+    trusteeFeeValue: 0,
+    cardmarketFeeValue: 0,
+    totalCost: 4.05,
+    shippingMethod: "Postapriority Internazionale - Ufficio Postale",
+    trackingStatus: "untracked",
+    source: "recalculated",
+    sourceLabel: "Dynamic shipping from table",
+    estimatedWeight: 1.8,
+    shippingDebug: {
+      trackedRequired: false,
+      orderValue: 24.8,
+      cardCount: 1,
+      estimatedWeight: 1.8,
+      reason: "Tracking not required below EUR 25.00.",
+      basePrice: 4.05,
+      cardmarketFeeIncluded: true
+    }
+  }
+);
+assert.match(sellerPlanHtml, /EUR 28\.85/, "Seller plan cards should display full totals including cards plus shipping.");
+assert.doesNotMatch(sellerPlanHtml, />\s*EUR 4\.05\s*<\/strong>\s*<\/div>\s*<\/header>/, "Seller total header must not show shipping-only totals.");
 
 const infoOnlyResult = {
   selectedTotal: 10,
@@ -74,6 +129,8 @@ assert.match(warningHtml, /Affects: Sol Ring/);
 
 console.log(JSON.stringify({
   checkedMainCopy: true,
+  desiredCardsShowsScryfall: true,
+  sellerPlanShowsFullTotal: true,
   infoWarningEntries: infoEntries.length,
   criticalWarningEntries: criticalEntries.length
 }, null, 2));

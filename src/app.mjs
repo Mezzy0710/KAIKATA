@@ -405,6 +405,7 @@ function renderDesiredCards(offerGroups) {
       </summary>
       <div class="review-details-body">
         <p class="note-text">Quantities are inferred from the pasted cart. Adjust them before optimizing if needed.</p>
+        ${referenceStatusTemplate()}
         ${desiredCardsTableTemplate(offerGroups)}
       </div>
     </details>
@@ -422,6 +423,8 @@ function desiredCardsTableTemplate(offerGroups) {
               <th>Desired qty</th>
               <th>Offers found</th>
               <th>Best price</th>
+              <th>Scryfall ref</th>
+              <th>Vs Scryfall</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -440,6 +443,10 @@ function desiredCardRowTemplate(group) {
   const isAvailable = availableQty >= desiredQty;
   const statusLabel = desiredQty === 0 ? "Excluded" : isAvailable ? "Ready" : "Insufficient";
   const statusClass = desiredQty === 0 ? "muted" : isAvailable ? "good" : "warning";
+  const referenceData = getReferenceData(group.cardName);
+  const referenceCard = enrichCardWithReference({ cardName: group.cardName, price: group.lowestUnitPrice }, referenceData);
+  const referenceDisplay = referencePriceDisplay(referenceData);
+  const deltaDisplay = referenceDeltaDisplay(referenceCard, referenceData);
 
   return `
     <tr data-card-name="${escapeAttribute(group.cardName)}">
@@ -451,9 +458,56 @@ function desiredCardRowTemplate(group) {
       </td>
       <td>${escapeHtml(group.sellerCount)}</td>
       <td>${escapeHtml(formatMoney(group.lowestUnitPrice))}</td>
+      <td class="reference-cell">${referenceDisplay}</td>
+      <td class="reference-cell">${deltaDisplay}</td>
       <td><span class="status-pill ${statusClass}">${escapeHtml(statusLabel)}</span></td>
     </tr>
   `;
+}
+
+function referenceStatusTemplate() {
+  if (!state.referenceCheckEnabled) {
+    return "";
+  }
+
+  if (state.scryallLookupInProgress) {
+    return `<p class="note-text reference-status-text">Scryfall reference prices are loading for detected cards.</p>`;
+  }
+
+  const referenceCount = Object.values(state.priceReferences).filter((entry) => entry && !entry.error).length;
+  if (referenceCount > 0) {
+    return `<p class="note-text reference-status-text">Scryfall reference prices are shown where available.</p>`;
+  }
+
+  return `<p class="note-text reference-status-text">Scryfall reference prices are unavailable for this review right now.</p>`;
+}
+
+function referencePriceDisplay(referenceData) {
+  if (state.scryallLookupInProgress && !referenceData) {
+    return `<span class="reference-muted">Loading...</span>`;
+  }
+
+  if (!referenceData) {
+    return `<span class="reference-muted">Pending</span>`;
+  }
+
+  if (referenceData.error) {
+    return `<span class="reference-muted" title="${escapeAttribute(referenceErrorLabel(referenceData.reason))}">Unavailable</span>`;
+  }
+
+  return `<span class="price-with-reference">${escapeHtml(formatReferenceMoney(referenceData.price, referenceData.currency))}${referenceSourceIcon(referenceData)}</span>`;
+}
+
+function referenceDeltaDisplay(referenceCard, referenceData) {
+  if (state.scryallLookupInProgress && !referenceData) {
+    return `<span class="reference-muted">Loading...</span>`;
+  }
+
+  if (!referenceData || referenceData.error || !referenceCard.hasReference) {
+    return `<span class="reference-muted">-</span>`;
+  }
+
+  return `<span class="reference-delta-badge delta-${escapeAttribute(referenceCard.deltaColor)}" title="${escapeAttribute(referenceDeltaTitle(referenceCard, referenceData))}">${escapeHtml(referenceCard.deltaDisplay)}</span>`;
 }
 
 function renderSellers(sellers, offerGroups) {
@@ -1209,11 +1263,14 @@ function optimizationSummaryTemplate(result) {
 function recommendationsTemplate(result) {
   const planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
   const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
+  const enrichedSelectedOffers = result.selectedOffers.map((offer) => enrichOfferWithReference(offer));
+  const highPriceNote = hasHighPricedCards(enrichedSelectedOffers) ? generateHighPriceNote(enrichedSelectedOffers) : "";
 
   return `
     <div class="recommendations-header">
       <button class="ghost-button copy-plan-button" type="button" id="copyPlanButton">Copy buying plan</button>
     </div>
+    ${highPriceNote}
     <div class="recommendation-grid">
       ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
     </div>
@@ -1517,7 +1574,9 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
   const cardTotal = sellerCost?.articleValue ?? offerSubtotal(offers);
   const shippingTotal = sellerCost?.shippingValue ?? 0;
   const feeTotal = sellerCost?.cardmarketFeeValue ?? 0;
-  const totalCost = sellerCost?.totalCost ?? (cardTotal + shippingTotal + feeTotal);
+  const trusteeTotal = sellerCost?.trusteeFeeValue ?? 0;
+  const fixedTotal = sellerCost?.totalCost ?? (shippingTotal + feeTotal + trusteeTotal);
+  const displayTotal = Number.isFinite(fixedTotal) ? roundMoney(cardTotal + fixedTotal) : Number.POSITIVE_INFINITY;
   const shippingMethod = sellerCost?.shippingMethod || seller.shippingMethod || "Unknown shipping";
   const trackingLabel = sellerCost?.trackingStatus || seller.trackingStatus || "unknown";
   const shippingSourceClass = sellerCost?.source === "unresolved" ? "warning" : "good";
@@ -1535,7 +1594,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
           </div>
         </div>
         <div class="seller-total">
-          <strong>${escapeHtml(formatEstimatedMoney(totalCost))}</strong>
+          <strong>${escapeHtml(formatEstimatedMoney(displayTotal))}</strong>
         </div>
       </header>
 
@@ -1543,14 +1602,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
         <div class="seller-section-label">Cards to buy</div>
         <table class="recommendation-table">
           <tbody>
-            ${offers.map((offer) => `
-              <tr>
-                <td>${escapeHtml(offer.requiredQuantity || offer.quantity)}×</td>
-                <td>${escapeHtml(offer.cardName)}</td>
-                <td class="condition-cell">${escapeHtml(offer.condition)}</td>
-                <td class="price-cell">${escapeHtml(formatMoney(offer.unitPrice))}</td>
-              </tr>
-            `).join("")}
+            ${offers.map((offer) => recommendationOfferRowTemplate(offer)).join("")}
           </tbody>
         </table>
       </div>
@@ -1565,6 +1617,10 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
           <span>Shipping</span>
           <strong>${escapeHtml(formatMoney(shippingTotal))}</strong>
         </div>
+        <div class="breakdown-item">
+          <span>Trustee</span>
+          <strong>${escapeHtml(formatMoney(trusteeTotal))}</strong>
+        </div>
         ${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `
           <div class="breakdown-item">
             <span>Fees</span>
@@ -1574,7 +1630,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
         <div class="breakdown-divider"></div>
         <div class="breakdown-item breakdown-total">
           <span>Total</span>
-          <strong>${escapeHtml(formatEstimatedMoney(totalCost))}</strong>
+          <strong>${escapeHtml(formatEstimatedMoney(displayTotal))}</strong>
         </div>
       </div>
 
@@ -1599,6 +1655,32 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
   `;
 }
 
+function recommendationOfferRowTemplate(offer) {
+  const referenceOffer = enrichOfferWithReference(offer);
+  const referenceBadge = referenceOffer.hasReference
+    ? `<span class="reference-delta-badge delta-${escapeAttribute(referenceOffer.deltaColor)}" title="${escapeAttribute(referenceDeltaTitle(referenceOffer, getReferenceData(offer.cardName)))}">${escapeHtml(referenceOffer.deltaDisplay)}</span>`
+    : "";
+  const referenceHint = referenceOffer.hasReference
+    ? `<div class="reference-inline-note">Scryfall ref ${escapeHtml(formatReferenceMoney(referenceOffer.referencePrice, referenceOffer.referenceCurrency))}</div>`
+    : state.scryallLookupInProgress
+      ? `<div class="reference-inline-note">Scryfall loading...</div>`
+      : "";
+
+  return `
+    <tr>
+      <td>${escapeHtml(offer.requiredQuantity || offer.quantity)}×</td>
+      <td>
+        ${escapeHtml(offer.cardName)}
+        ${referenceHint}
+      </td>
+      <td class="condition-cell">${escapeHtml(offer.condition)}</td>
+      <td class="price-cell">
+        <span class="price-with-reference">${escapeHtml(formatMoney(offer.unitPrice))}${referenceBadge}</span>
+      </td>
+    </tr>
+  `;
+}
+
 function groupSelectedOffersBySeller(offers) {
   const grouped = new Map();
   offers.forEach((offer) => {
@@ -1608,6 +1690,62 @@ function groupSelectedOffersBySeller(offers) {
     grouped.get(offer.sellerIndex).push(offer);
   });
   return grouped;
+}
+
+function getReferenceData(cardName) {
+  return state.priceReferences[normalizeReferenceKey(cardName)] || null;
+}
+
+function normalizeReferenceKey(cardName) {
+  return String(cardName || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function formatReferenceMoney(price, currency = "EUR") {
+  if (!Number.isFinite(Number(price))) {
+    return "Unavailable";
+  }
+
+  return currency === "EUR"
+    ? formatMoney(price)
+    : `${currency} ${Number(price).toFixed(2)}`;
+}
+
+function referenceSourceIcon(referenceData) {
+  if (!referenceData || referenceData.error) {
+    return "";
+  }
+
+  return `<span class="reference-price-icon" title="${escapeAttribute(`${referenceData.source} reference price`)}" aria-label="${escapeAttribute(`${referenceData.source} reference price`)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01"></path><path d="M11 12h1v4h1"></path></svg></span>`;
+}
+
+function referenceErrorLabel(reason) {
+  switch (reason) {
+    case "no_price_available":
+      return "Scryfall found the card but returned no market price.";
+    case "not_found":
+      return "Scryfall could not find this card name.";
+    case "timeout":
+      return "Scryfall lookup timed out.";
+    case "network_error":
+      return "Scryfall lookup failed because the network request did not complete.";
+    default:
+      return "Scryfall reference price is unavailable.";
+  }
+}
+
+function enrichOfferWithReference(offer) {
+  return enrichCardWithReference(offer, getReferenceData(offer.cardName));
+}
+
+function referenceDeltaTitle(referenceCard, referenceData) {
+  if (!referenceCard?.hasReference || !referenceData || referenceData.error) {
+    return "Scryfall reference unavailable";
+  }
+
+  return `${formatMoney(referenceCard.price)} vs ${formatReferenceMoney(referenceData.price, referenceData.currency)} from ${referenceData.source}`;
 }
 
 function formatSavings(value) {
@@ -1789,10 +1927,14 @@ export const __testing = {
   state,
   buildOfferGroups,
   buildResultWarnings,
+  desiredCardsTableTemplate,
   getTotalCopies,
   groupSelectedOffersBySeller,
+  normalizeReferenceKey,
   optimizeCart,
   optimizationSummaryTemplate,
+  recommendationOfferRowTemplate,
+  sellerPlanTemplate,
   warningBannerTemplate
 };
 
