@@ -43,7 +43,9 @@ const state = {
   referenceCheckEnabled: true // Can be disabled in settings (v2)
 };
 
-const elements = {
+const hasDom = typeof document !== "undefined";
+
+const elements = hasDom ? {
   cartInput: document.querySelector("#cartInput"),
   parseButton: document.querySelector("#parseButton"),
   loadSampleButton: document.querySelector("#loadSampleButton"),
@@ -65,9 +67,11 @@ const elements = {
   optimizationState: document.querySelector("#optimizationState"),
   optimizationOutput: document.querySelector("#optimizationOutput"),
   emptyStateTemplate: document.querySelector("#emptyStateTemplate")
-};
+} : {};
 
-boot();
+if (hasDom) {
+  boot();
+}
 
 function boot() {
   // Initialize Scryfall cache for reference price lookups
@@ -935,11 +939,14 @@ function optimizeCart(sellers, offerGroups) {
   }
 
   costNotes.push("Trustee fees and final checkout total are estimated. Verify at Cardmarket before purchasing.");
+  const statusLabel = insufficientGroups.length
+    ? "Action required"
+    : unresolvedShippingCosts.length || countryWarnings.length
+      ? "Needs review"
+      : "Best plan ready";
 
   return {
-    statusLabel: unresolvedShippingCosts.length || countryWarnings.length
-      ? "Needs review"
-      : "Best plan ready",
+    statusLabel,
     currentTotal,
     selectedTotal: score.total,
     cardTotal: score.cardTotal,
@@ -962,9 +969,16 @@ function optimizeCart(sellers, offerGroups) {
 function buildInitialAssignment(groups, sellers, shippingRecords) {
   const cheapestByCard = groups.map((group) => group.candidates[0]).filter(Boolean);
   const currentCartAssignment = groups.map((group) => group.candidates.find((offer) => offer.sellerIndex === group.offers[0]?.sellerIndex) || group.candidates[0]).filter(Boolean);
-  const cheapestScore = scoreSelection(cheapestByCard, sellers, shippingRecords);
-  const currentScore = scoreSelection(currentCartAssignment, sellers, shippingRecords);
-  return isBetterScore(cheapestScore, currentScore) ? cheapestByCard : currentCartAssignment;
+  const consolidatedAssignments = sellers
+    .map((_, sellerIndex) => groups.map((group) => group.candidates.find((offer) => offer.sellerIndex === sellerIndex)))
+    .filter((assignment) => assignment.length && assignment.every(Boolean));
+  const candidates = [cheapestByCard, currentCartAssignment, ...consolidatedAssignments].filter((assignment) => assignment.length);
+
+  return candidates.reduce((bestAssignment, assignment) => {
+    const candidateScore = scoreSelection(assignment, sellers, shippingRecords);
+    const bestScore = scoreSelection(bestAssignment, sellers, shippingRecords);
+    return isBetterScore(candidateScore, bestScore) ? assignment : bestAssignment;
+  }, candidates[0] || []);
 }
 
 function optimizeBySellerMoves(initialSelection, groups, sellers, shippingRecords) {
@@ -1253,6 +1267,7 @@ function warningEntryTemplate(entry) {
       </div>
       ${entry.affected ? `<p class="warning-affected">Affects: ${escapeHtml(entry.affected)}</p>` : ""}
       <p>${escapeHtml(entry.whatHappened)}</p>
+      <p><strong>Why it matters:</strong> ${escapeHtml(entry.whyItMatters)}</p>
       <p class="warning-action"><strong>What to do:</strong> ${escapeHtml(entry.whatToDo)}</p>
     </article>
   `;
@@ -1280,6 +1295,17 @@ function buildResultWarnings(result) {
       whatHappened: "The parser could not confidently match country or shipping for some selected sellers.",
       whyItMatters: "Shipping and trustee costs may be estimated from incomplete seller data.",
       whatToDo: "Open the warning details and confirm country and shipping before buying."
+    });
+  }
+
+  if (result.insufficientGroups?.length) {
+    entries.push({
+      severity: "critical",
+      title: "Some desired quantities cannot be fulfilled",
+      affected: result.insufficientGroups.map((group) => group.cardName).join(", "),
+      whatHappened: "The optimizer found fewer available copies than the reviewed desired quantity for one or more cards.",
+      whyItMatters: "The buying plan is incomplete until those quantities are reduced or more seller offers are added.",
+      whatToDo: "Adjust the desired quantity or find additional offers, then re-run optimization."
     });
   }
 
@@ -1758,6 +1784,17 @@ function exactParsedTrusteeValue(seller, articleValue, quantity, shippingMethod,
 
   return roundMoney(parsedTrusteeValue);
 }
+
+export const __testing = {
+  state,
+  buildOfferGroups,
+  buildResultWarnings,
+  getTotalCopies,
+  groupSelectedOffersBySeller,
+  optimizeCart,
+  optimizationSummaryTemplate,
+  warningBannerTemplate
+};
 
 function normalizeMethodForComparison(value) {
   return String(value || "")
