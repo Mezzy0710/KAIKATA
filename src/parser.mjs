@@ -36,6 +36,12 @@ const GENERIC_METHOD_TOKENS = new Set([
   "value"
 ]);
 
+const SHIPPING_METHOD_COUNTRY_ALIASES = [
+  { pattern: /\bdeutschland-deal\b/i, country: "Germany", score: 0.91 },
+  { pattern: /\bpostamail internazionale\b/i, country: "Italy", score: 0.9 },
+  { pattern: /\bcorriere espresso\b/i, country: "Italy", score: 0.9 }
+];
+
 const CONDITION_PATTERNS = [
   ["Near Mint", /\b(near mint|nm|m\/nm)\b/i],
   ["Mint", /\b(mint|mt)\b/i],
@@ -1013,6 +1019,10 @@ function inferSellerCountry(shippingMethod, shippingValue, trackingStatus, shipp
     .slice(0, 5);
 
   if (!scored.length) {
+    const aliasedCountry = inferCountryByMethodAlias(shippingMethod);
+    if (aliasedCountry) {
+      return aliasedCountry;
+    }
     return fallback;
   }
 
@@ -1032,6 +1042,27 @@ function inferSellerCountry(shippingMethod, shippingValue, trackingStatus, shipp
       price: record.price,
       score: record.score
     }))
+  };
+}
+
+function inferCountryByMethodAlias(shippingMethod) {
+  const match = SHIPPING_METHOD_COUNTRY_ALIASES.find((entry) => entry.pattern.test(String(shippingMethod || "")));
+  if (!match) {
+    return null;
+  }
+
+  return {
+    country: match.country,
+    source: "shipping_method_alias",
+    confidence: match.score,
+    ambiguous: false,
+    matches: [{
+      country: match.country,
+      method: cleanupValue(shippingMethod),
+      tracked: "unknown",
+      price: null,
+      score: match.score
+    }]
   };
 }
 
