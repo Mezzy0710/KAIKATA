@@ -2453,6 +2453,32 @@ select {
     grid-template-columns: 1fr 1fr;
   }
 
+  .desired-cards-table {
+    font-size: 0.8em;
+  }
+
+  .desired-cards-table thead th,
+  .desired-cards-table tbody td {
+    padding: 8px 10px;
+  }
+
+  .reference-cell {
+    display: none;
+  }
+
+  .qty-button {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+
+  .qty-input {
+    width: 50px;
+    height: 28px;
+    padding: 0 6px;
+    font-size: 0.85em;
+  }
+
   .plan-pill-row {
     gap: 8px;
   }
