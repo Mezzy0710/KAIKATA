@@ -5,6 +5,19 @@ import {
   estimateShipmentWeight,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
 } from "./shipping.mjs?v=20260509f";
+import {
+  getReferencePrice,
+  enrichCardsWithReferencePrices,
+  initScryallCache
+} from "./scryfall.mjs?v=20260509g";
+import {
+  calculatePriceDelta,
+  getDeltaColor,
+  formatDeltaDisplay,
+  enrichCardWithReference,
+  hasHighPricedCards,
+  generateHighPriceNote
+} from "./price-verdict.mjs?v=20260509g";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
@@ -23,7 +36,11 @@ const state = {
   showDebug: false,
   inputCollapsed: false,
   desiredQuantityByCard: {},
-  optimizationStale: false
+  optimizationStale: false,
+  // Reference price check feature
+  priceReferences: {}, // Map<normalizedCardName, referencePriceData>
+  scryallLookupInProgress: false, // Show loading state while fetching
+  referenceCheckEnabled: true // Can be disabled in settings (v2)
 };
 
 const elements = {
@@ -53,6 +70,13 @@ const elements = {
 boot();
 
 function boot() {
+  // Initialize Scryfall cache for reference price lookups
+  if (state.referenceCheckEnabled) {
+    initScryallCache().catch(error => {
+      console.error('Failed to initialize Scryfall cache:', error);
+    });
+  }
+
   elements.parseButton.addEventListener("click", optimizeFromInput);
   if (elements.loadSampleButton) {
     elements.loadSampleButton.addEventListener("click", loadSampleCart);
@@ -148,6 +172,54 @@ function parseCurrentInput() {
   elements.optimizationState.textContent = "Ready";
   elements.optimizationState.className = "status-pill info";
   render();
+
+  // Trigger async Scryfall enrichment (non-blocking)
+  if (state.referenceCheckEnabled && state.parsed.sellers.length > 0) {
+    enrichParserResultsWithScryfall(state.parsed.sellers).catch(error => {
+      console.error('Scryfall enrichment failed:', error);
+    });
+  }
+}
+
+/**
+ * Asynchronously enrich parsed cards with Scryfall reference prices
+ *
+ * @param {array} sellers - Array of seller objects from parsed cart
+ */
+async function enrichParserResultsWithScryfall(sellers) {
+  state.scryallLookupInProgress = true;
+  render(); // Show loading state
+
+  try {
+    // Extract unique card names from all sellers
+    const cardNames = new Set();
+    sellers.forEach(seller => {
+      seller.items.forEach(item => {
+        if (item.cardName) {
+          cardNames.add(item.cardName);
+        }
+      });
+    });
+
+    if (cardNames.size === 0) {
+      return; // No cards to look up
+    }
+
+    // Bulk lookup with Scryfall
+    const references = await enrichCardsWithReferencePrices([...cardNames]);
+
+    // Store in state, keyed by normalized name
+    references.forEach((refData, normalizedKey) => {
+      state.priceReferences[normalizedKey] = refData;
+    });
+
+  } catch (error) {
+    console.error('Scryfall lookup failed:', error);
+    // Don't break the app - just skip reference prices
+  } finally {
+    state.scryallLookupInProgress = false;
+    render(); // Update UI with reference prices
+  }
 }
 
 function clearInput() {
@@ -157,6 +229,8 @@ function clearInput() {
   state.inputCollapsed = false;
   state.desiredQuantityByCard = {};
   state.optimizationStale = false;
+  state.priceReferences = {}; // Clear reference prices
+  state.scryallLookupInProgress = false;
   elements.optimizationState.textContent = "Waiting";
   elements.optimizationState.className = "status-pill muted";
   setMessage("No cart parsed yet.");
