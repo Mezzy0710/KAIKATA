@@ -3,102 +3,97 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cardmarket Cart Optimizer</title>
+    <title>CartForge</title>
     <link rel="stylesheet" href="./styles.css?v=20260509h">
   </head>
   <body>
     <div class="app-shell">
-      <header class="workspace-header page-header">
+      <header class="workspace-header page-header forge-header">
         <div class="brand">
-          <div>
-            <h1>Cardmarket Cart Optimizer</h1>
-            <p class="header-subtitle">Minimize total cost including card prices, dynamic shipping, and fees.</p>
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="10" y="16" width="24" height="32" rx="5"></rect>
+              <rect x="18" y="11" width="24" height="32" rx="5"></rect>
+              <rect x="26" y="6" width="24" height="32" rx="5"></rect>
+              <path d="M35 21l4 4 8-10"></path>
+            </svg>
           </div>
+          <div class="brand-copy">
+            <p class="eyebrow">Cardmarket buying planner</p>
+            <h1>CartForge</h1>
+            <p class="header-subtitle">Turn messy seller offers into a clean buying plan.</p>
+          </div>
+        </div>
+        <div class="header-status-line" aria-live="polite">
+          <span id="recipientCountry">Germany</span>
+          <span class="header-status-separator" aria-hidden="true">&middot;</span>
+          <span id="shippingDataStatus" class="shipping-load-status loading">Shipping data loading</span>
         </div>
       </header>
 
-      <nav class="stepper" id="appStepper" aria-label="Workflow steps">
-        <ol class="stepper-list">
-          <li class="stepper-item" data-step="1">
-            <div class="stepper-circle">
-              <span class="stepper-number">1</span>
-              <span class="stepper-check" aria-hidden="true">✓</span>
-            </div>
-            <div class="stepper-label">Paste cart</div>
-          </li>
-          <li class="stepper-line" data-from="1" aria-hidden="true"></li>
-          <li class="stepper-item" data-step="2">
-            <div class="stepper-circle">
-              <span class="stepper-number">2</span>
-              <span class="stepper-check" aria-hidden="true">✓</span>
-            </div>
-            <div class="stepper-label">Review quantities</div>
-          </li>
-          <li class="stepper-line" data-from="2" aria-hidden="true"></li>
-          <li class="stepper-item" data-step="3">
-            <div class="stepper-circle">
-              <span class="stepper-number">3</span>
-              <span class="stepper-check" aria-hidden="true">✓</span>
-            </div>
-            <div class="stepper-label">Buy from sellers</div>
-          </li>
-        </ol>
-      </nav>
-
       <main class="workspace">
-        <div class="workspace-top-row">
-          <section class="panel input-panel">
-            <div class="panel-heading panel-heading-stack">
-              <div>
-                <p class="eyebrow">Step 1</p>
-                <h2>Paste your Cardmarket cart content</h2>
-              </div>
-              <span id="optimizationState" class="status-pill muted">Waiting</span>
+        <section class="panel input-panel forge-intro-panel">
+          <div class="panel-heading panel-heading-stack">
+            <div>
+              <p class="eyebrow">Paste cart</p>
+              <h2>Paste your full Cardmarket cart content</h2>
             </div>
-            <div id="inputEditor" class="input-editor">
-              <p class="panel-description">Paste your full Cardmarket shopping cart from desktop or mobile.</p>
-              <details class="how-it-works-toggle">
-                <summary>How does this work?</summary>
-                <p>The optimizer parses your pasted cart to detect sellers, cards, prices, and quantities. It validates the parsing, then computes the cheapest seller mix using dynamic shipping costs and trustee fees so you can compare it against your current cart total.</p>
-              </details>
-              <label class="field-label" for="cartInput">Cardmarket cart content</label>
-              <textarea id="cartInput" spellcheck="false" placeholder="Paste the full Cardmarket shopping cart page content here"></textarea>
-              <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
-              <p id="shippingDataStatus" class="shipping-load-status" aria-live="polite"></p>
-              <div class="button-row button-row-input">
-                <button id="parseButton" class="primary-button" type="button">Optimize Cart</button>
-                <button id="clearButton" class="ghost-button" type="button">Clear</button>
-              </div>
+            <span id="optimizationState" class="workflow-state" aria-live="polite">Waiting</span>
+          </div>
+          <div id="inputEditor" class="input-editor">
+            <p class="panel-description">Copy the full Cardmarket cart page from desktop or mobile. CartForge will detect sellers, cards, quantities, shipping, and fees before building a cleaner seller split.</p>
+            <details class="how-it-works-toggle">
+              <summary>How CartForge reads the pasted cart</summary>
+              <p>The parser reads seller blocks, card lines, quantities, and checkout costs from the copied page. You can review the detected shopping list before forging the final buying plan.</p>
+            </details>
+            <label class="field-label" for="cartInput">Cardmarket cart content</label>
+            <textarea id="cartInput" spellcheck="false" placeholder="Paste the full Cardmarket shopping cart page content here"></textarea>
+            <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
+            <div class="button-row button-row-input">
+              <button id="parseButton" class="primary-button" type="button">Build buying plan</button>
+              <button id="clearButton" class="ghost-button" type="button">Clear</button>
             </div>
-            <div id="inputSummary" class="input-summary hidden" aria-live="polite"></div>
-          </section>
-
-          <section class="panel result-panel summary-panel">
-            <div class="panel-heading">
-              <div>
-                <p class="eyebrow">Result</p>
-                <h2>Optimization result</h2>
-              </div>
-            </div>
-            <div id="optimizationSummary" class="summary-output" aria-live="polite"></div>
-          </section>
-        </div>
+          </div>
+          <div id="inputSummary" class="input-summary hidden" aria-live="polite"></div>
+        </section>
 
         <section class="panel compact-panel validation-panel">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Step 2</p>
-              <h2>Review desired quantities</h2>
+              <p class="eyebrow">Shopping list</p>
+              <h2>Review desired cards</h2>
             </div>
           </div>
           <div id="desiredCardsReview" class="desired-cards-review" aria-live="polite"></div>
         </section>
 
+        <section class="panel result-panel summary-panel">
+          <div class="panel-heading panel-heading-soft">
+            <div>
+              <p class="eyebrow">Buying plan</p>
+              <h2>Best buying plan</h2>
+            </div>
+          </div>
+          <div id="optimizationSummary" class="summary-output" aria-live="polite"></div>
+        </section>
+
+        <section id="notesPanel" class="panel result-panel notes-panel hidden">
+          <div class="panel-heading panel-heading-soft">
+            <div>
+              <p class="eyebrow">Review notes</p>
+              <h2>Review notes, cost notes, and warnings</h2>
+              <p class="panel-description panel-description-tight">Anything that affects confidence in the buying plan appears here before you copy cards into checkout.</p>
+            </div>
+          </div>
+          <div id="optimizationNotes" class="optimization-notes" aria-live="polite"></div>
+        </section>
+
         <section class="panel result-panel recommendation-panel">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Step 3</p>
+              <p class="eyebrow">Seller split</p>
               <h2>Buy from these sellers</h2>
+              <p class="panel-description panel-description-tight">Add the listed cards from each seller to match the optimized buying plan.</p>
             </div>
             <button id="runOptimizationButton" class="primary-button run-button" type="button">Re-run Optimization</button>
           </div>
@@ -109,12 +104,13 @@
           <summary>
             <span class="advanced-details-chevron" aria-hidden="true"></span>
             <span class="advanced-details-summary-text">Advanced details</span>
+            <span class="advanced-details-summary-subtext">For troubleshooting and validation.</span>
           </summary>
           <div class="advanced-details-body">
             <div class="compact-panel-footer">
               <label class="toggle-row">
                 <input id="debugToggle" type="checkbox">
-                <span>Show raw parser blocks in validation review</span>
+                <span>Show raw parser blocks</span>
               </label>
             </div>
             <section id="sellerReview" class="seller-review" aria-live="polite"></section>

@@ -5,7 +5,11 @@ import { __testing } from "../src/app.mjs";
 const indexHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const appSource = await readFile(new URL("../src/app.mjs", import.meta.url), "utf8");
 
-assert.match(indexHtml, /Review desired quantities/);
+assert.match(indexHtml, /CartForge/);
+assert.match(indexHtml, /Turn messy seller offers into a clean buying plan\./);
+assert.match(indexHtml, /Review desired cards/);
+assert.match(indexHtml, /Buy from these sellers/);
+assert.match(indexHtml, /Advanced details/);
 assert.match(appSource, /Review desired cards/);
 assert.match(appSource, /Different cards/);
 assert.match(appSource, /Total copies/);
@@ -18,13 +22,18 @@ assert.ok(!appSource.includes("Difference to reviewed offer pool"));
 assert.ok(!appSource.includes("Total saved"));
 assert.ok(!appSource.includes(">Savings<"));
 assert.ok(!appSource.includes("Card groups"));
+for (const forbiddenPhrase of ["route selected", "seller route", "journey"]) {
+  assert.ok(!indexHtml.toLowerCase().includes(forbiddenPhrase), `Main HTML should not use "${forbiddenPhrase}" language.`);
+  assert.ok(!appSource.toLowerCase().includes(forbiddenPhrase), `App copy should not use "${forbiddenPhrase}" language.`);
+}
 
 assert.match(appSource, /Buying plan needs update/, "Changing desired quantity should mark the plan stale and require re-run.");
 assert.match(appSource, /Re-run optimization/);
 assert.match(appSource, /class="result-warning/, "Warnings and cost notes should render in a dedicated visible section.");
-assert.match(appSource, /Show details/, "Warning counters/sections should expose accessible details.");
+assert.match(appSource, /Review details/, "Warning counters/sections should expose accessible details.");
 assert.match(appSource, /Cost note/, "Informational assumptions should be labeled as a cost note when no critical warning exists.");
-assert.match(appSource, /Fees \/ trustee \(estimated\)/, "Estimated trustee values should be clearly labeled as estimated.");
+assert.match(appSource, /Fees \/ trustee/, "Trustee values should be clearly labeled.");
+assert.match(appSource, /Estimated /, "Estimated trustee values should be clearly labeled as estimated.");
 assert.match(appSource, /Why it matters:/, "Warning details should explain why the issue matters.");
 assert.match(appSource, /What to do:/, "Warning details should explain what to do next.");
 assert.match(appSource, /Affects:/, "Warning details should show affected seller/card when available.");
@@ -53,6 +62,17 @@ assert.match(desiredCardsHtml, /Scryfall ref/);
 assert.match(desiredCardsHtml, /Vs Scryfall/);
 assert.match(desiredCardsHtml, /EUR 0\.80/, "Rendered desired card rows should show the fetched Scryfall price.");
 assert.match(desiredCardsHtml, /reference-delta-badge/, "Rendered desired card rows should show a visible delta badge.");
+
+__testing.state.desiredQuantityByCard = { "Arcane Signet": 0 };
+const excludedDesiredCardsHtml = __testing.desiredCardsTableTemplate([{
+  cardName: "Arcane Signet",
+  requiredQuantity: 1,
+  sellerCount: 4,
+  lowestUnitPrice: 0.85,
+  offers: [{ quantity: 1 }]
+}]);
+assert.match(excludedDesiredCardsHtml, /value="0"/, "Quantity 0 should stay visible in the desired cards control.");
+assert.match(excludedDesiredCardsHtml, /Excluded/, "Quantity 0 should render as excluded in the desired cards table.");
 
 const sellerPlanHtml = __testing.sellerPlanTemplate(
   { sellerName: "ItalianValue", sellerCountry: "Italy", shippingMethod: "Posta", trackingStatus: "untracked" },

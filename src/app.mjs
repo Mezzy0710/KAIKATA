@@ -65,7 +65,9 @@ const elements = hasDom ? {
   inputSummary: document.querySelector("#inputSummary"),
   shippingDataStatus: document.querySelector("#shippingDataStatus"),
   optimizationState: document.querySelector("#optimizationState"),
+  optimizationNotes: document.querySelector("#optimizationNotes"),
   optimizationOutput: document.querySelector("#optimizationOutput"),
+  notesPanel: document.querySelector("#notesPanel"),
   emptyStateTemplate: document.querySelector("#emptyStateTemplate")
 } : {};
 
@@ -127,22 +129,22 @@ function updateOptimizeButton() {
   const isLoading = shippingDataState === "loading";
 
   elements.parseButton.disabled = isLoading;
-  elements.parseButton.textContent = isLoading ? "Loading…" : "Optimize Cart";
+  elements.parseButton.textContent = isLoading ? "Loading…" : "Build buying plan";
 
   const statusEl = elements.shippingDataStatus;
   if (!statusEl) return;
 
   if (shippingDataState === "loading") {
-    statusEl.textContent = "Loading shipping data…";
+    statusEl.textContent = "Shipping data loading";
     statusEl.className = "shipping-load-status loading";
   } else if (shippingDataState === "loaded") {
-    statusEl.textContent = "";
-    statusEl.className = "shipping-load-status";
+    statusEl.textContent = "Shipping data loaded";
+    statusEl.className = "shipping-load-status loaded";
   } else if (shippingDataState === "error") {
     statusEl.textContent = window.location.protocol === "file:"
-      ? "⚠ Shipping data unavailable via file://. Open via a local server or GitHub Pages."
-      : "⚠ Could not load shipping data. Optimization will run but cannot compute shipping costs.";
-    statusEl.className = "shipping-load-status error";
+      ? "Shipping data unavailable via file://"
+      : "Shipping data unavailable";
+    statusEl.className = "shipping-load-status missing";
   }
 }
 
@@ -315,9 +317,9 @@ function renderInputState(sellers, parsedTotal) {
   elements.inputSummary.innerHTML = `
     <div class="input-summary-card">
       <div class="input-summary-copy">
-        <span class="status-pill good">Cart parsed successfully</span>
-        <h3>Ready to review your buying plan</h3>
-        <p>${escapeHtml(`${sellers.length} seller${sellers.length === 1 ? "" : "s"} found, ${state.parsed.itemCount} offer${state.parsed.itemCount === 1 ? "" : "s"} parsed, original total ${formatMoney(parsedTotal)}.`)}</p>
+        <span class="status-pill good">Cart detected</span>
+        <h3>Shopping list ready for review</h3>
+        <p>${escapeHtml(`${sellers.length} seller${sellers.length === 1 ? "" : "s"} detected, ${state.parsed.itemCount} offer${state.parsed.itemCount === 1 ? "" : "s"} parsed, original total ${formatMoney(parsedTotal)}.`)}</p>
       </div>
       <div class="button-row input-summary-actions">
         <button id="editCartButton" class="ghost-button" type="button">Edit pasted cart</button>
@@ -370,6 +372,8 @@ function summaryCard(label, value, tone = "muted") {
 function renderOptimizationViews() {
   if (!state.optimizationResult) {
     elements.optimizationSummary.innerHTML = summaryEmptyState();
+    elements.optimizationNotes.innerHTML = "";
+    elements.notesPanel.classList.add("hidden");
     elements.optimizationOutput.innerHTML = recommendationsEmptyState();
     elements.assignmentOutput.innerHTML = assignmentEmptyState();
     elements.assumptionsOutput.innerHTML = assumptionsEmptyState();
@@ -377,6 +381,9 @@ function renderOptimizationViews() {
   }
 
   elements.optimizationSummary.innerHTML = optimizationSummaryTemplate(state.optimizationResult);
+  const warningEntries = buildResultWarnings(state.optimizationResult);
+  elements.optimizationNotes.innerHTML = warningEntries.length ? warningBannerTemplate(state.optimizationResult, warningEntries) : "";
+  elements.notesPanel.classList.toggle("hidden", warningEntries.length === 0);
   elements.optimizationOutput.innerHTML = recommendationsTemplate(state.optimizationResult);
   elements.assignmentOutput.innerHTML = assignmentTableTemplate(state.optimizationResult);
   elements.assumptionsOutput.innerHTML = assumptionsTemplate(state.optimizationResult);
@@ -438,7 +445,7 @@ function desiredCardsTableTemplate(offerGroups) {
 }
 
 function desiredCardRowTemplate(group) {
-  const desiredQty = state.desiredQuantityByCard[group.cardName] || group.requiredQuantity;
+  const desiredQty = state.desiredQuantityByCard[group.cardName] ?? group.requiredQuantity;
   const availableQty = Math.max(...group.offers.map(o => o.quantity), 0);
   const isAvailable = availableQty >= desiredQty;
   const statusLabel = desiredQty === 0 ? "Excluded" : isAvailable ? "Ready" : "Insufficient";
@@ -907,7 +914,7 @@ function updateOptimizationPreview() {
   elements.optimizationOutput.innerHTML = `
     <div class="result-stale-notice">
       <p><strong>Buying plan needs update</strong></p>
-      <p>You changed desired quantities after the last optimization.</p>
+      <p>Desired quantities changed after the last optimization.</p>
       <button id="rerunOptimizationButton" class="primary-button" type="button">Re-run optimization</button>
     </div>
   `;
@@ -1226,33 +1233,30 @@ function optimizationSummaryTemplate(result) {
   const shippingTotal = result.shippingTotal;
   const trusteeTotal = result.trusteeTotal;
   const feeTotal = result.sellerCosts.reduce((sum, sellerCost) => sum + Number(sellerCost.cardmarketFeeValue || 0), 0);
-  const warningEntries = buildResultWarnings(result);
-  const warningBanner = warningEntries.length ? warningBannerTemplate(result, warningEntries) : "";
   const selectedCardGroups = result.selectedOffers.length;
   const totalCopies = result.selectedOffers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
   const hasEstimatedTrustee = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
-  const trusteeLabel = hasEstimatedTrustee ? "Fees / trustee (estimated)" : "Fees / trustee";
-  const trusteeNote = "Verify at Cardmarket checkout";
+  const trusteeLabel = hasEstimatedTrustee ? "Fees / trustee" : "Fees / trustee";
+  const trusteeNote = hasEstimatedTrustee ? "Estimated · verify at Cardmarket checkout" : "Verify at Cardmarket checkout";
 
   return `
-    <div class="summary-hero-card">
+    <div class="summary-hero-card summary-hero-forge">
       <div class="summary-hero-copy">
         <span class="eyebrow">Best buying plan</span>
         <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
-        <p>Buy the cards from the sellers below.</p>
+        <p>Forge a clean seller split from the copied cart without rechecking every offer by hand.</p>
+        <div class="hero-meta-line">${escapeHtml(`${result.usedSellers.length} sellers · ${selectedCardGroups} different cards · ${totalCopies} total copies`)}</div>
       </div>
     </div>
-    ${warningBanner}
     <div class="result-hero guided-metrics">
-      <div class="guided-metric"><span>Optimized buying plan</span><strong>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</strong></div>
       <div class="guided-metric"><span>Sellers to use</span><strong>${escapeHtml(result.usedSellers.length)}</strong></div>
       <div class="guided-metric"><span>Different cards</span><strong>${escapeHtml(selectedCardGroups)}</strong></div>
       <div class="guided-metric"><span>Total copies</span><strong>${escapeHtml(totalCopies)}</strong></div>
-      <div class="guided-metric"><span>Article value</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
-      <div class="guided-metric muted-detail"><span>Shipping total</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
+      <div class="guided-metric"><span>Cards</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
+      <div class="guided-metric muted-detail"><span>Shipping</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
       <div class="guided-metric muted-detail">
         <span>${escapeHtml(trusteeLabel)}</span>
-        <strong>${escapeHtml(formatEstimatedMoney(trusteeTotal))}</strong>
+        <strong>${escapeHtml(`Estimated ${formatEstimatedMoney(trusteeTotal)}`)}</strong>
         <small class="metric-note">${escapeHtml(trusteeNote)}</small>
       </div>
       ${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `<div class="guided-metric muted-detail"><span>Cardmarket fees</span><strong>${escapeHtml(formatEstimatedMoney(feeTotal))}</strong></div>`}
@@ -1304,7 +1308,7 @@ function warningBannerTemplate(result, warningEntries) {
         <p class="result-warning-body">${escapeHtml(sectionBody)}</p>
       </div>
       <details class="warning-details" ${criticalCount ? "open" : ""}>
-        <summary>Show details</summary>
+        <summary>Review details</summary>
         <div class="warning-list">
           ${warningEntries.map((entry) => warningEntryTemplate(entry)).join("")}
         </div>
@@ -1508,8 +1512,8 @@ function emptyStateBlockTemplate({ icon, title, body }) {
 function summaryEmptyState() {
   return emptyStateBlockTemplate({
     icon: ICON_CHART,
-    title: "No optimization yet",
-    body: "Paste your Cardmarket cart and click Optimize to see the cheapest seller mix."
+    title: "No buying plan yet",
+    body: "Paste your Cardmarket cart and build a buying plan to see the cleanest seller split."
   });
 }
 
@@ -1517,7 +1521,7 @@ function recommendationsEmptyState() {
   return emptyStateBlockTemplate({
     icon: ICON_CART,
     title: "No buying plan yet",
-    body: "Recommended sellers and assigned cards will appear here after optimization."
+    body: "Buy-from-these-sellers instructions will appear here after optimization."
   });
 }
 
@@ -1532,8 +1536,8 @@ function assignmentEmptyState() {
 function assumptionsEmptyState() {
   return emptyStateBlockTemplate({
     icon: ICON_INFO,
-    title: "No assumptions yet",
-    body: "Shipping thresholds, selected methods, and calculation notes will appear here after optimization."
+    title: "No advanced details yet",
+    body: "Validation, shipping traces, and calculation notes will appear here after optimization."
   });
 }
 
@@ -1590,7 +1594,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
         <div class="seller-info-primary">
           <h3>Buy from ${escapeHtml(seller.sellerName)}</h3>
           <div class="seller-meta">
-            ${escapeHtml(seller.sellerCountry || "Unknown")} · ${escapeHtml(trackingLabel)} · ${escapeHtml(`${itemCount} card${itemCount === 1 ? "" : "s"}`)}
+            ${escapeHtml(seller.sellerCountry || "Unknown")} · ${escapeHtml(trackingLabel)} · ${escapeHtml(`${itemCount} ${itemCount === 1 ? "copy" : "copies"}`)}
           </div>
         </div>
         <div class="seller-total">
