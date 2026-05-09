@@ -1,10 +1,10 @@
-import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260509e";
+import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260509f";
 import {
   calculateShippingCost,
   calculateTrusteeFee,
   estimateShipmentWeight,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
-} from "./shipping.mjs?v=20260509e";
+} from "./shipping.mjs?v=20260509f";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
@@ -174,6 +174,7 @@ function render() {
   }
 
   renderStepper(sellers);
+  updateRunOptimizationButtonVisibility();
   renderInputState(sellers, parsedTotal);
   renderSummary(sellers, itemCount, offerGroups, parsedTotal);
   renderDesiredCards(offerGroups);
@@ -209,6 +210,13 @@ function renderStepper(sellers) {
     const fromStep = Number(line.dataset.from);
     line.classList.toggle("done", fromStep < activeStep);
   });
+}
+
+function updateRunOptimizationButtonVisibility() {
+  // Only show "Re-run Optimization" button when there's already a result to re-run.
+  // Before the first optimization, this button is confusing and should stay hidden.
+  const hasResult = !!state.optimizationResult;
+  elements.runOptimizationButton.style.display = hasResult ? "" : "none";
 }
 
 function renderInputState(sellers, parsedTotal) {
