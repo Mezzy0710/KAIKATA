@@ -1,10 +1,10 @@
-import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260509d";
+import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260509e";
 import {
   calculateShippingCost,
   calculateTrusteeFee,
   estimateShipmentWeight,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
-} from "./shipping.mjs?v=20260509d";
+} from "./shipping.mjs?v=20260509e";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
@@ -12,6 +12,7 @@ const MAX_OPTIMIZATION_ITERATIONS = 50;
 
 const state = {
   shippingData: null,
+  shippingDataState: "loading", // "loading" | "loaded" | "error"
   parsed: parseCart(""),
   optimizationResult: null,
   showDebug: false,
@@ -69,24 +70,46 @@ function boot() {
 }
 
 async function loadShippingData() {
+  state.shippingDataState = "loading";
+  updateOptimizeButton();
   try {
     const response = await fetch("./shipping_data.json", { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
     state.shippingData = await response.json();
-    if (elements.shippingDataStatus) {
-      elements.shippingDataStatus.textContent = "Shipping data loaded";
-      elements.shippingDataStatus.className = "shipping-status loaded";
-    }
+    state.shippingDataState = "loaded";
+    updateOptimizeButton();
     render();
   } catch (error) {
     state.shippingData = null;
-    if (elements.shippingDataStatus) {
-      elements.shippingDataStatus.textContent = window.location.protocol === "file:" ? "Use localhost for shipping data" : "Shipping data missing";
-      elements.shippingDataStatus.className = "shipping-status missing";
-    }
+    state.shippingDataState = "error";
+    updateOptimizeButton();
     render();
+  }
+}
+
+function updateOptimizeButton() {
+  const { shippingDataState } = state;
+  const isLoading = shippingDataState === "loading";
+
+  elements.parseButton.disabled = isLoading;
+  elements.parseButton.textContent = isLoading ? "Loading…" : "Optimize Cart";
+
+  const statusEl = elements.shippingDataStatus;
+  if (!statusEl) return;
+
+  if (shippingDataState === "loading") {
+    statusEl.textContent = "Loading shipping data…";
+    statusEl.className = "shipping-load-status loading";
+  } else if (shippingDataState === "loaded") {
+    statusEl.textContent = "";
+    statusEl.className = "shipping-load-status";
+  } else if (shippingDataState === "error") {
+    statusEl.textContent = window.location.protocol === "file:"
+      ? "⚠ Shipping data unavailable via file://. Open via a local server or GitHub Pages."
+      : "⚠ Could not load shipping data. Optimization will run but cannot compute shipping costs.";
+    statusEl.className = "shipping-load-status error";
   }
 }
 

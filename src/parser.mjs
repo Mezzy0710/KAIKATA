@@ -997,7 +997,11 @@ function inferSellerCountry(shippingMethod, shippingValue, trackingStatus, shipp
     .map((record) => {
       const recordTokens = tokenize(record.method);
       const overlap = recordTokens.filter((token) => methodTokens.includes(token)).length;
-      const inclusion = normalizeText(record.method).includes(normalizeText(shippingMethod)) || normalizeText(shippingMethod).includes(normalizeText(record.method));
+      const strippedRecordNorm = normalizeText(stripParens(record.method));
+      const strippedMethodNorm = normalizeText(stripParens(shippingMethod));
+      const inclusion = strippedRecordNorm === strippedMethodNorm ||
+        strippedRecordNorm.includes(strippedMethodNorm) ||
+        strippedMethodNorm.includes(strippedRecordNorm);
       const trackingBoost = trackingStatus !== "unknown" && record.tracked === trackingStatus ? 0.15 : 0;
       const priceBoost = shippingValue !== null && record.price !== null && Math.abs(record.price - shippingValue) < 0.005 ? 0.2 : 0;
       const rawScore = (inclusion ? 0.65 : 0) + overlap / Math.max(recordTokens.length, methodTokens.length, 1) + trackingBoost + priceBoost;
@@ -1059,14 +1063,31 @@ function inferCountryByMethodTokens(shippingMethod, shippingRows) {
   };
 }
 
+function stripParens(value) {
+  // Remove parenthetical annotations (e.g. translations, suffixes) from a method name.
+  // "Posta Raccomandata Internazionale (International Registered Mail)" →
+  // "Posta Raccomandata Internazionale"
+  return String(value || "").replace(/\s*\([^)]*\)/g, "").trim();
+}
+
 function methodsMatch(left, right) {
   const normalizedLeft = normalizeText(left);
   const normalizedRight = normalizeText(right);
-  return Boolean(
-    normalizedLeft &&
-      normalizedRight &&
-      (normalizedLeft === normalizedRight || normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft))
-  );
+  if (!normalizedLeft || !normalizedRight) {
+    return false;
+  }
+  if (normalizedLeft === normalizedRight) {
+    return true;
+  }
+  // Strip parenthetical annotations before substring checks so that
+  // "Foo Bar (English Translation)" does not falsely match a cart
+  // method of "English Translation". Only allow the record (left) to
+  // contain the cart method (right), not the other way around, to
+  // prevent short record names like "Registered Letter" from matching
+  // long cart methods like "International Registered Letter".
+  const strippedLeft = normalizeText(stripParens(left));
+  const strippedRight = normalizeText(stripParens(right));
+  return strippedLeft === strippedRight || strippedLeft.includes(strippedRight);
 }
 
 function uniqueCountries(records) {
