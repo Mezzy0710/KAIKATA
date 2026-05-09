@@ -229,6 +229,9 @@ async function enrichParserResultsWithScryfall(sellers) {
   } finally {
     state.scryallLookupInProgress = false;
     render(); // Update UI with reference prices
+
+    // Ensure all reference tooltips are updated with loaded data
+    updateReferenceTooltips();
   }
 }
 
@@ -416,17 +419,10 @@ function renderDesiredCards(offerGroups) {
   const selectedTotal = Object.values(state.desiredQuantityByCard).filter(qty => qty > 0).length;
 
   elements.desiredCardsReview.insertAdjacentHTML("beforeend", `
-    <details class="review-details desired-cards-section" open>
-      <summary>
-        <span>Review desired cards</span>
-        <span class="summary-meta">Different cards: ${selectedTotal} · Total copies: ${detectedTotal}</span>
-      </summary>
-      <div class="review-details-body">
-        <p class="note-text">Quantities are inferred from the pasted cart. Adjust them before optimizing if needed.</p>
-        ${referenceStatusTemplate()}
-        ${desiredCardsTableTemplate(offerGroups)}
-      </div>
-    </details>
+    <p class="note-text">Quantities from cart—adjust if needed.</p>
+    <p class="note-text reference-status-text" style="margin-top: 8px; color: var(--text-muted);">Different cards: ${selectedTotal} · Total copies: ${detectedTotal}</p>
+    ${referenceStatusTemplate()}
+    ${desiredCardsTableTemplate(offerGroups)}
   `);
 }
 
@@ -489,15 +485,15 @@ function referenceStatusTemplate() {
   }
 
   if (state.scryallLookupInProgress) {
-    return `<p class="note-text reference-status-text">Scryfall reference prices are loading for detected cards.</p>`;
+    return `<p class="note-text reference-status-text">Loading reference prices...</p>`;
   }
 
   const referenceCount = Object.values(state.priceReferences).filter((entry) => entry && !entry.error).length;
   if (referenceCount > 0) {
-    return `<p class="note-text reference-status-text">Scryfall reference prices are shown where available.</p>`;
+    return `<p class="note-text reference-status-text">Reference prices shown</p>`;
   }
 
-  return `<p class="note-text reference-status-text">Scryfall reference prices are unavailable for this review right now.</p>`;
+  return `<p class="note-text reference-status-text">Reference prices unavailable</p>`;
 }
 
 function referencePriceDisplay(referenceData) {
@@ -1776,6 +1772,40 @@ function referenceDeltaTitle(referenceCard, referenceData) {
   }
 
   return `${formatMoney(referenceCard.price)} vs ${formatReferenceMoney(referenceData.price, referenceData.currency)} from ${referenceData.source}`;
+}
+
+/**
+ * Update reference price tooltips after Scryfall data loads
+ *
+ * This ensures that even if rows are re-rendered before Scryfall data arrives,
+ * tooltips will be updated with correct reference prices when data becomes available.
+ */
+function updateReferenceTooltips() {
+  // Find all reference delta badges (both in desired cards and recommendations)
+  const badges = document.querySelectorAll(".reference-delta-badge");
+
+  badges.forEach((badge) => {
+    // Find the card name from nearby table row's data attribute or text content
+    const row = badge.closest("tr");
+    if (!row) return;
+
+    const cardNameAttr = row.getAttribute("data-card-name");
+    const cardNameFromText = row.querySelector("td")?.textContent?.trim();
+    const cardName = cardNameAttr || cardNameFromText;
+
+    if (!cardName) return;
+
+    // Get the current reference data for this card
+    const referenceData = getReferenceData(cardName);
+    const referenceCard = enrichCardWithReference(
+      { cardName, price: parseFloat(row.querySelector(".price-cell")?.textContent || 0) },
+      referenceData
+    );
+
+    // Update the tooltip title with the correct reference data
+    const correctTitle = referenceDeltaTitle(referenceCard, referenceData);
+    badge.setAttribute("title", correctTitle);
+  });
 }
 
 function formatSavings(value) {
