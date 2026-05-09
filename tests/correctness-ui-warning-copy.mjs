@@ -6,7 +6,7 @@ const indexHtml = await readFile(new URL("../index.html", import.meta.url), "utf
 const appSource = await readFile(new URL("../src/app.mjs", import.meta.url), "utf8");
 
 assert.match(indexHtml, /CartForge/);
-assert.match(indexHtml, /Turn messy seller offers into a clean buying plan\./);
+assert.match(indexHtml, /Cardmarket buying planner/);
 assert.match(indexHtml, /Review desired cards/);
 assert.match(indexHtml, /Buy from these sellers/);
 assert.match(indexHtml, /Advanced details/);
