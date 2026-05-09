@@ -996,6 +996,7 @@ function optimizeBySellerMoves(initialSelection, groups, sellers, shippingRecord
     let improved = false;
     iterations += 1;
 
+    outerLoop:
     for (const fromSellerIndex of sellerIndexes) {
       for (const toSellerIndex of sellerIndexes) {
         if (fromSellerIndex === toSellerIndex) {
@@ -1022,6 +1023,7 @@ function optimizeBySellerMoves(initialSelection, groups, sellers, shippingRecord
             selection = trialSelection;
             score = trialScore;
             improved = true;
+            break outerLoop;
           }
         }
       }
