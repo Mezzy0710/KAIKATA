@@ -191,7 +191,7 @@ h3 {
 }
 
 .shipping-load-status {
-  display: none !important;
+  display: inline;
   margin: 0;
   font-size: 0.74rem;
   line-height: 1.4;
@@ -578,10 +578,6 @@ select {
   padding: 0 20px;
 }
 
-#runOptimizationButton {
-  display: none;
-}
-
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -636,6 +632,13 @@ select {
   line-height: 1.5;
 }
 
+.workflow-hint {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .result-stale-notice {
   padding: 14px;
   border: 1px solid rgba(237, 191, 155, 0.26);
@@ -646,17 +649,6 @@ select {
 .result-stale-notice p + p,
 .result-stale-notice button {
   margin-top: 12px;
-}
-
-.workflow-state {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  border: 0;
 }
 
 .summary-strip {
@@ -736,6 +728,30 @@ select {
   margin-top: 0;
 }
 
+.review-action-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.review-action-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.note-text {
+  color: var(--text-soft);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.reference-status-text {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
 .toggle-row {
   display: flex;
   align-items: center;
@@ -793,6 +809,24 @@ select {
   font-size: 0.9rem;
   line-height: 1.5;
   max-width: 40rem;
+}
+
+.summary-hero-copy .summary-savings {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.summary-hero-copy .summary-savings.good {
+  color: var(--success);
+}
+
+.summary-hero-copy .summary-savings.warning {
+  color: var(--warning);
+}
+
+.summary-hero-copy .summary-savings.muted {
+  color: var(--text-soft);
 }
 
 .plan-pill-row {
@@ -919,6 +953,21 @@ select {
 .warning-details {
   border-top: 1px solid var(--line);
   padding-top: 10px;
+}
+
+.warning-quick-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.warning-quick-actions p {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+  color: var(--text-soft);
+  line-height: 1.5;
 }
 
 .warning-details summary {
@@ -1694,6 +1743,11 @@ select {
   background: var(--bg-panel);
 }
 
+.reference-stack {
+  display: grid;
+  gap: 4px;
+}
+
 .subdued-panel {
   background: var(--bg-panel-soft);
 }
@@ -1705,6 +1759,16 @@ select {
 .drop-panel p {
   color: var(--text-muted);
   line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .review-action-bar {
+    flex-direction: column;
+  }
+
+  .review-action-bar .run-button {
+    width: 100%;
+  }
 }
 
 .hidden {
@@ -2073,27 +2137,85 @@ select {
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.reference-price-icon {
+.tooltip-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
-  margin-left: 6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   cursor: help;
-  opacity: 0.65;
-  transition: opacity 0.2s ease;
+  opacity: 0.78;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
   color: var(--blue);
+  border: 1px solid rgba(107, 158, 217, 0.25);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  background: rgba(107, 158, 217, 0.08);
 }
 
-.reference-price-icon:hover {
+.tooltip-chip:hover {
   opacity: 1;
+  border-color: rgba(107, 158, 217, 0.45);
 }
 
-.reference-price-icon svg {
-  width: 100%;
-  height: 100%;
-  stroke: currentColor;
+.tooltip-chip:focus-visible {
+  opacity: 1;
+  border-color: rgba(107, 158, 217, 0.45);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(107, 158, 217, 0.18);
+}
+
+.tooltip-chip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 180px;
+  max-width: 260px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #171717;
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: normal;
+  text-align: left;
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.14s ease, visibility 0.14s ease;
+  z-index: 20;
+}
+
+.tooltip-chip::before {
+  content: "";
+  position: absolute;
+  right: calc(100% + 2px);
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent transparent #171717;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.14s ease, visibility 0.14s ease;
+  z-index: 21;
+}
+
+.tooltip-chip:hover::after,
+.tooltip-chip:hover::before,
+.tooltip-chip:focus-visible::after,
+.tooltip-chip:focus-visible::before {
+  opacity: 1;
+  visibility: visible;
 }
 
 .price-with-reference {

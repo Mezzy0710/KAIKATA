@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CartForge</title>
-    <link rel="stylesheet" href="./styles.css?v=20260509j">
+    <link rel="stylesheet" href="./styles.css?v=20260509m">
   </head>
   <body>
     <div class="app-shell">
@@ -21,14 +21,9 @@
           <div class="brand-copy">
             <div class="brand-lockup">
               <h1>CartForge</h1>
-              <p class="header-subtitle">Cardmarket buying planner</p>
+              <p class="header-subtitle">Cardmarket cart optimizer</p>
             </div>
           </div>
-        </div>
-        <div class="header-meta" aria-live="polite">
-          <span id="recipientCountry" class="header-meta-country">Germany</span>
-          <span class="header-status-separator" aria-hidden="true">&middot;</span>
-          <span id="shippingDataStatus" class="shipping-load-status loading">Data loading</span>
         </div>
       </header>
 
@@ -36,18 +31,19 @@
         <section class="panel input-panel forge-intro-panel">
           <div class="panel-heading panel-heading-stack">
             <div>
-              <h2>Paste your Cardmarket cart</h2>
+              <h2 title="Paste copied Cardmarket cart text here to detect cards, sellers, and the best buying plan.">Cardmarket Input</h2>
             </div>
-            <span id="optimizationState" class="workflow-state" aria-live="polite">Waiting</span>
+            <span id="optimizationState" class="status-pill muted" aria-live="polite">Ready to parse</span>
           </div>
           <div id="inputEditor" class="input-editor">
-            <p class="panel-description">Paste your Cardmarket shopping cart to build a buying plan.</p>
+            <p class="panel-description">Paste copied Cardmarket cart text to detect cards, sellers, and the best buying plan.</p>
             <label class="field-label" for="cartInput">Cardmarket cart content</label>
-            <textarea id="cartInput" spellcheck="false" placeholder="Paste the full Cardmarket shopping cart page content here"></textarea>
+            <textarea id="cartInput" spellcheck="false" placeholder="Paste the full copied Cardmarket cart text here"></textarea>
             <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
+            <p id="workflowHint" class="workflow-hint">Next: confirm the detected shopping list.</p>
             <div class="button-row button-row-input">
-              <button id="parseButton" class="primary-button" type="button">Build buying plan</button>
-              <button id="clearButton" class="ghost-button" type="button">Clear</button>
+              <button id="parseButton" class="primary-button" type="button" onclick="window.__cartforgeParse && window.__cartforgeParse()">Review pasted cart</button>
+              <button id="clearButton" class="ghost-button" type="button">Clear cart</button>
             </div>
           </div>
           <div id="inputSummary" class="input-summary hidden" aria-live="polite"></div>
@@ -57,7 +53,7 @@
           <summary>
             <div class="accordion-header">
               <p class="eyebrow">Shopping list</p>
-              <h2>Review desired cards</h2>
+              <h2>Confirm shopping list</h2>
             </div>
           </summary>
           <div id="desiredCardsReview" class="desired-cards-review" aria-live="polite"></div>
@@ -76,7 +72,7 @@
         <section id="notesPanel" class="panel result-panel notes-panel hidden">
           <div class="panel-heading panel-heading-soft">
             <div>
-              <h2>Review notes</h2>
+              <h2>What to check before buying</h2>
             </div>
           </div>
           <div id="optimizationNotes" class="optimization-notes" aria-live="polite"></div>
@@ -85,33 +81,13 @@
         <section id="recommendationSection" class="panel result-panel recommendation-panel hidden">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Instructions</p>
-              <h2>Buy from these sellers</h2>
-              <p class="panel-description panel-description-tight">Add the listed cards from each seller to match the optimized buying plan.</p>
+              <p class="eyebrow">Plan</p>
+              <h2>Recommended buying plan</h2>
+              <p class="panel-description panel-description-tight">Buy the listed cards from the selected sellers.</p>
             </div>
-            <button id="runOptimizationButton" class="primary-button run-button" type="button">Build buying plan</button>
           </div>
           <div id="optimizationOutput" class="optimization-output" aria-live="polite"></div>
         </section>
-
-        <details id="advancedDetailsSection" class="panel result-panel secondary-panel advanced-details-panel hidden">
-          <summary>
-            <span class="advanced-details-chevron" aria-hidden="true"></span>
-            <span class="advanced-details-summary-text">Advanced details</span>
-            <span class="advanced-details-summary-subtext">For troubleshooting and validation.</span>
-          </summary>
-          <div class="advanced-details-body">
-            <div class="compact-panel-footer">
-              <label class="toggle-row">
-                <input id="debugToggle" type="checkbox">
-                <span>Show raw parser blocks</span>
-              </label>
-            </div>
-            <section id="sellerReview" class="seller-review" aria-live="polite"></section>
-            <div id="assignmentOutput" class="assignment-output" aria-live="polite"></div>
-            <div id="assumptionsOutput" class="assumptions-output" aria-live="polite"></div>
-          </div>
-        </details>
       </main>
     </div>
 
@@ -129,6 +105,6 @@
       </div>
     </template>
 
-    <script type="module" src="./src/app.mjs?v=20260509j"></script>
+    <script type="module" src="./src/app.mjs?v=20260509m"></script>
   </body>
 </html>

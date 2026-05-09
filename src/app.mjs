@@ -1,15 +1,15 @@
-import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260509f";
+import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260509m";
 import {
   calculateShippingCost,
   calculateTrusteeFee,
   estimateShipmentWeight,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
-} from "./shipping.mjs?v=20260509f";
+} from "./shipping.mjs?v=20260509m";
 import {
   getReferencePrice,
   enrichCardsWithReferencePrices,
   initScryallCache
-} from "./scryfall.mjs?v=20260509g";
+} from "./scryfall.mjs?v=20260509m";
 import {
   calculatePriceDelta,
   getDeltaColor,
@@ -17,7 +17,7 @@ import {
   enrichCardWithReference,
   hasHighPricedCards,
   generateHighPriceNote
-} from "./price-verdict.mjs?v=20260509g";
+} from "./price-verdict.mjs?v=20260509m";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
@@ -33,7 +33,6 @@ const state = {
   shippingDataState: "loading", // "loading" | "loaded" | "error"
   parsed: parseCart(""),
   optimizationResult: null,
-  showDebug: false,
   inputCollapsed: false,
   desiredQuantityByCard: {},
   optimizationStale: false,
@@ -51,26 +50,20 @@ const elements = hasDom ? {
   loadSampleButton: document.querySelector("#loadSampleButton"),
   clearButton: document.querySelector("#clearButton"),
   editCartButton: document.querySelector("#editCartButton"),
-  debugToggle: document.querySelector("#debugToggle"),
   runOptimizationButton: document.querySelector("#runOptimizationButton"),
   desiredCardsReview: document.querySelector("#desiredCardsReview"),
   desiredCardsSection: document.querySelector("#desiredCardsSection"),
-  sellerReview: document.querySelector("#sellerReview"),
   summaryStrip: document.querySelector("#summaryStrip"),
   summarySection: document.querySelector("#summarySection"),
   optimizationSummary: document.querySelector("#optimizationSummary"),
-  assignmentOutput: document.querySelector("#assignmentOutput"),
-  assumptionsOutput: document.querySelector("#assumptionsOutput"),
-  recipientCountry: document.querySelector("#recipientCountry"),
   parseMessage: document.querySelector("#parseMessage"),
+  workflowHint: document.querySelector("#workflowHint"),
   inputEditor: document.querySelector("#inputEditor"),
   inputSummary: document.querySelector("#inputSummary"),
-  shippingDataStatus: document.querySelector("#shippingDataStatus"),
   optimizationState: document.querySelector("#optimizationState"),
   optimizationNotes: document.querySelector("#optimizationNotes"),
   optimizationOutput: document.querySelector("#optimizationOutput"),
   recommendationSection: document.querySelector("#recommendationSection"),
-  advancedDetailsSection: document.querySelector("#advancedDetailsSection"),
   notesPanel: document.querySelector("#notesPanel"),
   emptyStateTemplate: document.querySelector("#emptyStateTemplate")
 } : {};
@@ -80,6 +73,8 @@ if (hasDom) {
 }
 
 function boot() {
+  window.__cartforgeParse = parseCurrentInput;
+
   // Initialize Scryfall cache for reference price lookups
   if (state.referenceCheckEnabled) {
     initScryallCache().catch(error => {
@@ -87,22 +82,13 @@ function boot() {
     });
   }
 
-  elements.parseButton.addEventListener("click", optimizeFromInput);
+  elements.parseButton.addEventListener("click", parseCurrentInput);
   if (elements.loadSampleButton) {
     elements.loadSampleButton.addEventListener("click", loadSampleCart);
   }
   elements.clearButton.addEventListener("click", clearInput);
-  elements.debugToggle.checked = state.showDebug;
-  elements.debugToggle.addEventListener("change", () => {
-    state.showDebug = elements.debugToggle.checked;
-    render();
-  });
-  elements.runOptimizationButton.addEventListener("click", runOptimizationPlaceholder);
   elements.desiredCardsReview.addEventListener("change", handleDesiredQuantityChange);
   elements.desiredCardsReview.addEventListener("click", handleDesiredQuantityClick);
-  elements.sellerReview.addEventListener("change", handleReviewChange);
-  elements.sellerReview.addEventListener("click", handleReviewClick);
-  elements.optimizationOutput.addEventListener("change", handleReviewChange);
 
   loadShippingData();
   render();
@@ -130,25 +116,11 @@ async function loadShippingData() {
 
 function updateOptimizeButton() {
   const { shippingDataState } = state;
-  const isLoading = shippingDataState === "loading";
+  elements.parseButton.disabled = false;
+  elements.parseButton.textContent = "Review pasted cart";
 
-  elements.parseButton.disabled = isLoading;
-  elements.parseButton.textContent = isLoading ? "Loading…" : "Build buying plan";
-
-  const statusEl = elements.shippingDataStatus;
-  if (!statusEl) return;
-
-  if (shippingDataState === "loading") {
-    statusEl.textContent = "Shipping data loading";
-    statusEl.className = "shipping-load-status loading";
-  } else if (shippingDataState === "loaded") {
-    statusEl.textContent = "Shipping data loaded";
-    statusEl.className = "shipping-load-status loaded";
-  } else if (shippingDataState === "error") {
-    statusEl.textContent = window.location.protocol === "file:"
-      ? "Shipping data unavailable via file://"
-      : "Shipping data unavailable";
-    statusEl.className = "shipping-load-status missing";
+  if (shippingDataState === "error" && !state.parsed.sellers?.length && !state.optimizationResult) {
+    updateWorkflowStatus("Ready to parse", "warning", "Shipping data is unavailable here. Review still works.");
   }
 }
 
@@ -166,6 +138,10 @@ async function loadSampleCart() {
 }
 
 function parseCurrentInput() {
+  if (elements.parseButton) {
+    elements.parseButton.textContent = "Parsing…";
+  }
+
   state.parsed = parseCart(elements.cartInput.value, state.shippingData);
   state.optimizationResult = null;
   state.optimizationStale = true;
@@ -178,9 +154,16 @@ function parseCurrentInput() {
   });
 
   const totalCopies = getTotalCopies(offerGroups);
-  setMessage(`Parsed ${state.parsed.sellerCount} seller block(s), ${state.parsed.itemCount} seller offer(s), ${offerGroups.length} different card(s), and ${totalCopies} total copies.${warningText}`);
-  elements.optimizationState.textContent = "Ready";
-  elements.optimizationState.className = "status-pill info";
+  if (!state.parsed.sellerCount || !offerGroups.length) {
+    setMessage("No seller blocks or card rows were detected. Paste the copied Cardmarket cart text and try again.");
+    updateWorkflowStatus("Nothing detected", "warning", "Check the pasted cart text and try again.");
+    updateOptimizeButton();
+    render();
+    return;
+  }
+  setMessage(`Detected ${offerGroups.length} different card(s), ${totalCopies} total copies, and ${state.parsed.sellerCount} seller block(s).${warningText}`);
+  updateWorkflowStatus("Cart parsed", state.parsed.warnings.length ? "warning" : "info", "Next: confirm quantities and generate the plan.");
+  updateOptimizeButton();
   render();
 
   // Trigger async Scryfall enrichment (non-blocking)
@@ -244,15 +227,9 @@ function clearInput() {
   state.optimizationStale = false;
   state.priceReferences = {}; // Clear reference prices
   state.scryallLookupInProgress = false;
-  elements.optimizationState.textContent = "Waiting";
-  elements.optimizationState.className = "status-pill muted";
   setMessage("No cart parsed yet.");
+  updateWorkflowStatus("Ready to parse", "muted", "Next: confirm the detected shopping list.");
   render();
-}
-
-function optimizeFromInput() {
-  parseCurrentInput();
-  runOptimizationPlaceholder();
 }
 
 function render() {
@@ -263,21 +240,14 @@ function render() {
   const hasParsedData = sellers.length > 0;
   const hasOptimization = Boolean(state.optimizationResult);
 
-  if (elements.recipientCountry) {
-    elements.recipientCountry.textContent = "Germany";
-  }
-
   elements.desiredCardsSection?.classList.toggle("hidden", !hasParsedData);
   elements.summarySection?.classList.toggle("hidden", !hasOptimization);
   elements.recommendationSection?.classList.toggle("hidden", !hasOptimization);
-  elements.advancedDetailsSection?.classList.toggle("hidden", !hasParsedData);
 
   renderStepper(sellers);
-  updateRunOptimizationButtonVisibility();
   renderInputState(sellers, parsedTotal);
   renderSummary(sellers, itemCount, offerGroups, parsedTotal);
   renderDesiredCards(offerGroups);
-  renderSellers(sellers, offerGroups);
   renderOptimizationViews();
 }
 
@@ -311,13 +281,6 @@ function renderStepper(sellers) {
   });
 }
 
-function updateRunOptimizationButtonVisibility() {
-  // Only show "Re-run Optimization" button when there's already a result to re-run.
-  // Before the first optimization, this button is confusing and should stay hidden.
-  const hasResult = !!state.optimizationResult;
-  elements.runOptimizationButton.style.display = hasResult ? "" : "none";
-}
-
 function renderInputState(sellers, parsedTotal) {
   const canCollapse = state.inputCollapsed && state.optimizationResult && sellers.length;
   elements.inputEditor.classList.toggle("hidden", Boolean(canCollapse));
@@ -331,13 +294,13 @@ function renderInputState(sellers, parsedTotal) {
   elements.inputSummary.innerHTML = `
     <div class="input-summary-card">
       <div class="input-summary-copy">
-        <span class="status-pill good">Cart ready</span>
+        <span class="status-pill good">Cart parsed</span>
         <h3>Shopping list ready</h3>
         <p>${escapeHtml(`${sellers.length} seller${sellers.length === 1 ? "" : "s"} detected, ${state.parsed.itemCount} offer${state.parsed.itemCount === 1 ? "" : "s"} parsed, original total ${formatMoney(parsedTotal)}.`)}</p>
       </div>
       <div class="button-row input-summary-actions">
         <button id="editCartButton" class="ghost-button" type="button">Edit pasted cart</button>
-        <button id="clearButtonCompact" class="ghost-button" type="button">Clear</button>
+        <button id="clearButtonCompact" class="ghost-button" type="button">Clear cart</button>
       </div>
     </div>
   `;
@@ -389,8 +352,6 @@ function renderOptimizationViews() {
     elements.optimizationNotes.innerHTML = "";
     elements.notesPanel.classList.add("hidden");
     elements.optimizationOutput.innerHTML = "";
-    elements.assignmentOutput.innerHTML = "";
-    elements.assumptionsOutput.innerHTML = "";
     return;
   }
 
@@ -399,8 +360,6 @@ function renderOptimizationViews() {
   elements.optimizationNotes.innerHTML = warningEntries.length ? warningBannerTemplate(state.optimizationResult, warningEntries) : "";
   elements.notesPanel.classList.toggle("hidden", warningEntries.length === 0);
   elements.optimizationOutput.innerHTML = recommendationsTemplate(state.optimizationResult);
-  elements.assignmentOutput.innerHTML = assignmentTableTemplate(state.optimizationResult);
-  elements.assumptionsOutput.innerHTML = assumptionsTemplate(state.optimizationResult);
 
   const copyBtn = document.querySelector("#copyPlanButton");
   if (copyBtn) {
@@ -417,13 +376,22 @@ function renderDesiredCards(offerGroups) {
 
   const detectedTotal = Object.values(state.desiredQuantityByCard).reduce((sum, qty) => sum + qty, 0);
   const selectedTotal = Object.values(state.desiredQuantityByCard).filter(qty => qty > 0).length;
+  const actionLabel = state.optimizationStale || !state.optimizationResult ? "Generate best buying plan" : "Generate best buying plan again";
 
   elements.desiredCardsReview.insertAdjacentHTML("beforeend", `
-    <p class="note-text">Quantities from cart—adjust if needed.</p>
-    <p class="note-text reference-status-text" style="margin-top: 8px; color: var(--text-muted);">Different cards: ${selectedTotal} · Total copies: ${detectedTotal}</p>
+    <div class="review-action-bar">
+      <div class="review-action-copy">
+        <p class="note-text">Check quantities.</p>
+        <p class="note-text reference-status-text">Different cards: ${selectedTotal} · Total copies: ${detectedTotal}</p>
+      </div>
+      <button id="runOptimizationButton" class="primary-button run-button" type="button">${escapeHtml(actionLabel)}</button>
+    </div>
     ${referenceStatusTemplate()}
     ${desiredCardsTableTemplate(offerGroups)}
   `);
+
+  elements.runOptimizationButton = document.querySelector("#runOptimizationButton");
+  elements.runOptimizationButton?.addEventListener("click", runOptimizationPlaceholder);
 }
 
 function desiredCardsTableTemplate(offerGroups) {
@@ -433,13 +401,12 @@ function desiredCardsTableTemplate(offerGroups) {
         <table class="desired-cards-table">
           <thead>
             <tr>
-              <th>Card</th>
-              <th>Desired qty</th>
-              <th>Offers found</th>
-              <th>Best price</th>
-              <th>Scryfall ref</th>
-              <th>Vs Scryfall</th>
-              <th>Status</th>
+              <th title="Detected card name from the pasted cart.">Card</th>
+              <th title="Edit how many copies you want the optimizer to buy.">Desired qty</th>
+              <th title="How many sellers in the pasted cart offer this card.">Offers found</th>
+              <th title="Lowest detected unit price in the pasted cart.">Best price</th>
+              <th title="Scryfall comparison only. It does not affect optimization.">Ref check</th>
+              <th title="Whether the current desired quantity can be fulfilled.">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -472,8 +439,12 @@ function desiredCardRowTemplate(group) {
       </td>
       <td>${escapeHtml(group.sellerCount)}</td>
       <td>${escapeHtml(formatMoney(group.lowestUnitPrice))}</td>
-      <td class="reference-cell">${referenceDisplay}</td>
-      <td class="reference-cell">${deltaDisplay}</td>
+      <td class="reference-cell">
+        <div class="reference-stack">
+          ${referenceDisplay}
+          ${deltaDisplay}
+        </div>
+      </td>
       <td><span class="status-pill ${statusClass}">${escapeHtml(statusLabel)}</span></td>
     </tr>
   `;
@@ -485,15 +456,15 @@ function referenceStatusTemplate() {
   }
 
   if (state.scryallLookupInProgress) {
-    return `<p class="note-text reference-status-text">Loading reference prices...</p>`;
+    return `<p class="note-text reference-status-text" title="Scryfall prices are only a comparison signal and do not affect optimization.">Reference prices loading.</p>`;
   }
 
   const referenceCount = Object.values(state.priceReferences).filter((entry) => entry && !entry.error).length;
   if (referenceCount > 0) {
-    return `<p class="note-text reference-status-text">Reference prices shown</p>`;
+    return `<p class="note-text reference-status-text" title="Scryfall prices are only a comparison signal and do not affect optimization.">Reference prices loaded.</p>`;
   }
 
-  return `<p class="note-text reference-status-text">Reference prices unavailable</p>`;
+  return `<p class="note-text reference-status-text" title="Optimization still uses the parsed Cardmarket cart data even without Scryfall prices.">Reference prices unavailable.</p>`;
 }
 
 function referencePriceDisplay(referenceData) {
@@ -506,10 +477,10 @@ function referencePriceDisplay(referenceData) {
   }
 
   if (referenceData.error) {
-    return `<span class="reference-muted" title="${escapeAttribute(referenceErrorLabel(referenceData.reason))}">Unavailable</span>`;
+    return `<span class="reference-muted">Unavailable</span>`;
   }
 
-  return `<span class="price-with-reference">${escapeHtml(formatReferenceMoney(referenceData.price, referenceData.currency))}${referenceSourceIcon(referenceData)}</span>`;
+  return `<span class="price-with-reference">${escapeHtml(formatReferenceMoney(referenceData.price, referenceData.currency))}</span>`;
 }
 
 function referenceDeltaDisplay(referenceCard, referenceData) {
@@ -517,42 +488,15 @@ function referenceDeltaDisplay(referenceCard, referenceData) {
     return `<span class="reference-muted">Loading...</span>`;
   }
 
-  if (!referenceData || referenceData.error || !referenceCard.hasReference) {
+  if (!referenceData) {
     return `<span class="reference-muted">-</span>`;
   }
 
-  return `<span class="reference-delta-badge delta-${escapeAttribute(referenceCard.deltaColor)}" title="${escapeAttribute(referenceDeltaTitle(referenceCard, referenceData))}">${escapeHtml(referenceCard.deltaDisplay)}</span>`;
-}
-
-function renderSellers(sellers, offerGroups) {
-  elements.sellerReview.innerHTML = "";
-
-  if (!sellers.length) {
-    return;
+  if (referenceData.error || !referenceCard.hasReference) {
+    return `<span class="price-with-reference"><span class="reference-muted">-</span>${tooltipChip(referenceErrorLabel(referenceData.reason || "unknown"))}</span>`;
   }
 
-  elements.sellerReview.insertAdjacentHTML("beforeend", `
-    <details class="review-details">
-      <summary>Review parsed seller costs and card offers</summary>
-      <div class="review-details-body">
-        ${sellerSummaryTableTemplate(sellers)}
-        ${offerMatrixTemplate(offerGroups)}
-      </div>
-    </details>
-  `);
-
-  const sellerCards = sellers.map((seller, sellerIndex) => `
-    <article class="seller-card ${manaClasses[sellerIndex % manaClasses.length]}" data-seller-index="${sellerIndex}">
-      ${sellerItemBreakdownTemplate(seller, sellerIndex)}
-    </article>
-  `).join("");
-
-  elements.sellerReview.insertAdjacentHTML("beforeend", `
-    <details class="review-details">
-      <summary>Raw per-seller item breakdown</summary>
-      <div class="seller-card-list">${sellerCards}</div>
-    </details>
-  `);
+  return `<span class="price-with-reference"><span class="reference-delta-badge delta-${escapeAttribute(referenceCard.deltaColor)}">${escapeHtml(referenceCard.deltaDisplay)}</span>${tooltipChip(referenceDeltaTitle(referenceCard, referenceData))}</span>`;
 }
 
 function offerMatrixTemplate(offerGroups) {
@@ -898,8 +842,7 @@ function runOptimizationPlaceholder() {
 
   if (!sellers.length || !offerGroups.length) {
     state.optimizationResult = null;
-    elements.optimizationState.textContent = "No data";
-    elements.optimizationState.className = "status-pill warning";
+    updateWorkflowStatus("No cart data", "warning", "Paste a Cardmarket cart to continue.");
     renderOptimizationViews();
     return;
   }
@@ -907,30 +850,25 @@ function runOptimizationPlaceholder() {
   state.optimizationStale = false;
   state.optimizationResult = optimizeCart(sellers, offerGroups);
   state.inputCollapsed = true;
-  elements.optimizationState.textContent = state.optimizationResult.statusLabel;
-  elements.optimizationState.className = state.optimizationResult.warnings.length ? "status-pill warning" : "status-pill good";
+  updateWorkflowStatus(
+    state.optimizationResult.warnings.length ? "Plan needs review" : "Plan ready",
+    state.optimizationResult.warnings.length ? "warning" : "good",
+    state.optimizationResult.warnings.length
+      ? "Check the notes before buying."
+      : "Your buying plan is ready."
+  );
   render();
   elements.optimizationSummary.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function updateOptimizationPreview() {
   state.optimizationResult = null;
-  elements.optimizationState.textContent = "Needs update";
-  elements.optimizationState.className = "status-pill warning";
-  elements.optimizationOutput.innerHTML = `
-    <div class="result-stale-notice">
-      <p><strong>Buying plan needs update</strong></p>
-      <p>Desired quantities changed after the last optimization.</p>
-      <button id="rerunOptimizationButton" class="primary-button" type="button">Re-run optimization</button>
-    </div>
-  `;
+  updateWorkflowStatus("Needs review", "warning", "Quantities changed. Generate the plan again.");
+  elements.optimizationOutput.innerHTML = "";
   const sellers = state.parsed.sellers;
   const offerGroups = buildOfferGroups(sellers);
   renderSummary(sellers, state.parsed.itemCount, offerGroups, sellers.reduce((sum, seller) => sum + Number(seller.total || 0), 0));
-
-  document.getElementById("rerunOptimizationButton")?.addEventListener("click", runOptimizationPlaceholder);
-  elements.assignmentOutput.innerHTML = assignmentEmptyState();
-  elements.assumptionsOutput.innerHTML = assumptionsEmptyState();
+  elements.notesPanel.classList.add("hidden");
 }
 
 function optimizeCart(sellers, offerGroups) {
@@ -1244,6 +1182,12 @@ function optimizationSummaryTemplate(result) {
   const hasEstimatedTrustee = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
   const trusteeLabel = hasEstimatedTrustee ? "Fees / trustee" : "Fees / trustee";
   const trusteeNote = hasEstimatedTrustee ? "Estimated · verify at Cardmarket checkout" : "Verify at Cardmarket checkout";
+  const savingsTone = result.savings > 0.005 ? "good" : Math.abs(result.savings) < 0.005 ? "muted" : "warning";
+  const savingsLabel = result.savings > 0.005
+    ? `Save ${formatMoney(result.savings)} vs current cart`
+    : Math.abs(result.savings) < 0.005
+      ? "No savings vs current cart"
+      : `${formatMoney(Math.abs(result.savings))} above current cart`;
 
   return `
     <div class="summary-hero-card summary-hero-forge">
@@ -1251,7 +1195,8 @@ function optimizationSummaryTemplate(result) {
         <div class="summary-hero-copy">
           <span class="eyebrow">Best buying plan</span>
           <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
-          <p>Buy the cards from the sellers below to match the lowest combined checkout cost.</p>
+          <p class="summary-savings ${escapeAttribute(savingsTone)}">${escapeHtml(savingsLabel)}</p>
+          <p>Buy the cards below from the selected sellers.</p>
         </div>
         <div class="plan-pill-row" aria-label="Buying plan summary">
           <span class="plan-pill">${escapeHtml(`Sellers to use: ${result.usedSellers.length}`)}</span>
@@ -1299,7 +1244,7 @@ function recommendationsTemplate(result) {
       ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
     </div>
     <div class="drop-panel subdued-panel">
-      <h3>Sellers not used</h3>
+      <h3>Sellers you can drop</h3>
       ${result.droppedSellers.length
         ? `<p>${result.droppedSellers.map(({ seller }) => escapeHtml(seller.sellerName)).join(", ")}</p>`
         : "<p>Every parsed seller contributes to the current best result.</p>"}
@@ -1312,12 +1257,13 @@ function warningBannerTemplate(result, warningEntries) {
   const warningCount = warningEntries.filter((entry) => entry.severity === "warning").length;
   const highestSeverity = criticalCount ? "critical" : warningCount ? "warning" : "info";
 
-  const sectionTitle = criticalCount ? "Action required" : warningCount ? "Review before buying" : "Cost note";
+  const sectionTitle = criticalCount ? "Review before buying" : warningCount ? "Check a few details" : "Quick cost note";
   const sectionBody = criticalCount
-    ? "Some seller costs or assignments could not be resolved. The buying plan may be incomplete."
+    ? "Some costs or quantities could not be confirmed automatically."
     : warningCount
-      ? "The buying plan is usable, but some costs are estimated. Verify the final Cardmarket checkout total before buying."
-      : "All costs are estimated. Verify the final Cardmarket checkout total before buying.";
+      ? "The recommendation is ready, but a few items deserve a quick check."
+      : "Final checkout costs are still estimates.";
+  const quickActions = warningEntries.slice(0, 3).map((entry) => entry.whatToDo);
 
   return `
     <div class="result-warning severity-${escapeAttribute(highestSeverity)}">
@@ -1327,13 +1273,15 @@ function warningBannerTemplate(result, warningEntries) {
         </div>
         <p class="result-warning-body">${escapeHtml(sectionBody)}</p>
       </div>
+      <div class="warning-quick-actions">
+        ${quickActions.map((action) => `<p>${escapeHtml(action)}</p>`).join("")}
+      </div>
       <details class="warning-details" ${criticalCount ? "open" : ""}>
-        <summary>Review details</summary>
+        <summary>Show all warning details</summary>
         <div class="warning-list">
           ${warningEntries.map((entry) => warningEntryTemplate(entry)).join("")}
         </div>
       </details>
-      ${result.countryWarnings.length ? countryReviewTemplate(result.countryWarnings) : ""}
     </div>
   `;
 }
@@ -1375,7 +1323,7 @@ function buildResultWarnings(result) {
       affected: result.countryWarnings.map(({ seller }) => seller.sellerName).join(", "),
       whatHappened: "The parser could not confidently match country or shipping for some selected sellers.",
       whyItMatters: "Shipping and trustee costs may be estimated from incomplete seller data.",
-      whatToDo: "Open the warning details and confirm country and shipping before buying."
+      whatToDo: "Treat shipping-related totals as estimated and double-check them on Cardmarket before buying."
     });
   }
 
@@ -1612,7 +1560,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
       <header class="seller-card-header">
         <div class="seller-number-badge">${escapeHtml(displayNumber)}</div>
         <div class="seller-info-primary">
-          <h3>Buy from ${escapeHtml(seller.sellerName)}</h3>
+          <h3>Seller ${escapeHtml(displayNumber)} · Buy from ${escapeHtml(seller.sellerName)}</h3>
           <div class="seller-meta">
             ${escapeHtml(seller.sellerCountry || "Unknown")} · ${escapeHtml(trackingLabel)} · ${escapeHtml(`${itemCount} ${itemCount === 1 ? "copy" : "copies"}`)}
           </div>
@@ -1744,7 +1692,7 @@ function referenceSourceIcon(referenceData) {
     return "";
   }
 
-  return `<span class="reference-price-icon" title="${escapeAttribute(`${referenceData.source} reference price`)}" aria-label="${escapeAttribute(`${referenceData.source} reference price`)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01"></path><path d="M11 12h1v4h1"></path></svg></span>`;
+  return "";
 }
 
 function referenceErrorLabel(reason) {
@@ -1772,6 +1720,10 @@ function referenceDeltaTitle(referenceCard, referenceData) {
   }
 
   return `${formatMoney(referenceCard.price)} vs ${formatReferenceMoney(referenceData.price, referenceData.currency)} from ${referenceData.source}`;
+}
+
+function tooltipChip(text) {
+  return `<span class="tooltip-chip" data-tooltip="${escapeAttribute(text)}" aria-label="${escapeAttribute(text)}" tabindex="0">?</span>`;
 }
 
 /**
@@ -1806,6 +1758,16 @@ function updateReferenceTooltips() {
     const correctTitle = referenceDeltaTitle(referenceCard, referenceData);
     badge.setAttribute("title", correctTitle);
   });
+}
+
+function updateWorkflowStatus(label, tone = "muted", hint = "") {
+  if (elements.optimizationState) {
+    elements.optimizationState.textContent = label;
+    elements.optimizationState.className = `status-pill ${tone}`;
+  }
+  if (elements.workflowHint) {
+    elements.workflowHint.textContent = hint;
+  }
 }
 
 function formatSavings(value) {
