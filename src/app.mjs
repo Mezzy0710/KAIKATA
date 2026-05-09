@@ -317,8 +317,8 @@ function renderInputState(sellers, parsedTotal) {
   elements.inputSummary.innerHTML = `
     <div class="input-summary-card">
       <div class="input-summary-copy">
-        <span class="status-pill good">Cart detected</span>
-        <h3>Shopping list ready for review</h3>
+        <span class="status-pill good">Cart ready</span>
+        <h3>Shopping list ready</h3>
         <p>${escapeHtml(`${sellers.length} seller${sellers.length === 1 ? "" : "s"} detected, ${state.parsed.itemCount} offer${state.parsed.itemCount === 1 ? "" : "s"} parsed, original total ${formatMoney(parsedTotal)}.`)}</p>
       </div>
       <div class="button-row input-summary-actions">
@@ -408,7 +408,7 @@ function renderDesiredCards(offerGroups) {
     <details class="review-details desired-cards-section" open>
       <summary>
         <span>Review desired cards</span>
-        <span class="summary-meta">${selectedTotal} different card(s) · ${detectedTotal} total copies selected</span>
+        <span class="summary-meta">Different cards: ${selectedTotal} · Total copies: ${detectedTotal}</span>
       </summary>
       <div class="review-details-body">
         <p class="note-text">Quantities are inferred from the pasted cart. Adjust them before optimizing if needed.</p>
@@ -1241,25 +1241,39 @@ function optimizationSummaryTemplate(result) {
 
   return `
     <div class="summary-hero-card summary-hero-forge">
-      <div class="summary-hero-copy">
-        <span class="eyebrow">Best buying plan</span>
-        <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
-        <p>Forge a clean seller split from the copied cart without rechecking every offer by hand.</p>
-        <div class="hero-meta-line">${escapeHtml(`${result.usedSellers.length} sellers · ${selectedCardGroups} different cards · ${totalCopies} total copies`)}</div>
+      <div class="summary-hero-main">
+        <div class="summary-hero-copy">
+          <span class="eyebrow">Best buying plan</span>
+          <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
+          <p>Buy the cards from the sellers below to match the lowest combined checkout cost.</p>
+        </div>
+        <div class="plan-pill-row" aria-label="Buying plan summary">
+          <span class="plan-pill">${escapeHtml(`Sellers to use: ${result.usedSellers.length}`)}</span>
+          <span class="plan-pill">${escapeHtml(`Different cards: ${selectedCardGroups}`)}</span>
+          <span class="plan-pill">${escapeHtml(`Total copies: ${totalCopies}`)}</span>
+        </div>
       </div>
-    </div>
-    <div class="result-hero guided-metrics">
-      <div class="guided-metric"><span>Sellers to use</span><strong>${escapeHtml(result.usedSellers.length)}</strong></div>
-      <div class="guided-metric"><span>Different cards</span><strong>${escapeHtml(selectedCardGroups)}</strong></div>
-      <div class="guided-metric"><span>Total copies</span><strong>${escapeHtml(totalCopies)}</strong></div>
-      <div class="guided-metric"><span>Cards</span><strong>${escapeHtml(formatMoney(cardValue))}</strong></div>
-      <div class="guided-metric muted-detail"><span>Shipping</span><strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong></div>
-      <div class="guided-metric muted-detail">
-        <span>${escapeHtml(trusteeLabel)}</span>
-        <strong>${escapeHtml(`Estimated ${formatEstimatedMoney(trusteeTotal)}`)}</strong>
-        <small class="metric-note">${escapeHtml(trusteeNote)}</small>
+      <div class="summary-breakdown-card">
+        <div class="summary-breakdown-row">
+          <span>Cards / article value</span>
+          <strong>${escapeHtml(formatMoney(cardValue))}</strong>
+        </div>
+        <div class="summary-breakdown-row">
+          <span>Shipping</span>
+          <strong>${escapeHtml(formatEstimatedMoney(shippingTotal))}</strong>
+        </div>
+        <div class="summary-breakdown-row summary-breakdown-row-note">
+          <span>${escapeHtml(trusteeLabel)}</span>
+          <strong>${escapeHtml(`Estimated ${formatEstimatedMoney(trusteeTotal)}`)}</strong>
+          <small>${escapeHtml(trusteeNote)}</small>
+        </div>
+        ${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `
+          <div class="summary-breakdown-row">
+            <span>Cardmarket fees</span>
+            <strong>${escapeHtml(formatEstimatedMoney(feeTotal))}</strong>
+          </div>
+        `}
       </div>
-      ${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `<div class="guided-metric muted-detail"><span>Cardmarket fees</span><strong>${escapeHtml(formatEstimatedMoney(feeTotal))}</strong></div>`}
     </div>
   `;
 }
@@ -1598,6 +1612,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
           </div>
         </div>
         <div class="seller-total">
+          <span>Total</span>
           <strong>${escapeHtml(formatEstimatedMoney(displayTotal))}</strong>
         </div>
       </header>
@@ -1661,6 +1676,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
 
 function recommendationOfferRowTemplate(offer) {
   const referenceOffer = enrichOfferWithReference(offer);
+  const unitLabel = `${formatMoney(offer.unitPrice)} each`;
   const referenceBadge = referenceOffer.hasReference
     ? `<span class="reference-delta-badge delta-${escapeAttribute(referenceOffer.deltaColor)}" title="${escapeAttribute(referenceDeltaTitle(referenceOffer, getReferenceData(offer.cardName)))}">${escapeHtml(referenceOffer.deltaDisplay)}</span>`
     : "";
@@ -1679,7 +1695,7 @@ function recommendationOfferRowTemplate(offer) {
       </td>
       <td class="condition-cell">${escapeHtml(offer.condition)}</td>
       <td class="price-cell">
-        <span class="price-with-reference">${escapeHtml(formatMoney(offer.unitPrice))}${referenceBadge}</span>
+        <span class="price-with-reference">${escapeHtml(unitLabel)}${referenceBadge}</span>
       </td>
     </tr>
   `;
