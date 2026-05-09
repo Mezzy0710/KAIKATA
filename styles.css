@@ -488,6 +488,10 @@ select {
   padding: 0 20px;
 }
 
+#runOptimizationButton {
+  display: none;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
