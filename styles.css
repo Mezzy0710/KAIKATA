@@ -458,6 +458,15 @@ select {
   background: linear-gradient(180deg, #7aebe1 0%, #4fdacb 100%);
 }
 
+.primary-button:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+
+.primary-button:disabled:hover {
+  background: linear-gradient(180deg, #65e4d9 0%, #3fcfc0 100%);
+}
+
 .ghost-button,
 .icon-button {
   background: rgba(9, 13, 19, 0.9);
@@ -528,6 +537,23 @@ select {
   color: var(--text-muted);
   font-size: 0.88rem;
   line-height: 1.5;
+}
+
+.shipping-load-status {
+  display: none;
+  margin-top: 8px;
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.shipping-load-status.loading {
+  display: block;
+  color: var(--text-muted);
+}
+
+.shipping-load-status.error {
+  display: block;
+  color: #f8c56e;
 }
 
 .summary-strip {

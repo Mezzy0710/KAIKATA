@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cardmarket Cart Optimizer</title>
-    <link rel="stylesheet" href="./styles.css?v=20260509d">
+    <link rel="stylesheet" href="./styles.css?v=20260509e">
   </head>
   <body>
     <div class="app-shell">
@@ -64,6 +64,7 @@
               <label class="field-label" for="cartInput">Cardmarket cart content</label>
               <textarea id="cartInput" spellcheck="false" placeholder="Paste the full Cardmarket shopping cart page content here"></textarea>
               <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
+              <p id="shippingDataStatus" class="shipping-load-status" aria-live="polite"></p>
               <div class="button-row button-row-input">
                 <button id="parseButton" class="primary-button" type="button">Optimize Cart</button>
                 <button id="clearButton" class="ghost-button" type="button">Clear</button>
@@ -138,6 +139,6 @@
       </div>
     </template>
 
-    <script type="module" src="./src/app.mjs?v=20260509d"></script>
+    <script type="module" src="./src/app.mjs?v=20260509e"></script>
   </body>
 </html>
