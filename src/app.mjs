@@ -54,8 +54,10 @@ const elements = hasDom ? {
   debugToggle: document.querySelector("#debugToggle"),
   runOptimizationButton: document.querySelector("#runOptimizationButton"),
   desiredCardsReview: document.querySelector("#desiredCardsReview"),
+  desiredCardsSection: document.querySelector("#desiredCardsSection"),
   sellerReview: document.querySelector("#sellerReview"),
   summaryStrip: document.querySelector("#summaryStrip"),
+  summarySection: document.querySelector("#summarySection"),
   optimizationSummary: document.querySelector("#optimizationSummary"),
   assignmentOutput: document.querySelector("#assignmentOutput"),
   assumptionsOutput: document.querySelector("#assumptionsOutput"),
@@ -67,6 +69,8 @@ const elements = hasDom ? {
   optimizationState: document.querySelector("#optimizationState"),
   optimizationNotes: document.querySelector("#optimizationNotes"),
   optimizationOutput: document.querySelector("#optimizationOutput"),
+  recommendationSection: document.querySelector("#recommendationSection"),
+  advancedDetailsSection: document.querySelector("#advancedDetailsSection"),
   notesPanel: document.querySelector("#notesPanel"),
   emptyStateTemplate: document.querySelector("#emptyStateTemplate")
 } : {};
@@ -253,10 +257,17 @@ function render() {
   const itemCount = sellers.reduce((sum, seller) => sum + seller.items.length, 0);
   const offerGroups = buildOfferGroups(sellers);
   const parsedTotal = sellers.reduce((sum, seller) => sum + Number(seller.total || 0), 0);
+  const hasParsedData = sellers.length > 0;
+  const hasOptimization = Boolean(state.optimizationResult);
 
   if (elements.recipientCountry) {
     elements.recipientCountry.textContent = "Germany";
   }
+
+  elements.desiredCardsSection?.classList.toggle("hidden", !hasParsedData);
+  elements.summarySection?.classList.toggle("hidden", !hasOptimization);
+  elements.recommendationSection?.classList.toggle("hidden", !hasOptimization);
+  elements.advancedDetailsSection?.classList.toggle("hidden", !hasParsedData);
 
   renderStepper(sellers);
   updateRunOptimizationButtonVisibility();
@@ -371,12 +382,12 @@ function summaryCard(label, value, tone = "muted") {
 
 function renderOptimizationViews() {
   if (!state.optimizationResult) {
-    elements.optimizationSummary.innerHTML = summaryEmptyState();
+    elements.optimizationSummary.innerHTML = "";
     elements.optimizationNotes.innerHTML = "";
     elements.notesPanel.classList.add("hidden");
-    elements.optimizationOutput.innerHTML = recommendationsEmptyState();
-    elements.assignmentOutput.innerHTML = assignmentEmptyState();
-    elements.assumptionsOutput.innerHTML = assumptionsEmptyState();
+    elements.optimizationOutput.innerHTML = "";
+    elements.assignmentOutput.innerHTML = "";
+    elements.assumptionsOutput.innerHTML = "";
     return;
   }
 
@@ -521,7 +532,6 @@ function renderSellers(sellers, offerGroups) {
   elements.sellerReview.innerHTML = "";
 
   if (!sellers.length) {
-    elements.sellerReview.append(elements.emptyStateTemplate.content.cloneNode(true));
     return;
   }
 

@@ -58,7 +58,7 @@
           <div id="inputSummary" class="input-summary hidden" aria-live="polite"></div>
         </section>
 
-        <section class="panel compact-panel validation-panel">
+        <section id="desiredCardsSection" class="panel compact-panel validation-panel hidden">
           <div class="panel-heading">
             <div>
               <p class="eyebrow">Shopping list</p>
@@ -68,10 +68,10 @@
           <div id="desiredCardsReview" class="desired-cards-review" aria-live="polite"></div>
         </section>
 
-        <section class="panel result-panel summary-panel">
+        <section id="summarySection" class="panel result-panel summary-panel hidden">
           <div class="panel-heading panel-heading-soft">
             <div>
-              <p class="eyebrow">Buying plan</p>
+              <p class="eyebrow">Result</p>
               <h2>Best buying plan</h2>
             </div>
           </div>
@@ -89,10 +89,10 @@
           <div id="optimizationNotes" class="optimization-notes" aria-live="polite"></div>
         </section>
 
-        <section class="panel result-panel recommendation-panel">
+        <section id="recommendationSection" class="panel result-panel recommendation-panel hidden">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Seller split</p>
+              <p class="eyebrow">Instructions</p>
               <h2>Buy from these sellers</h2>
               <p class="panel-description panel-description-tight">Add the listed cards from each seller to match the optimized buying plan.</p>
             </div>
@@ -101,7 +101,7 @@
           <div id="optimizationOutput" class="optimization-output" aria-live="polite"></div>
         </section>
 
-        <details class="panel result-panel secondary-panel advanced-details-panel">
+        <details id="advancedDetailsSection" class="panel result-panel secondary-panel advanced-details-panel hidden">
           <summary>
             <span class="advanced-details-chevron" aria-hidden="true"></span>
             <span class="advanced-details-summary-text">Advanced details</span>
