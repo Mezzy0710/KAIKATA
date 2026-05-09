@@ -392,11 +392,37 @@ function renderDesiredCards(offerGroups) {
 
   elements.runOptimizationButton = document.querySelector("#runOptimizationButton");
   elements.runOptimizationButton?.addEventListener("click", runOptimizationPlaceholder);
+
+  const cardSearchInput = document.querySelector("#cardSearchInput");
+  const cardCountBadge = document.querySelector("#cardCountBadge");
+  if (cardSearchInput) {
+    cardSearchInput.addEventListener("input", (e) => {
+      const query = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll(".desired-cards-table tbody tr");
+      let visibleCount = 0;
+
+      rows.forEach((row) => {
+        const cardName = row.querySelector("td")?.textContent.toLowerCase() || "";
+        const isMatch = cardName.includes(query);
+        row.style.display = isMatch ? "" : "none";
+        if (isMatch) visibleCount += 1;
+      });
+
+      if (cardCountBadge) {
+        cardCountBadge.textContent = `${visibleCount}/${offerGroups.length} cards`;
+      }
+    });
+  }
 }
 
 function desiredCardsTableTemplate(offerGroups) {
+  const cardCount = offerGroups.length;
   return `
     <section class="panel desired-cards-panel">
+      <div class="desired-cards-toolbar">
+        <input type="text" id="cardSearchInput" class="card-search-input" placeholder="Search cards..." aria-label="Search cards in the review table">
+        <div class="card-count-badge" id="cardCountBadge">${cardCount} cards</div>
+      </div>
       <div class="desired-cards-wrap">
         <table class="desired-cards-table">
           <thead>

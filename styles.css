@@ -1801,6 +1801,46 @@ select {
   margin: 0;
 }
 
+.desired-cards-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(200, 200, 200, 0.01);
+}
+
+.card-search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-base);
+  color: var(--text);
+  font-size: 0.9em;
+}
+
+.card-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.card-search-input:focus {
+  outline: none;
+  border-color: var(--text-muted);
+  box-shadow: 0 0 0 2px rgba(120, 120, 120, 0.1);
+}
+
+.card-count-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(120, 120, 120, 0.1);
+  color: var(--text-muted);
+  font-size: 0.85em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .desired-cards-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -2357,6 +2397,15 @@ select {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
+  }
+
+  .desired-cards-toolbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card-search-input {
+    min-width: 100%;
   }
 
   .plan-pill-row {
