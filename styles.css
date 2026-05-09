@@ -1617,6 +1617,76 @@ select {
   color: var(--accent);
 }
 
+/* Shopping list accordion styling */
+.shopping-list-accordion {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.shopping-list-accordion > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  list-style: none;
+  user-select: none;
+}
+
+.shopping-list-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.shopping-list-accordion > summary:hover {
+  background: rgba(253, 123, 65, 0.05);
+}
+
+.accordion-header {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.accordion-header .eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.accordion-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+}
+
+.accordion-header .summary-meta {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.shopping-list-accordion[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.accordion-body {
+  padding: 12px 14px;
+}
+
 .drop-panel {
   padding: 16px 18px;
   border: 1px solid var(--line);

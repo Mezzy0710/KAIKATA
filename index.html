@@ -36,17 +36,12 @@
         <section class="panel input-panel forge-intro-panel">
           <div class="panel-heading panel-heading-stack">
             <div>
-              <p class="eyebrow">Paste cart</p>
               <h2>Paste your Cardmarket cart</h2>
             </div>
             <span id="optimizationState" class="workflow-state" aria-live="polite">Waiting</span>
           </div>
           <div id="inputEditor" class="input-editor">
-            <p class="panel-description">Paste the copied cart page. CartForge will detect sellers, cards, quantities, shipping, and fees before building the buying plan.</p>
-            <details class="how-it-works-toggle">
-              <summary>How CartForge reads the pasted cart</summary>
-              <p>The parser reads seller blocks, card lines, quantities, and checkout costs from the copied page. You can review the detected shopping list before forging the final buying plan.</p>
-            </details>
+            <p class="panel-description">Paste your Cardmarket shopping cart to build a buying plan.</p>
             <label class="field-label" for="cartInput">Cardmarket cart content</label>
             <textarea id="cartInput" spellcheck="false" placeholder="Paste the full Cardmarket shopping cart page content here"></textarea>
             <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
@@ -58,15 +53,15 @@
           <div id="inputSummary" class="input-summary hidden" aria-live="polite"></div>
         </section>
 
-        <section id="desiredCardsSection" class="panel compact-panel validation-panel hidden">
-          <div class="panel-heading">
-            <div>
+        <details id="desiredCardsSection" class="secondary-panel shopping-list-accordion hidden" open>
+          <summary>
+            <div class="accordion-header">
               <p class="eyebrow">Shopping list</p>
               <h2>Review desired cards</h2>
             </div>
-          </div>
+          </summary>
           <div id="desiredCardsReview" class="desired-cards-review" aria-live="polite"></div>
-        </section>
+        </details>
 
         <section id="summarySection" class="panel result-panel summary-panel hidden">
           <div class="panel-heading panel-heading-soft">
@@ -81,9 +76,7 @@
         <section id="notesPanel" class="panel result-panel notes-panel hidden">
           <div class="panel-heading panel-heading-soft">
             <div>
-              <p class="eyebrow">Review notes</p>
               <h2>Review notes</h2>
-              <p class="panel-description panel-description-tight">Anything that affects confidence in the buying plan appears here before you copy cards into checkout.</p>
             </div>
           </div>
           <div id="optimizationNotes" class="optimization-notes" aria-live="polite"></div>
