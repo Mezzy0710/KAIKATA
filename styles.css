@@ -651,7 +651,7 @@ select {
   min-height: 0;
   padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--bg-elevated);
 }
 
@@ -694,7 +694,7 @@ select {
   gap: 10px;
   padding: 14px 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--bg-elevated);
 }
 
@@ -747,7 +747,7 @@ select {
   gap: 16px;
   padding: 18px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--bg-elevated);
 }
 
@@ -801,7 +801,7 @@ select {
   align-content: start;
   padding: 14px 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--bg-panel);
   box-shadow: none;
 }
@@ -854,7 +854,7 @@ select {
   gap: 14px;
   padding: 16px;
   border: 1px solid rgba(237, 191, 155, 0.26);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: rgba(237, 191, 155, 0.08);
   color: var(--text-soft);
   font-size: 0.9rem;
@@ -923,7 +923,7 @@ select {
 .warning-item {
   padding: 14px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--bg-panel);
 }
 
@@ -1000,7 +1000,7 @@ select {
 .premium-seller-card {
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--bg-panel);
   box-shadow: none;
 }
@@ -1253,7 +1253,7 @@ select {
 .item-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--bg-panel);
 }
 
@@ -1269,7 +1269,7 @@ select {
   align-items: end;
   padding: 14px;
   border: 1px solid rgba(237, 191, 155, 0.18);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: rgba(237, 191, 155, 0.05);
 }
 
@@ -1295,7 +1295,7 @@ select {
 
 .review-details {
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--bg-panel-soft);
 }
 
@@ -1365,7 +1365,7 @@ select {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--radius);
   background: var(--bg-panel);
 }
 
@@ -1420,7 +1420,7 @@ select {
   margin: 0 18px 16px 22px;
   padding: 14px;
   border: 1px solid rgba(74, 222, 128, 0.16);
-  border-radius: 16px;
+  border-radius: var(--radius);
   background: rgba(74, 222, 128, 0.05);
 }
 
@@ -1437,7 +1437,7 @@ select {
   padding: 12px;
   overflow: auto;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--bg-elevated);
   color: var(--text-muted);
   font-size: 0.76rem;
@@ -1447,7 +1447,7 @@ select {
 
 .calculation-details {
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--radius);
   background: var(--bg-panel);
 }
 
@@ -1460,7 +1460,7 @@ select {
 .assumption-card {
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius);
   background: var(--bg-elevated);
 }
 
@@ -1490,7 +1490,7 @@ select {
 .result-empty {
   padding: 18px;
   border: 1px solid var(--line-strong);
-  border-radius: 12px;
+  border-radius: var(--radius);
   color: var(--text-muted);
   background: var(--bg-panel);
   font-size: 0.9rem;
@@ -1513,7 +1513,7 @@ select {
   gap: 12px;
   padding: 32px 22px;
   border: 1px solid var(--line-strong);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--bg-panel);
   text-align: center;
 }
@@ -1591,7 +1591,7 @@ select {
 .drop-panel {
   padding: 16px 18px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--bg-panel);
 }
 
@@ -1641,7 +1641,7 @@ select {
 .desired-cards-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--bg-panel);
 }
 
@@ -2027,7 +2027,7 @@ select {
 .high-price-note {
   margin: 12px 0 16px 0;
   padding: 14px 16px;
-  border-radius: 18px;
+  border-radius: var(--radius);
   background: rgba(237, 191, 155, 0.08);
   border: 1px solid rgba(237, 191, 155, 0.2);
   font-size: 0.9em;
