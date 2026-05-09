@@ -1257,16 +1257,46 @@ function optimizationSummaryTemplate(result) {
   `;
 }
 
+function resultSummaryTemplate(result, savingsPercent) {
+  const totalItems = result.selectedOffers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
+  const isSavingsMeaningful = result.savings > 0.1;
+
+  return `
+    <div class="result-summary-strip">
+      <div class="summary-metric">
+        <div class="summary-metric-label">Final Total</div>
+        <div class="summary-metric-value">${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</div>
+      </div>
+      ${isSavingsMeaningful ? `
+        <div class="summary-metric savings-metric">
+          <div class="summary-metric-label">Savings vs Current</div>
+          <div class="summary-metric-value savings-value">${escapeHtml(formatMoney(result.savings))} <span class="savings-percent">(${savingsPercent}%)</span></div>
+        </div>
+      ` : ''}
+      <div class="summary-metric">
+        <div class="summary-metric-label">Sellers to Use</div>
+        <div class="summary-metric-value">${escapeHtml(String(result.usedSellers.length))}</div>
+      </div>
+      <div class="summary-metric">
+        <div class="summary-metric-label">Total Items</div>
+        <div class="summary-metric-value">${escapeHtml(String(totalItems))}</div>
+      </div>
+    </div>
+  `;
+}
+
 function recommendationsTemplate(result) {
   const planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
   const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
   const enrichedSelectedOffers = result.selectedOffers.map((offer) => enrichOfferWithReference(offer));
   const highPriceNote = hasHighPricedCards(enrichedSelectedOffers) ? generateHighPriceNote(enrichedSelectedOffers) : "";
+  const savingsPercent = result.currentTotal > 0 ? Math.round((result.savings / result.currentTotal) * 100) : 0;
 
   return `
     <div class="recommendations-header">
       <button class="ghost-button copy-plan-button" type="button" id="copyPlanButton">Copy buying plan</button>
     </div>
+    ${resultSummaryTemplate(result, savingsPercent)}
     ${highPriceNote}
     <div class="recommendation-grid">
       ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
