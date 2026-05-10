@@ -65,6 +65,7 @@ const elements = hasDom ? {
   optimizationNotes: document.querySelector("#optimizationNotes"),
   optimizationOutput: document.querySelector("#optimizationOutput"),
   recommendationSection: document.querySelector("#recommendationSection"),
+  advancedDetails: document.querySelector("#advancedDetails"),
   notesPanel: document.querySelector("#notesPanel"),
   emptyStateTemplate: document.querySelector("#emptyStateTemplate")
 } : {};
@@ -353,6 +354,10 @@ function renderOptimizationViews() {
     elements.optimizationNotes.innerHTML = "";
     elements.notesPanel.classList.add("hidden");
     elements.optimizationOutput.innerHTML = "";
+    if (elements.advancedDetails?.parentElement) {
+      const advancedSection = elements.advancedDetails.parentElement;
+      advancedSection.classList.add("hidden");
+    }
     return;
   }
 
@@ -361,6 +366,14 @@ function renderOptimizationViews() {
   elements.optimizationNotes.innerHTML = warningEntries.length ? warningBannerTemplate(state.optimizationResult, warningEntries) : "";
   elements.notesPanel.classList.toggle("hidden", warningEntries.length === 0);
   elements.optimizationOutput.innerHTML = recommendationsTemplate(state.optimizationResult);
+
+  const offerGroups = buildOfferGroups(state.parsed.sellers);
+  const advancedContent = advancedDetailsTemplate(state.optimizationResult, offerGroups);
+  if (elements.advancedDetails) {
+    elements.advancedDetails.innerHTML = advancedContent;
+    const advancedSection = elements.advancedDetails.parentElement;
+    advancedSection.classList.toggle("hidden", !advancedContent.trim());
+  }
 
   const copyBtn = document.querySelector("#copyPlanButton");
   if (copyBtn) {
@@ -1302,12 +1315,6 @@ function recommendationsTemplate(result) {
     <div class="recommendation-grid">
       ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
     </div>
-    <div class="drop-panel subdued-panel">
-      <h3>Advanced: Sellers you can drop</h3>
-      ${result.droppedSellers.length
-        ? `<p>These sellers are not needed: ${result.droppedSellers.map(({ seller }) => escapeHtml(seller.sellerName)).join(", ")}</p>`
-        : "<p>All parsed sellers contribute to this plan.</p>"}
-    </div>
   `;
 }
 
@@ -1566,6 +1573,54 @@ function assumptionsEmptyState() {
     title: "No advanced details yet",
     body: "Validation, shipping traces, and calculation notes will appear here after optimization."
   });
+}
+
+function advancedDetailsTemplate(result, offerGroups) {
+  const hasDroppedSellers = result.droppedSellers && result.droppedSellers.length > 0;
+  const sections = [];
+
+  if (hasDroppedSellers) {
+    sections.push(`
+      <div class="advanced-section">
+        <h3>Sellers you can drop</h3>
+        <p class="section-description">These sellers are not needed for the optimized buying plan:</p>
+        <div class="dropped-sellers-list">
+          ${result.droppedSellers.map(({ seller, sellerIndex }) => `
+            <div class="dropped-seller-card">
+              <strong>${escapeHtml(seller.sellerName)}</strong>
+              <p class="seller-stats">${escapeHtml(`${seller.items.length} offer(s)`)}</p>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `);
+  }
+
+  sections.push(`
+    <div class="advanced-section">
+      <h3>Offer matrix</h3>
+      <p class="section-description">All available offers grouped by card:</p>
+      ${offerMatrixTemplate(offerGroups)}
+    </div>
+  `);
+
+  sections.push(`
+    <div class="advanced-section">
+      <h3>Your assignments</h3>
+      <p class="section-description">Which seller was chosen for each card:</p>
+      ${assignmentTableTemplate(result)}
+    </div>
+  `);
+
+  sections.push(`
+    <div class="advanced-section">
+      <h3>Calculation details</h3>
+      <p class="section-description">Shipping, trustee, and cost assumptions:</p>
+      ${assumptionsTemplate(result)}
+    </div>
+  `);
+
+  return sections.join("");
 }
 
 function countryReviewTemplate(countryWarnings) {
