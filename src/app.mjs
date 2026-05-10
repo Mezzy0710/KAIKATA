@@ -65,6 +65,7 @@ const elements = hasDom ? {
   optimizationNotes: document.querySelector("#optimizationNotes"),
   optimizationOutput: document.querySelector("#optimizationOutput"),
   recommendationSection: document.querySelector("#recommendationSection"),
+  advancedDetails: document.querySelector("#advancedDetails"),
   notesPanel: document.querySelector("#notesPanel"),
   emptyStateTemplate: document.querySelector("#emptyStateTemplate")
 } : {};
@@ -156,14 +157,14 @@ function parseCurrentInput() {
 
   const totalCopies = getTotalCopies(offerGroups);
   if (!state.parsed.sellerCount || !offerGroups.length) {
-    setMessage("No seller blocks or card rows were detected. Paste the copied Cardmarket cart text and try again.");
-    updateWorkflowStatus("Nothing detected", "warning", "Check the pasted cart text and try again.");
+    setMessage("No cards or sellers detected. Make sure you pasted the full Cardmarket cart page.");
+    updateWorkflowStatus("Parse failed", "warning", "Try again with the complete cart.");
     updateOptimizeButton();
     render();
     return;
   }
-  setMessage(`Detected ${offerGroups.length} different card(s), ${totalCopies} total copies, and ${state.parsed.sellerCount} seller block(s).${warningText}`);
-  updateWorkflowStatus("Cart parsed", state.parsed.warnings.length ? "warning" : "info", "Next: confirm quantities and generate the plan.");
+  setMessage(`Found ${state.parsed.sellerCount} seller(s) with ${offerGroups.length} card(s) (${totalCopies} total copies).${warningText}`);
+  updateWorkflowStatus("Ready", state.parsed.warnings.length ? "warning" : "good", "Review quantities below, then find your plan.");
   updateOptimizeButton();
   render();
 
@@ -353,6 +354,10 @@ function renderOptimizationViews() {
     elements.optimizationNotes.innerHTML = "";
     elements.notesPanel.classList.add("hidden");
     elements.optimizationOutput.innerHTML = "";
+    if (elements.advancedDetails?.parentElement) {
+      const advancedSection = elements.advancedDetails.parentElement;
+      advancedSection.classList.add("hidden");
+    }
     return;
   }
 
@@ -361,6 +366,14 @@ function renderOptimizationViews() {
   elements.optimizationNotes.innerHTML = warningEntries.length ? warningBannerTemplate(state.optimizationResult, warningEntries) : "";
   elements.notesPanel.classList.toggle("hidden", warningEntries.length === 0);
   elements.optimizationOutput.innerHTML = recommendationsTemplate(state.optimizationResult);
+
+  const offerGroups = buildOfferGroups(state.parsed.sellers);
+  const advancedContent = advancedDetailsTemplate(state.optimizationResult, offerGroups);
+  if (elements.advancedDetails) {
+    elements.advancedDetails.innerHTML = advancedContent;
+    const advancedSection = elements.advancedDetails.parentElement;
+    advancedSection.classList.toggle("hidden", !advancedContent.trim());
+  }
 
   const copyBtn = document.querySelector("#copyPlanButton");
   if (copyBtn) {
@@ -429,11 +442,11 @@ function desiredCardsTableTemplate(offerGroups) {
           <thead>
             <tr>
               <th title="Detected card name from the pasted cart.">Card</th>
-              <th title="Edit how many copies you want the optimizer to buy.">Desired qty</th>
-              <th title="How many sellers in the pasted cart offer this card.">Offers found</th>
-              <th title="Lowest detected unit price in the pasted cart.">Best price</th>
-              <th title="Scryfall comparison only. It does not affect optimization.">Ref check</th>
-              <th title="Whether the current desired quantity can be fulfilled.">Status</th>
+              <th title="Click to edit how many copies you want to buy.">Copies</th>
+              <th title="How many sellers offer this card.">Sellers</th>
+              <th title="Lowest price available.">Lowest $</th>
+              <th title="Market comparison from Scryfall. Does not affect optimization.">Reference</th>
+              <th title="Whether this quantity can be fulfilled.">Ready?</th>
             </tr>
           </thead>
           <tbody>
@@ -483,15 +496,15 @@ function referenceStatusTemplate() {
   }
 
   if (state.scryallLookupInProgress) {
-    return `<p class="note-text reference-status-text" title="Scryfall prices are only a comparison signal and do not affect optimization.">Reference prices loading.</p>`;
+    return `<p class="note-text reference-status-text" title="Scryfall shows market averages. We use Cardmarket prices to optimize.">Market prices loading...</p>`;
   }
 
   const referenceCount = Object.values(state.priceReferences).filter((entry) => entry && !entry.error).length;
   if (referenceCount > 0) {
-    return `<p class="note-text reference-status-text" title="Scryfall prices are only a comparison signal and do not affect optimization.">Reference prices loaded.</p>`;
+    return `<p class="note-text reference-status-text" title="Scryfall shows market averages. We use Cardmarket prices to optimize.">Market prices loaded (for comparison).</p>`;
   }
 
-  return `<p class="note-text reference-status-text" title="Optimization still uses the parsed Cardmarket cart data even without Scryfall prices.">Reference prices unavailable.</p>`;
+  return `<p class="note-text reference-status-text" title="Optimization still works without market prices.">Market prices unavailable (optimization still works).</p>`;
 }
 
 function referencePriceDisplay(referenceData) {
@@ -1295,18 +1308,12 @@ function recommendationsTemplate(result) {
 
   return `
     <div class="recommendations-header">
-      <button class="ghost-button copy-plan-button" type="button" id="copyPlanButton">Copy buying plan</button>
+      <button class="ghost-button copy-plan-button" type="button" id="copyPlanButton">📋 Copy plan to clipboard</button>
     </div>
     ${resultSummaryTemplate(result, savingsPercent)}
     ${highPriceNote}
     <div class="recommendation-grid">
       ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
-    </div>
-    <div class="drop-panel subdued-panel">
-      <h3>Sellers you can drop</h3>
-      ${result.droppedSellers.length
-        ? `<p>${result.droppedSellers.map(({ seller }) => escapeHtml(seller.sellerName)).join(", ")}</p>`
-        : "<p>Every parsed seller contributes to the current best result.</p>"}
     </div>
   `;
 }
@@ -1316,12 +1323,12 @@ function warningBannerTemplate(result, warningEntries) {
   const warningCount = warningEntries.filter((entry) => entry.severity === "warning").length;
   const highestSeverity = criticalCount ? "critical" : warningCount ? "warning" : "info";
 
-  const sectionTitle = criticalCount ? "Review before buying" : warningCount ? "Check a few details" : "Quick cost note";
+  const sectionTitle = criticalCount ? "⚠️ Must fix before buying" : warningCount ? "ℹ️ Verify at checkout" : "ℹ️ Quick note";
   const sectionBody = criticalCount
-    ? "Some costs or quantities could not be confirmed automatically."
+    ? "These issues must be fixed before you buy. Review them below."
     : warningCount
-      ? "The recommendation is ready, but a few items deserve a quick check."
-      : "Final checkout costs are still estimates.";
+      ? "These are estimates. Double-check them on Cardmarket before confirming."
+      : "Final costs will be verified when you checkout on Cardmarket.";
   const quickActions = warningEntries.slice(0, 3).map((entry) => entry.whatToDo);
 
   return `
@@ -1566,6 +1573,54 @@ function assumptionsEmptyState() {
     title: "No advanced details yet",
     body: "Validation, shipping traces, and calculation notes will appear here after optimization."
   });
+}
+
+function advancedDetailsTemplate(result, offerGroups) {
+  const hasDroppedSellers = result.droppedSellers && result.droppedSellers.length > 0;
+  const sections = [];
+
+  if (hasDroppedSellers) {
+    sections.push(`
+      <div class="advanced-section">
+        <h3>Sellers you can drop</h3>
+        <p class="section-description">These sellers are not needed for the optimized buying plan:</p>
+        <div class="dropped-sellers-list">
+          ${result.droppedSellers.map(({ seller, sellerIndex }) => `
+            <div class="dropped-seller-card">
+              <strong>${escapeHtml(seller.sellerName)}</strong>
+              <p class="seller-stats">${escapeHtml(`${seller.items.length} offer(s)`)}</p>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `);
+  }
+
+  sections.push(`
+    <div class="advanced-section">
+      <h3>Offer matrix</h3>
+      <p class="section-description">All available offers grouped by card:</p>
+      ${offerMatrixTemplate(offerGroups)}
+    </div>
+  `);
+
+  sections.push(`
+    <div class="advanced-section">
+      <h3>Your assignments</h3>
+      <p class="section-description">Which seller was chosen for each card:</p>
+      ${assignmentTableTemplate(result)}
+    </div>
+  `);
+
+  sections.push(`
+    <div class="advanced-section">
+      <h3>Calculation details</h3>
+      <p class="section-description">Shipping, trustee, and cost assumptions:</p>
+      ${assumptionsTemplate(result)}
+    </div>
+  `);
+
+  return sections.join("");
 }
 
 function countryReviewTemplate(countryWarnings) {
@@ -2006,6 +2061,7 @@ function exactParsedTrusteeValue(seller, articleValue, quantity, shippingMethod,
 
 export const __testing = {
   state,
+  advancedDetailsTemplate,
   buildOfferGroups,
   buildResultWarnings,
   desiredCardsTableTemplate,
