@@ -1,0 +1,24 @@
+{
+  "name": "cartforge-extension",
+  "version": "1.0.0",
+  "description": "CartForge - Cardmarket Cart Extractor Browser Extension",
+  "type": "module",
+  "author": "CartForge Contributors",
+  "license": "MIT",
+
+  "scripts": {
+    "test": "node tests/extractor.test.mjs",
+    "test:watch": "node --watch tests/extractor.test.mjs",
+    "dev": "echo 'Extension ready for testing in browser. Use chrome://extensions (developer mode) to load the extension folder.'",
+    "build": "node build.mjs",
+    "lint": "echo 'Linting not yet configured'"
+  },
+
+  "devDependencies": {
+    "jsdom": "^23.0.0"
+  },
+
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

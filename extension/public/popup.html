@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CartForge Extractor</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #1a1a1a;
+      --bg-elevated: #2a2a2a;
+      --bg-panel: #222222;
+      --line: rgba(200, 200, 200, 0.08);
+      --text: #e5e5e5;
+      --text-muted: #888888;
+      --accent: #F97316;
+      --accent-soft: rgba(249, 115, 22, 0.12);
+      --success: #10B981;
+      --danger: #EF4444;
+      --radius: 8px;
+    }
+
+    body {
+      width: 420px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+    }
+
+    .popup-container {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .logo {
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    #loading {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px 16px;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--line);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #errors {
+      min-height: 80px;
+      margin: 8px 0;
+    }
+
+    #results {
+      min-height: 80px;
+      margin: 8px 0;
+    }
+
+    .error-box,
+    .warning-box,
+    .success-box {
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .error-box {
+      background: rgba(239, 68, 68, 0.08);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .error-title,
+    .warning-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .error-message,
+    .error-hint,
+    .warning-title {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .error-hint {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+
+    .warning-box {
+      background: rgba(251, 191, 36, 0.08);
+      border-color: rgba(251, 191, 36, 0.2);
+      margin-top: 8px;
+    }
+
+    .success-box {
+      background: var(--bg-elevated);
+      border-color: var(--line);
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .summary-text {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .timestamp {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .sellers-list {
+      margin-bottom: 12px;
+    }
+
+    .label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sellers-list ul {
+      list-style: none;
+    }
+
+    .sellers-list li {
+      padding: 6px 0;
+      font-size: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .sellers-list li:last-child {
+      border-bottom: none;
+    }
+
+    .sellers-list strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .seller-meta {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    .issue-list {
+      list-style: none;
+      margin-left: 0;
+    }
+
+    .issue-list li {
+      padding: 4px 0;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .issue-list li::before {
+      content: "• ";
+      color: var(--danger);
+      margin-right: 4px;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #copyButton {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      grid-column: 1 / -1;
+    }
+
+    #copyButton:hover:not(:disabled) {
+      background: #EA580C;
+      border-color: #EA580C;
+      color: white;
+    }
+
+    #openCartForge {
+      grid-column: 1 / -1;
+    }
+
+    .footer {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup-container">
+    <div>
+      <div class="header">
+        <div class="logo">CF</div>
+        <div>
+          <div class="title">CartForge Extractor</div>
+          <div class="subtitle">v1.0.0</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading">
+      <div class="spinner"></div>
+      <div>Extracting cart...</div>
+    </div>
+
+    <div id="errors"></div>
+
+    <div id="results"></div>
+
+    <div class="button-row">
+      <button id="extractButton">🔄 Re-extract</button>
+      <button id="copyButton" disabled>📋 Copy to Clipboard</button>
+    </div>
+
+    <button id="openCartForge">Open CartForge</button>
+
+    <div class="footer">
+      <p>Extract successful? Paste the copied JSON into CartForge to optimize.</p>
+    </div>
+  </div>
+
+  <script type="module" src="../src/popup.mjs"></script>
+</body>
+</html>

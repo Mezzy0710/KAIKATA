@@ -1,0 +1,123 @@
+{
+  "comment": "Cardmarket DOM selectors for cart data extraction. Multiple selectors per element for robustness across layout variations.",
+
+  "sellerBlock": [
+    "[data-seller-id]",
+    ".seller-card",
+    ".seller-container",
+    "[role='region'][aria-label*='Seller' i]",
+    ".cart-seller"
+  ],
+
+  "sellerName": [
+    ".seller-name",
+    ".vendor-name",
+    "[itemprop='name']",
+    ".seller-title h3",
+    "[data-seller-name]"
+  ],
+
+  "sellerCountry": [
+    ".seller-country",
+    ".country-badge",
+    "[data-country]",
+    ".flag-with-country",
+    "[aria-label*='Country' i]"
+  ],
+
+  "sellerRating": [
+    ".seller-rating",
+    ".rating-stars",
+    "[data-rating]",
+    ".stars",
+    "[aria-label*='rating' i]"
+  ],
+
+  "sellerShippingMethod": [
+    ".shipping-method",
+    "[data-shipping-method]",
+    ".shipping-option",
+    ".method-name",
+    "[aria-label*='Shipping' i]"
+  ],
+
+  "cartItemRow": [
+    "[data-cy='cart-item']",
+    ".cart-row",
+    ".item-row",
+    "tr[data-item-id]",
+    ".product-row"
+  ],
+
+  "cardName": [
+    ".card-name",
+    "[itemprop='name']",
+    ".product-name",
+    ".item-title",
+    "[data-card-name]"
+  ],
+
+  "cardCondition": [
+    ".condition",
+    ".badge-condition",
+    "[data-condition]",
+    ".condition-badge",
+    "[aria-label*='Condition' i]"
+  ],
+
+  "cardQuantity": [
+    "input[type='number'][data-quantity]",
+    "input[name*='quantity' i]",
+    ".qty-input",
+    "[data-qty]",
+    "input[aria-label*='Quantity' i]"
+  ],
+
+  "cardPrice": [
+    ".price",
+    "[data-price]",
+    ".item-price",
+    ".unit-price",
+    "[aria-label*='Price' i]"
+  ],
+
+  "sellerArticleTotal": [
+    "[data-value='articles']",
+    ".article-total",
+    ".seller-subtotal",
+    "[data-seller-total]",
+    ".item-sum"
+  ],
+
+  "sellerShippingCost": [
+    "[data-value='shipping']",
+    ".shipping-cost",
+    ".shipping-total",
+    "[data-shipping-cost]",
+    ".shipping-fee"
+  ],
+
+  "sellerTrusteeFee": [
+    "[data-value='trustee']",
+    ".trustee-fee",
+    ".trustee-cost",
+    "[data-trustee]",
+    ".trustee-amount"
+  ],
+
+  "cartSummarySection": [
+    ".cart-summary",
+    "[role='region'][aria-label*='Summary' i]",
+    ".order-summary",
+    ".summary-section",
+    "[data-section='summary']"
+  ],
+
+  "cartTotal": [
+    "[data-value='total']",
+    ".cart-total",
+    ".final-total",
+    "[data-total]",
+    ".grand-total"
+  ]
+}
