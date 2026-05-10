@@ -90,6 +90,16 @@ result = optimize(variantSellers, { "Rejuvenating Springs": 1 });
 assert.equal(result.selectedOffers.length, 1);
 assert.equal(result.selectedOffers[0].sellerName, "VersionOneSeller", "Merged version groups should still pick the cheapest matching offer.");
 
+const partialDropSeller = seller("PartialSeller", "Germany", [
+  { cardName: "Rejuvenating Springs", quantity: 1, price: 6.95 },
+  { cardName: "Guardian of Faith", quantity: 1, price: 1.29 }
+]);
+const droppedItems = __testing.getDroppedItemsForSeller(partialDropSeller, [
+  { itemIndex: 0, requiredQuantity: 1, quantity: 1 }
+]);
+assert.equal(droppedItems.length, 1, "Used sellers should expose cards that can be removed from the original cart.");
+assert.equal(droppedItems[0].cardName, "Guardian of Faith");
+
 const thresholdSellers = [
   seller("ThresholdCheapA", "Germany", [{ cardName: "Threshold A", quantity: 1, price: 24.9 }]),
   seller("ThresholdCheapB", "Germany", [{ cardName: "Threshold B", quantity: 1, price: 0.1 }]),

@@ -1192,6 +1192,10 @@ select {
   padding: 10px 14px 0;
 }
 
+.dropped-cards-section {
+  margin-top: 10px;
+}
+
 .seller-section-label {
   margin-bottom: 8px;
   color: var(--text-muted);
@@ -1199,6 +1203,10 @@ select {
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
+}
+
+.dropped-section-label {
+  color: var(--danger);
 }
 
 .shipping-detail-section {
@@ -1344,6 +1352,22 @@ select {
 .seller-cards-section .recommendation-table td.condition-cell {
   color: var(--text-muted);
   font-size: 0.84rem;
+}
+
+.dropped-recommendation-table {
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.dropped-recommendation-table tbody tr,
+.dropped-recommendation-table tbody tr:hover {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.dropped-row td:first-child,
+.dropped-row .price-cell {
+  color: var(--danger);
 }
 
 .assignment-table tbody tr,
@@ -1791,6 +1815,14 @@ select {
   margin-top: 16px;
 }
 
+.drop-summary-panel {
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  border-radius: var(--radius);
+  background: rgba(239, 68, 68, 0.05);
+}
+
 .advanced-accordion > summary {
   cursor: pointer;
   padding: 12px 14px;
@@ -1859,6 +1891,19 @@ select {
   border: 1px solid var(--line);
   border-radius: 6px;
   background: rgba(253, 123, 65, 0.05);
+}
+
+.dropped-sellers-list-main {
+  margin-top: 10px;
+}
+
+.dropped-seller-card-main {
+  border-color: rgba(239, 68, 68, 0.18);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.dropped-seller-card-main strong {
+  color: var(--danger);
 }
 
 .dropped-seller-card strong {

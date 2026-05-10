@@ -12,6 +12,8 @@ assert.match(indexHtml, /What to buy from each seller/);
 assert.match(appSource, /Different cards/);
 assert.match(appSource, /Total copies/);
 assert.match(appSource, /Best buying plan/);
+assert.match(appSource, /Sellers to remove from cart/);
+assert.match(appSource, /Remove from this seller/);
 
 for (const forbidden of ["Total saved", "Difference to reviewed offer pool", "Card groups", "Advanced details"]) {
   assert.ok(!indexHtml.includes(forbidden), `Main HTML should not show "${forbidden}".`);
@@ -96,11 +98,14 @@ const sellerPlanHtml = __testing.sellerPlanTemplate(
       basePrice: 4.05,
       cardmarketFeeIncluded: true
     }
-  }
+  },
+  [{ cardName: "Smothering Tithe", quantity: 1, condition: "Near Mint", unitPrice: 28 }]
 );
 assert.match(sellerPlanHtml, /EUR 28\.85/, "Seller plan cards should display full totals including cards plus shipping.");
 assert.doesNotMatch(sellerPlanHtml, />\s*EUR 4\.05\s*<\/strong>\s*<\/div>\s*<\/header>/, "Seller total header must not show shipping-only totals.");
 assert.doesNotMatch(sellerPlanHtml, /Seller 1 · Buy from/, "Seller card headers should not prepend a redundant Seller # label before the seller name.");
+assert.match(sellerPlanHtml, /Remove from this seller/, "Seller cards should show cards to remove when only part of a seller's cart is kept.");
+assert.match(sellerPlanHtml, /Smothering Tithe/);
 
 const copiedPlanText = __testing.buildBuyingPlanText({
   selectedOffers: [
@@ -119,6 +124,12 @@ const copiedPlanText = __testing.buildBuyingPlanText({
 assert.match(copiedPlanText, /Cards: EUR 24\.80/, "Copied plans should include the cards subtotal.");
 assert.match(copiedPlanText, /Shipping: EUR 4\.05/, "Copied plans should include shipping.");
 assert.match(copiedPlanText, /Total: EUR 28\.85/, "Copied plans should report the same full total as the on-screen seller card.");
+
+const droppedSellersHtml = __testing.droppedSellersTemplate([
+  { seller: { sellerName: "UnusedSeller", items: [{}, {}] } }
+]);
+assert.match(droppedSellersHtml, /Sellers to remove from cart/);
+assert.match(droppedSellersHtml, /UnusedSeller/);
 
 const infoOnlyResult = {
   selectedTotal: 10,

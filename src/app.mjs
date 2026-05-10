@@ -1400,6 +1400,10 @@ function resultSummaryTemplate(result, savingsPercent) {
 function recommendationsTemplate(result) {
   const planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
   const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
+  const droppedItemsBySeller = new Map(result.usedSellers.map(({ seller, sellerIndex }) => [
+    sellerIndex,
+    getDroppedItemsForSeller(seller, planBySeller.get(sellerIndex) || [])
+  ]));
   const enrichedSelectedOffers = result.selectedOffers.map((offer) => enrichOfferWithReference(offer));
   const highPriceNote = hasHighPricedCards(enrichedSelectedOffers) ? generateHighPriceNote(enrichedSelectedOffers) : "";
   const savingsPercent = result.currentTotal > 0 ? Math.round((result.savings / result.currentTotal) * 100) : 0;
@@ -1410,9 +1414,35 @@ function recommendationsTemplate(result) {
     </div>
     ${resultSummaryTemplate(result, savingsPercent)}
     ${highPriceNote}
+    ${droppedSellersTemplate(result.droppedSellers)}
     <div class="recommendation-grid">
-      ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
+      ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex), droppedItemsBySeller.get(sellerIndex) || [])).join("")}
     </div>
+  `;
+}
+
+function droppedSellersTemplate(droppedSellers) {
+  if (!droppedSellers?.length) {
+    return "";
+  }
+
+  return `
+    <section class="drop-summary-panel">
+      <div class="panel-heading panel-heading-soft">
+        <div>
+          <p class="eyebrow">Remove</p>
+          <h3>Sellers to remove from cart</h3>
+        </div>
+      </div>
+      <div class="dropped-sellers-list dropped-sellers-list-main">
+        ${droppedSellers.map(({ seller }) => `
+          <article class="dropped-seller-card dropped-seller-card-main">
+            <strong>${escapeHtml(seller.sellerName)}</strong>
+            <p class="seller-stats">${escapeHtml(`${seller.items.length} card${seller.items.length === 1 ? "" : "s"} to remove`)}</p>
+          </article>
+        `).join("")}
+      </div>
+    </section>
   `;
 }
 
@@ -1552,6 +1582,33 @@ function buildResultWarnings(result) {
 
 function sellerNameForCost(result, sellerCost) {
   return result.usedSellers.find((entry) => entry.sellerIndex === sellerCost.sellerIndex)?.seller?.sellerName || `Seller ${sellerCost.sellerIndex + 1}`;
+}
+
+function getDroppedItemsForSeller(seller, selectedOffers) {
+  const selectedByItemIndex = new Map();
+  selectedOffers.forEach((offer) => {
+    const selectedQty = Number(offer.requiredQuantity || offer.quantity || 1);
+    selectedByItemIndex.set(offer.itemIndex, (selectedByItemIndex.get(offer.itemIndex) || 0) + selectedQty);
+  });
+
+  return seller.items.reduce((items, item, itemIndex) => {
+    const originalQty = Number(item.quantity || 1);
+    const selectedQty = selectedByItemIndex.get(itemIndex) || 0;
+    const droppedQty = Math.max(0, originalQty - selectedQty);
+
+    if (droppedQty <= 0) {
+      return items;
+    }
+
+    items.push({
+      cardName: item.cardName,
+      quantity: droppedQty,
+      condition: item.condition || "Unknown",
+      unitPrice: Number(item.price || 0),
+      partiallyKept: selectedQty > 0
+    });
+    return items;
+  }, []);
 }
 
 function assignmentTableTemplate(result) {
@@ -1754,7 +1811,7 @@ function countryReviewRowTemplate(seller, sellerIndex) {
   `;
 }
 
-function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCost) {
+function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCost, droppedItems = []) {
   const cardTotal = sellerCost?.articleValue ?? offerSubtotal(offers);
   const shippingTotal = sellerCost?.shippingValue ?? 0;
   const feeTotal = sellerCost?.cardmarketFeeValue ?? 0;
@@ -1791,6 +1848,27 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
           </tbody>
         </table>
       </div>
+
+      ${droppedItems.length ? `
+        <div class="seller-cards-section dropped-cards-section">
+          <div class="seller-section-label dropped-section-label">Remove from this seller</div>
+          <table class="recommendation-table dropped-recommendation-table">
+            <tbody>
+              ${droppedItems.map((item) => `
+                <tr class="dropped-row">
+                  <td>${escapeHtml(item.quantity)}×</td>
+                  <td>
+                    ${escapeHtml(item.cardName)}
+                    <div class="reference-inline-note">${escapeHtml(item.partiallyKept ? "Extra copies not needed here" : "Move this card to another seller")}</div>
+                  </td>
+                  <td class="condition-cell">${escapeHtml(item.condition)}</td>
+                  <td class="price-cell">${escapeHtml(`${formatMoney(item.unitPrice)} each`)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      ` : ""}
 
       <div class="cost-breakdown">
         <div class="seller-section-label">Cost breakdown</div>
@@ -2193,6 +2271,8 @@ export const __testing = {
   buildBuyingPlanText,
   buildResultWarnings,
   desiredCardsTableTemplate,
+  droppedSellersTemplate,
+  getDroppedItemsForSeller,
   getTotalCopies,
   groupSelectedOffersBySeller,
   normalizeReferenceKey,
