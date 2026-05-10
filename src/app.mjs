@@ -18,6 +18,7 @@ import {
   hasHighPricedCards,
   generateHighPriceNote
 } from "./price-verdict.mjs?v=20260509m";
+import { escapeHtml, escapeAttribute } from "./utils.mjs";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
@@ -392,11 +393,37 @@ function renderDesiredCards(offerGroups) {
 
   elements.runOptimizationButton = document.querySelector("#runOptimizationButton");
   elements.runOptimizationButton?.addEventListener("click", runOptimizationPlaceholder);
+
+  const cardSearchInput = document.querySelector("#cardSearchInput");
+  const cardCountBadge = document.querySelector("#cardCountBadge");
+  if (cardSearchInput) {
+    cardSearchInput.addEventListener("input", (e) => {
+      const query = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll(".desired-cards-table tbody tr");
+      let visibleCount = 0;
+
+      rows.forEach((row) => {
+        const cardName = row.querySelector("td")?.textContent.toLowerCase() || "";
+        const isMatch = cardName.includes(query);
+        row.style.display = isMatch ? "" : "none";
+        if (isMatch) visibleCount += 1;
+      });
+
+      if (cardCountBadge) {
+        cardCountBadge.textContent = `${visibleCount}/${offerGroups.length} cards`;
+      }
+    });
+  }
 }
 
 function desiredCardsTableTemplate(offerGroups) {
+  const cardCount = offerGroups.length;
   return `
     <section class="panel desired-cards-panel">
+      <div class="desired-cards-toolbar">
+        <input type="text" id="cardSearchInput" class="card-search-input" placeholder="Search cards..." aria-label="Search cards in the review table">
+        <div class="card-count-badge" id="cardCountBadge">${cardCount} cards</div>
+      </div>
       <div class="desired-cards-wrap">
         <table class="desired-cards-table">
           <thead>
@@ -996,6 +1023,7 @@ function optimizeBySellerMoves(initialSelection, groups, sellers, shippingRecord
     let improved = false;
     iterations += 1;
 
+    outerLoop:
     for (const fromSellerIndex of sellerIndexes) {
       for (const toSellerIndex of sellerIndexes) {
         if (fromSellerIndex === toSellerIndex) {
@@ -1022,6 +1050,7 @@ function optimizeBySellerMoves(initialSelection, groups, sellers, shippingRecord
             selection = trialSelection;
             score = trialScore;
             improved = true;
+            break outerLoop;
           }
         }
       }
@@ -1229,16 +1258,46 @@ function optimizationSummaryTemplate(result) {
   `;
 }
 
+function resultSummaryTemplate(result, savingsPercent) {
+  const totalItems = result.selectedOffers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
+  const isSavingsMeaningful = result.savings > 0.1;
+
+  return `
+    <div class="result-summary-strip">
+      <div class="summary-metric">
+        <div class="summary-metric-label">Final Total</div>
+        <div class="summary-metric-value">${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</div>
+      </div>
+      ${isSavingsMeaningful ? `
+        <div class="summary-metric savings-metric">
+          <div class="summary-metric-label">Savings vs Current</div>
+          <div class="summary-metric-value savings-value">${escapeHtml(formatMoney(result.savings))} <span class="savings-percent">(${savingsPercent}%)</span></div>
+        </div>
+      ` : ''}
+      <div class="summary-metric">
+        <div class="summary-metric-label">Sellers to Use</div>
+        <div class="summary-metric-value">${escapeHtml(String(result.usedSellers.length))}</div>
+      </div>
+      <div class="summary-metric">
+        <div class="summary-metric-label">Total Items</div>
+        <div class="summary-metric-value">${escapeHtml(String(totalItems))}</div>
+      </div>
+    </div>
+  `;
+}
+
 function recommendationsTemplate(result) {
   const planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
   const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
   const enrichedSelectedOffers = result.selectedOffers.map((offer) => enrichOfferWithReference(offer));
   const highPriceNote = hasHighPricedCards(enrichedSelectedOffers) ? generateHighPriceNote(enrichedSelectedOffers) : "";
+  const savingsPercent = result.currentTotal > 0 ? Math.round((result.savings / result.currentTotal) * 100) : 0;
 
   return `
     <div class="recommendations-header">
       <button class="ghost-button copy-plan-button" type="button" id="copyPlanButton">Copy buying plan</button>
     </div>
+    ${resultSummaryTemplate(result, savingsPercent)}
     ${highPriceNote}
     <div class="recommendation-grid">
       ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
@@ -1998,15 +2057,3 @@ function setMessage(message) {
   elements.parseMessage.textContent = message;
 }
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function escapeAttribute(value) {
-  return escapeHtml(value);
-}

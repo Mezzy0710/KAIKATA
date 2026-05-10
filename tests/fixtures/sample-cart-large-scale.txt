@@ -1,0 +1,761 @@
+Shopping Cart
+Seller: Seller001Germany
+Seller Country
+Germany
+Summary
+Contents
+5 Articles
+Article Value
+12,50 €
+Shipping
+1,25 €
+Trustee Service
+0,00 €
+Total
+13,75 €
+Select shipping method
+Standardbrief (1,25 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card A1
+Near Mint
+2,50 €
+1x Card A2
+Near Mint
+2,50 €
+1x Card A3
+Near Mint
+2,50 €
+1x Card A4
+Near Mint
+2,50 €
+1x Card A5
+Near Mint
+2,50 €
+Seller: Seller002France
+Seller Country
+France
+Summary
+Contents
+5 Articles
+Article Value
+13,75 €
+Shipping
+3,20 €
+Trustee Service
+0,00 €
+Total
+16,95 €
+Select shipping method
+Lettre Internationale Prioritaire (3,20 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card B1
+Excellent
+2,75 €
+1x Card B2
+Excellent
+2,75 €
+1x Card B3
+Excellent
+2,75 €
+1x Card B4
+Excellent
+2,75 €
+1x Card B5
+Excellent
+2,75 €
+Seller: Seller003Italy
+Seller Country
+Italy
+Summary
+Contents
+5 Articles
+Article Value
+14,85 €
+Shipping
+4,05 €
+Trustee Service
+0,00 €
+Total
+18,90 €
+Select shipping method
+Postapriority Internazionale - Ufficio Postale (4,05 €) max. Weight: 50g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card C1
+Good
+2,97 €
+1x Card C2
+Good
+2,97 €
+1x Card C3
+Good
+2,97 €
+1x Card C4
+Good
+2,97 €
+1x Card C5
+Good
+2,97 €
+Seller: Seller004Spain
+Seller Country
+Spain
+Summary
+Contents
+5 Articles
+Article Value
+15,00 €
+Shipping
+5,10 €
+Trustee Service
+0,00 €
+Total
+20,10 €
+Select shipping method
+Carta internacional ordinaria (5,10 €) max. Weight: 50g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card D1
+Light Played
+3,00 €
+1x Card D2
+Light Played
+3,00 €
+1x Card D3
+Light Played
+3,00 €
+1x Card D4
+Light Played
+3,00 €
+1x Card D5
+Light Played
+3,00 €
+Seller: Seller005Netherlands
+Seller Country
+Netherlands
+Summary
+Contents
+5 Articles
+Article Value
+12,00 €
+Shipping
+2,95 €
+Trustee Service
+0,00 €
+Total
+14,95 €
+Select shipping method
+PostNL International Letter (2,95 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card E1
+Near Mint
+2,40 €
+1x Card E2
+Near Mint
+2,40 €
+1x Card E3
+Near Mint
+2,40 €
+1x Card E4
+Near Mint
+2,40 €
+1x Card E5
+Near Mint
+2,40 €
+Seller: Seller006Poland
+Seller Country
+Poland
+Summary
+Contents
+5 Articles
+Article Value
+11,25 €
+Shipping
+2,50 €
+Trustee Service
+0,00 €
+Total
+13,75 €
+Select shipping method
+International Standard (2,50 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card F1
+Excellent
+2,25 €
+1x Card F2
+Excellent
+2,25 €
+1x Card F3
+Excellent
+2,25 €
+1x Card F4
+Excellent
+2,25 €
+1x Card F5
+Excellent
+2,25 €
+Seller: Seller007Belgium
+Seller Country
+Belgium
+Summary
+Contents
+5 Articles
+Article Value
+13,50 €
+Shipping
+3,00 €
+Trustee Service
+0,00 €
+Total
+16,50 €
+Select shipping method
+Lettre Prioritaire Internationale (3,00 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card G1
+Good
+2,70 €
+1x Card G2
+Good
+2,70 €
+1x Card G3
+Good
+2,70 €
+1x Card G4
+Good
+2,70 €
+1x Card G5
+Good
+2,70 €
+Seller: Seller008Austria
+Seller Country
+Austria
+Summary
+Contents
+5 Articles
+Article Value
+14,00 €
+Shipping
+3,50 €
+Trustee Service
+0,00 €
+Total
+17,50 €
+Select shipping method
+OesterreichischePost Brief (3,50 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card H1
+Light Played
+2,80 €
+1x Card H2
+Light Played
+2,80 €
+1x Card H3
+Light Played
+2,80 €
+1x Card H4
+Light Played
+2,80 €
+1x Card H5
+Light Played
+2,80 €
+Seller: Seller009UK
+Seller Country
+UK
+Summary
+Contents
+5 Articles
+Article Value
+15,50 €
+Shipping
+4,75 €
+Trustee Service
+0,00 €
+Total
+20,25 €
+Select shipping method
+Royal Mail Special Delivery (4,75 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card I1
+Near Mint
+3,10 €
+1x Card I2
+Near Mint
+3,10 €
+1x Card I3
+Near Mint
+3,10 €
+1x Card I4
+Near Mint
+3,10 €
+1x Card I5
+Near Mint
+3,10 €
+Seller: Seller010Canada
+Seller Country
+Canada
+Summary
+Contents
+5 Articles
+Article Value
+16,50 €
+Shipping
+12,00 €
+Trustee Service
+0,00 €
+Total
+28,50 €
+Select shipping method
+Canada Post International (12,00 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card J1
+Excellent
+3,30 €
+1x Card J2
+Excellent
+3,30 €
+1x Card J3
+Excellent
+3,30 €
+1x Card J4
+Excellent
+3,30 €
+1x Card J5
+Excellent
+3,30 €
+Seller: Seller011USA
+Seller Country
+USA
+Summary
+Contents
+5 Articles
+Article Value
+17,00 €
+Shipping
+15,00 €
+Trustee Service
+0,00 €
+Total
+32,00 €
+Select shipping method
+USPS Priority Mail International (15,00 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card K1
+Good
+3,40 €
+1x Card K2
+Good
+3,40 €
+1x Card K3
+Good
+3,40 €
+1x Card K4
+Good
+3,40 €
+1x Card K5
+Good
+3,40 €
+Seller: Seller012Japan
+Seller Country
+Japan
+Summary
+Contents
+5 Articles
+Article Value
+18,00 €
+Shipping
+18,00 €
+Trustee Service
+0,00 €
+Total
+36,00 €
+Select shipping method
+Japan Post EMS (18,00 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card L1
+Near Mint
+3,60 €
+1x Card L2
+Near Mint
+3,60 €
+1x Card L3
+Near Mint
+3,60 €
+1x Card L4
+Near Mint
+3,60 €
+1x Card L5
+Near Mint
+3,60 €
+Seller: Seller013Australia
+Seller Country
+Australia
+Summary
+Contents
+5 Articles
+Article Value
+17,50 €
+Shipping
+20,00 €
+Trustee Service
+0,00 €
+Total
+37,50 €
+Select shipping method
+Australia Post International (20,00 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card M1
+Excellent
+3,50 €
+1x Card M2
+Excellent
+3,50 €
+1x Card M3
+Excellent
+3,50 €
+1x Card M4
+Excellent
+3,50 €
+1x Card M5
+Excellent
+3,50 €
+Seller: Seller014Sweden
+Seller Country
+Sweden
+Summary
+Contents
+5 Articles
+Article Value
+13,25 €
+Shipping
+3,75 €
+Trustee Service
+0,00 €
+Total
+17,00 €
+Select shipping method
+Swedish Post (3,75 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card N1
+Good
+2,65 €
+1x Card N2
+Good
+2,65 €
+1x Card N3
+Good
+2,65 €
+1x Card N4
+Good
+2,65 €
+1x Card N5
+Good
+2,65 €
+Seller: Seller015Finland
+Seller Country
+Finland
+Summary
+Contents
+5 Articles
+Article Value
+14,50 €
+Shipping
+4,00 €
+Trustee Service
+0,00 €
+Total
+18,50 €
+Select shipping method
+Finnish Post (4,00 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card O1
+Light Played
+2,90 €
+1x Card O2
+Light Played
+2,90 €
+1x Card O3
+Light Played
+2,90 €
+1x Card O4
+Light Played
+2,90 €
+1x Card O5
+Light Played
+2,90 €
+Seller: Seller016Denmark
+Seller Country
+Denmark
+Summary
+Contents
+5 Articles
+Article Value
+15,75 €
+Shipping
+3,85 €
+Trustee Service
+0,00 €
+Total
+19,60 €
+Select shipping method
+Danish Post (3,85 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card P1
+Near Mint
+3,15 €
+1x Card P2
+Near Mint
+3,15 €
+1x Card P3
+Near Mint
+3,15 €
+1x Card P4
+Near Mint
+3,15 €
+1x Card P5
+Near Mint
+3,15 €
+Seller: Seller017Norway
+Seller Country
+Norway
+Summary
+Contents
+5 Articles
+Article Value
+16,00 €
+Shipping
+5,50 €
+Trustee Service
+0,00 €
+Total
+21,50 €
+Select shipping method
+Norwegian Post (5,50 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card Q1
+Excellent
+3,20 €
+1x Card Q2
+Excellent
+3,20 €
+1x Card Q3
+Excellent
+3,20 €
+1x Card Q4
+Excellent
+3,20 €
+1x Card Q5
+Excellent
+3,20 €
+Seller: Seller018Czech
+Seller Country
+Czech Republic
+Summary
+Contents
+5 Articles
+Article Value
+12,50 €
+Shipping
+2,75 €
+Trustee Service
+0,00 €
+Total
+15,25 €
+Select shipping method
+Czech Post (2,75 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card R1
+Good
+2,50 €
+1x Card R2
+Good
+2,50 €
+1x Card R3
+Good
+2,50 €
+1x Card R4
+Good
+2,50 €
+1x Card R5
+Good
+2,50 €
+Seller: Seller019Slovakia
+Seller Country
+Slovakia
+Summary
+Contents
+5 Articles
+Article Value
+13,00 €
+Shipping
+2,60 €
+Trustee Service
+0,00 €
+Total
+15,60 €
+Select shipping method
+Slovak Post (2,60 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card S1
+Light Played
+2,60 €
+1x Card S2
+Light Played
+2,60 €
+1x Card S3
+Light Played
+2,60 €
+1x Card S4
+Light Played
+2,60 €
+1x Card S5
+Light Played
+2,60 €
+Seller: Seller020Hungary
+Seller Country
+Hungary
+Summary
+Contents
+5 Articles
+Article Value
+14,25 €
+Shipping
+3,10 €
+Trustee Service
+0,00 €
+Total
+17,35 €
+Select shipping method
+Hungarian Post (3,10 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card T1
+Near Mint
+2,85 €
+1x Card T2
+Near Mint
+2,85 €
+1x Card T3
+Near Mint
+2,85 €
+1x Card T4
+Near Mint
+2,85 €
+1x Card T5
+Near Mint
+2,85 €
+Seller: Seller021Romania
+Seller Country
+Romania
+Summary
+Contents
+5 Articles
+Article Value
+11,50 €
+Shipping
+2,30 €
+Trustee Service
+0,00 €
+Total
+13,80 €
+Select shipping method
+Romanian Post (2,30 €) max. Weight: 20g
+Untracked
+Magic the Gathering Singles (5)
+Info. Price
+1x Card U1
+Excellent
+2,30 €
+1x Card U2
+Excellent
+2,30 €
+1x Card U3
+Excellent
+2,30 €
+1x Card U4
+Excellent
+2,30 €
+1x Card U5
+Excellent
+2,30 €
+Cart overview
+303,40 €
+Seller001Germany
+13,75 €
+Seller002France
+16,95 €
+Seller003Italy
+18,90 €
+Seller004Spain
+20,10 €
+Seller005Netherlands
+14,95 €
+Seller006Poland
+13,75 €
+Seller007Belgium
+16,50 €
+Seller008Austria
+17,50 €
+Seller009UK
+20,25 €
+Seller010Canada
+28,50 €
+Seller011USA
+32,00 €
+Seller012Japan
+36,00 €
+Seller013Australia
+37,50 €
+Seller014Sweden
+17,00 €
+Seller015Finland
+18,50 €
+Seller016Denmark
+19,60 €
+Seller017Norway
+21,50 €
+Seller018Czech
+15,25 €
+Seller019Slovakia
+15,60 €
+Seller020Hungary
+17,35 €
+Seller021Romania
+13,80 €
+Number of orders
+21 Sellers
