@@ -26,9 +26,9 @@
   --focus: rgba(249, 115, 22, 0.2);
   --red: #EF4444;
   --blue: #3B82F6;
-  --shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
-  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.35);
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.3);
   --radius: 8px;
   --radius-sm: 6px;
   --max-width: 1480px;
@@ -433,13 +433,12 @@ textarea,
 input,
 select {
   width: 100%;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
   background: var(--bg-elevated);
   color: var(--text);
-  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 textarea:focus,
@@ -448,13 +447,13 @@ select:focus,
 button:focus-visible {
   outline: 0;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--focus);
+  box-shadow: 0 0 0 2px var(--focus);
 }
 
 textarea {
-  min-height: 220px;
+  min-height: 200px;
   resize: vertical;
-  padding: 14px;
+  font-family: "IBM Plex Mono", monospace;
   line-height: 1.5;
 }
 
@@ -532,10 +531,12 @@ select {
 .primary-button,
 .ghost-button,
 .icon-button {
-  min-height: 42px;
+  min-height: 40px;
+  padding: 8px 16px;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  font-weight: 700;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .primary-button {
