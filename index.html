@@ -21,7 +21,7 @@
           <div class="brand-copy">
             <div class="brand-lockup">
               <h1>CartForge</h1>
-              <p class="header-subtitle">Cardmarket cart optimizer</p>
+              <p class="header-subtitle">Find the cheapest way to buy your cards</p>
             </div>
           </div>
         </div>
@@ -31,19 +31,19 @@
         <section class="panel input-panel forge-intro-panel">
           <div class="panel-heading panel-heading-stack">
             <div>
-              <h2 title="Paste copied Cardmarket cart text here to detect cards, sellers, and the best buying plan.">Cardmarket Input</h2>
+              <h2>Paste your cart</h2>
             </div>
-            <span id="optimizationState" class="status-pill muted" aria-live="polite">Ready to parse</span>
+            <span id="optimizationState" class="status-pill muted" aria-live="polite">Ready</span>
           </div>
           <div id="inputEditor" class="input-editor">
-            <p class="panel-description">Paste copied Cardmarket cart text to detect cards, sellers, and the best buying plan.</p>
-            <label class="field-label" for="cartInput">Cardmarket cart content</label>
-            <textarea id="cartInput" spellcheck="false" placeholder="Paste the full copied Cardmarket cart text here"></textarea>
+            <p class="panel-description">Copy the full cart page from Cardmarket (Ctrl+A → Ctrl+C) and paste it below.</p>
+            <label class="field-label" for="cartInput">Cart content</label>
+            <textarea id="cartInput" spellcheck="false" placeholder="Paste your Cardmarket cart here..."></textarea>
             <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
             <p id="workflowHint" class="workflow-hint">Next: confirm the detected shopping list.</p>
             <div class="button-row button-row-input">
-              <button id="parseButton" class="primary-button" type="button" onclick="window.__cartforgeParse && window.__cartforgeParse()">Review pasted cart</button>
-              <button id="clearButton" class="ghost-button" type="button">Clear cart</button>
+              <button id="parseButton" class="primary-button" type="button" onclick="window.__cartforgeParse && window.__cartforgeParse()">Parse cart</button>
+              <button id="clearButton" class="ghost-button" type="button">Clear</button>
             </div>
           </div>
           <div id="inputSummary" class="input-summary hidden" aria-live="polite"></div>
@@ -52,8 +52,8 @@
         <details id="desiredCardsSection" class="secondary-panel shopping-list-accordion hidden" open>
           <summary>
             <div class="accordion-header">
-              <p class="eyebrow">Shopping list</p>
-              <h2>Confirm shopping list</h2>
+              <p class="eyebrow">Step 2</p>
+              <h2>Review cards & quantities</h2>
             </div>
           </summary>
           <div id="desiredCardsReview" class="desired-cards-review" aria-live="polite"></div>
@@ -62,8 +62,8 @@
         <section id="summarySection" class="panel result-panel summary-panel hidden">
           <div class="panel-heading panel-heading-soft">
             <div>
-              <p class="eyebrow">Result</p>
-              <h2>Best buying plan</h2>
+              <p class="eyebrow">Your plan</p>
+              <h2>Buy from these sellers</h2>
             </div>
           </div>
           <div id="optimizationSummary" class="summary-output" aria-live="polite"></div>
@@ -72,7 +72,7 @@
         <section id="notesPanel" class="panel result-panel notes-panel hidden">
           <div class="panel-heading panel-heading-soft">
             <div>
-              <h2>What to check before buying</h2>
+              <h2>⚠️ Before you buy</h2>
             </div>
           </div>
           <div id="optimizationNotes" class="optimization-notes" aria-live="polite"></div>
@@ -81,9 +81,9 @@
         <section id="recommendationSection" class="panel result-panel recommendation-panel hidden">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Plan</p>
-              <h2>Recommended buying plan</h2>
-              <p class="panel-description panel-description-tight">Buy the listed cards from the selected sellers.</p>
+              <p class="eyebrow">Breakdown</p>
+              <h2>What to buy from each seller</h2>
+              <p class="panel-description panel-description-tight">Update your Cardmarket cart with these sellers and cards.</p>
             </div>
           </div>
           <div id="optimizationOutput" class="optimization-output" aria-live="polite"></div>
