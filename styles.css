@@ -5,29 +5,32 @@
   --bg-panel: #222222;
   --bg-panel-soft: rgba(34, 34, 34, 0.6);
   --bg-table: rgba(42, 42, 42, 0.5);
-  --line: rgba(200, 200, 200, 0.1);
-  --line-strong: rgba(200, 200, 200, 0.2);
-  --text: #e0e0e0;
-  --text-muted: #999999;
-  --text-soft: #cccccc;
-  --accent: #FD7B41;
-  --accent-strong: #F56A2A;
-  --accent-soft: rgba(253, 123, 65, 0.15);
-  --accent-warm: #EDBF9B;
-  --accent-warm-soft: rgba(237, 191, 155, 0.15);
-  --accent-mint: #7a9e9a;
-  --accent-mint-soft: rgba(122, 158, 154, 0.15);
-  --success: #4ade80;
-  --warning: #EDBF9B;
-  --danger: #ef4444;
-  --focus: rgba(253, 123, 65, 0.2);
-  --red: #ef4444;
-  --blue: #6b9ed9;
-  --shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  --line: rgba(200, 200, 200, 0.08);
+  --line-strong: rgba(200, 200, 200, 0.15);
+  --text: #e5e5e5;
+  --text-muted: #888888;
+  --text-soft: #d0d0d0;
+  --accent: #F97316;
+  --accent-strong: #EA580C;
+  --accent-soft: rgba(249, 115, 22, 0.12);
+  --accent-warm: #FBBF24;
+  --accent-warm-soft: rgba(251, 191, 36, 0.12);
+  --accent-mint: #10B981;
+  --accent-mint-soft: rgba(16, 185, 129, 0.12);
+  --success: #10B981;
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --warning: #FBBF24;
+  --warning-soft: rgba(251, 191, 36, 0.12);
+  --danger: #EF4444;
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --focus: rgba(249, 115, 22, 0.2);
+  --red: #EF4444;
+  --blue: #3B82F6;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
   --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.3);
-  --radius: 10px;
-  --radius-sm: 8px;
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.35);
+  --radius: 8px;
+  --radius-sm: 6px;
   --max-width: 1480px;
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
 }
@@ -142,13 +145,15 @@ h3 {
 }
 
 h2 {
-  font-size: 1.08rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 h3 {
+  font-size: 1rem;
   font-weight: 600;
+  line-height: 1.3;
 }
 
 .header-subtitle {
@@ -536,14 +541,14 @@ select {
 .primary-button {
   background: var(--accent);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(253, 123, 65, 0.2);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .primary-button:hover {
   background: var(--accent-strong);
-  box-shadow: 0 8px 24px rgba(253, 123, 65, 0.3);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.25);
+  transform: translateY(-1px);
 }
 
 .primary-button:disabled {
@@ -566,7 +571,7 @@ select {
 .ghost-button:hover,
 .icon-button:hover {
   border-color: var(--accent);
-  background: rgba(253, 123, 65, 0.08);
+  background: var(--accent-soft);
   color: var(--accent);
 }
 
