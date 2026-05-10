@@ -2061,6 +2061,7 @@ function exactParsedTrusteeValue(seller, articleValue, quantity, shippingMethod,
 
 export const __testing = {
   state,
+  advancedDetailsTemplate,
   buildOfferGroups,
   buildResultWarnings,
   desiredCardsTableTemplate,
