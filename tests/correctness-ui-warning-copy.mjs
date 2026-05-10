@@ -101,6 +101,24 @@ const sellerPlanHtml = __testing.sellerPlanTemplate(
 assert.match(sellerPlanHtml, /EUR 28\.85/, "Seller plan cards should display full totals including cards plus shipping.");
 assert.doesNotMatch(sellerPlanHtml, />\s*EUR 4\.05\s*<\/strong>\s*<\/div>\s*<\/header>/, "Seller total header must not show shipping-only totals.");
 
+const copiedPlanText = __testing.buildBuyingPlanText({
+  selectedOffers: [
+    { sellerIndex: 0, sellerName: "ItalianValue", cardName: "Rhystic Study", requiredQuantity: 1, quantity: 1, condition: "Excellent", unitPrice: 24.8 }
+  ],
+  sellerCosts: [{
+    sellerIndex: 0,
+    articleValue: 24.8,
+    shippingValue: 4.05,
+    trusteeFeeValue: 0,
+    cardmarketFeeValue: 0,
+    totalCost: 4.05
+  }],
+  usedSellers: [{ sellerIndex: 0, seller: { sellerName: "ItalianValue" } }]
+});
+assert.match(copiedPlanText, /Cards: EUR 24\.80/, "Copied plans should include the cards subtotal.");
+assert.match(copiedPlanText, /Shipping: EUR 4\.05/, "Copied plans should include shipping.");
+assert.match(copiedPlanText, /Total: EUR 28\.85/, "Copied plans should report the same full total as the on-screen seller card.");
+
 const infoOnlyResult = {
   selectedTotal: 10,
   sellerCosts: [{

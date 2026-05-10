@@ -40,6 +40,23 @@ TEST_FILES=(
 # Performance test (optional, can be slow)
 PERF_TEST="tests/performance-large-scale.mjs"
 
+run_with_timeout() {
+  local timeout_seconds="$1"
+  shift
+
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$timeout_seconds" "$@"
+    return $?
+  fi
+
+  if command -v gtimeout >/dev/null 2>&1; then
+    gtimeout "$timeout_seconds" "$@"
+    return $?
+  fi
+
+  perl -e 'alarm shift @ARGV; exec @ARGV' "$timeout_seconds" "$@"
+}
+
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║     Cardmarket Cart Optimizer - Test Suite                     ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
@@ -53,7 +70,7 @@ for test_file in "${TEST_FILES[@]}"; do
   TOTAL=$((TOTAL + 1))
   test_name=$(basename "$test_file")
 
-  if timeout 15 node "$test_file" > /dev/null 2>&1; then
+  if run_with_timeout 15 node "$test_file" > /dev/null 2>&1; then
     echo -e "${GREEN}✓${NC} $test_name"
     PASSED=$((PASSED + 1))
   else
@@ -70,7 +87,7 @@ if [ "$1" = "--perf" ] || [ "$1" = "-p" ]; then
   echo ""
   echo "📊 Running performance test..."
   echo "────────────────────────────────────────────────────────────────"
-  if timeout 30 node "$PERF_TEST" > /tmp/perf_test.log 2>&1; then
+  if run_with_timeout 30 node "$PERF_TEST" > /tmp/perf_test.log 2>&1; then
     echo -e "${GREEN}✓${NC} $(basename "$PERF_TEST")"
     PASSED=$((PASSED + 1))
     TOTAL=$((TOTAL + 1))

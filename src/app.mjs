@@ -40,7 +40,8 @@ const state = {
   // Reference price check feature
   priceReferences: {}, // Map<normalizedCardName, referencePriceData>
   scryallLookupInProgress: false, // Show loading state while fetching
-  referenceCheckEnabled: true // Can be disabled in settings (v2)
+  referenceCheckEnabled: true, // Can be disabled in settings (v2)
+  activeReferenceLookupToken: 0
 };
 
 const hasDom = typeof document !== "undefined";
@@ -144,6 +145,9 @@ function parseCurrentInput() {
     elements.parseButton.textContent = "Parsing…";
   }
 
+  state.activeReferenceLookupToken += 1;
+  state.priceReferences = {};
+  state.scryallLookupInProgress = false;
   state.parsed = parseCart(elements.cartInput.value, state.shippingData);
   state.optimizationResult = null;
   state.optimizationStale = true;
@@ -170,7 +174,8 @@ function parseCurrentInput() {
 
   // Trigger async Scryfall enrichment (non-blocking)
   if (state.referenceCheckEnabled && state.parsed.sellers.length > 0) {
-    enrichParserResultsWithScryfall(state.parsed.sellers).catch(error => {
+    const lookupToken = state.activeReferenceLookupToken;
+    enrichParserResultsWithScryfall(state.parsed.sellers, lookupToken).catch(error => {
       console.error('Scryfall enrichment failed:', error);
     });
   }
@@ -180,8 +185,9 @@ function parseCurrentInput() {
  * Asynchronously enrich parsed cards with Scryfall reference prices
  *
  * @param {array} sellers - Array of seller objects from parsed cart
+ * @param {number} lookupToken - Parse-scoped token to ignore stale async responses
  */
-async function enrichParserResultsWithScryfall(sellers) {
+async function enrichParserResultsWithScryfall(sellers, lookupToken) {
   state.scryallLookupInProgress = true;
   render(); // Show loading state
 
@@ -203,6 +209,10 @@ async function enrichParserResultsWithScryfall(sellers) {
     // Bulk lookup with Scryfall
     const references = await enrichCardsWithReferencePrices([...cardNames]);
 
+    if (lookupToken !== state.activeReferenceLookupToken) {
+      return;
+    }
+
     // Store in state, keyed by normalized name
     references.forEach((refData, normalizedKey) => {
       state.priceReferences[normalizedKey] = refData;
@@ -212,6 +222,9 @@ async function enrichParserResultsWithScryfall(sellers) {
     console.error('Scryfall lookup failed:', error);
     // Don't break the app - just skip reference prices
   } finally {
+    if (lookupToken !== state.activeReferenceLookupToken) {
+      return;
+    }
     state.scryallLookupInProgress = false;
     render(); // Update UI with reference prices
 
@@ -229,6 +242,7 @@ function clearInput() {
   state.optimizationStale = false;
   state.priceReferences = {}; // Clear reference prices
   state.scryallLookupInProgress = false;
+  state.activeReferenceLookupToken += 1;
   setMessage("No cart parsed yet.");
   updateWorkflowStatus("Ready to parse", "muted", "Next: confirm the detected shopping list.");
   render();
@@ -478,7 +492,7 @@ function desiredCardRowTemplate(group) {
         <button class="qty-button" data-action="increment-qty" title="Increase quantity" aria-label="Increase ${group.cardName} quantity">+</button>
       </td>
       <td>${escapeHtml(group.sellerCount)}</td>
-      <td>${escapeHtml(formatMoney(group.lowestUnitPrice))}</td>
+      <td class="price-cell" data-price="${escapeAttribute(String(group.lowestUnitPrice))}">${escapeHtml(formatMoney(group.lowestUnitPrice))}</td>
       <td class="reference-cell">
         <div class="reference-stack">
           ${referenceDisplay}
@@ -536,7 +550,7 @@ function referenceDeltaDisplay(referenceCard, referenceData) {
     return `<span class="price-with-reference"><span class="reference-muted">-</span>${tooltipChip(referenceErrorLabel(referenceData.reason || "unknown"))}</span>`;
   }
 
-  return `<span class="price-with-reference"><span class="reference-delta-badge delta-${escapeAttribute(referenceCard.deltaColor)}">${escapeHtml(referenceCard.deltaDisplay)}</span>${tooltipChip(referenceDeltaTitle(referenceCard, referenceData))}</span>`;
+  return `<span class="price-with-reference"><span class="reference-delta-badge delta-${escapeAttribute(referenceCard.deltaColor)}" data-card-name="${escapeAttribute(referenceCard.cardName)}" data-price="${escapeAttribute(String(referenceCard.price))}">${escapeHtml(referenceCard.deltaDisplay)}</span>${tooltipChip(referenceDeltaTitle(referenceCard, referenceData))}</span>`;
 }
 
 function offerMatrixTemplate(offerGroups) {
@@ -1746,7 +1760,7 @@ function recommendationOfferRowTemplate(offer) {
   const referenceOffer = enrichOfferWithReference(offer);
   const unitLabel = `${formatMoney(offer.unitPrice)} each`;
   const referenceBadge = referenceOffer.hasReference
-    ? `<span class="reference-delta-badge delta-${escapeAttribute(referenceOffer.deltaColor)}" title="${escapeAttribute(referenceDeltaTitle(referenceOffer, getReferenceData(offer.cardName)))}">${escapeHtml(referenceOffer.deltaDisplay)}</span>`
+    ? `<span class="reference-delta-badge delta-${escapeAttribute(referenceOffer.deltaColor)}" data-card-name="${escapeAttribute(offer.cardName)}" data-price="${escapeAttribute(String(offer.unitPrice))}" title="${escapeAttribute(referenceDeltaTitle(referenceOffer, getReferenceData(offer.cardName)))}">${escapeHtml(referenceOffer.deltaDisplay)}</span>`
     : "";
   const referenceHint = referenceOffer.hasReference
     ? `<div class="reference-inline-note">Scryfall ref ${escapeHtml(formatReferenceMoney(referenceOffer.referencePrice, referenceOffer.referenceCurrency))}</div>`
@@ -1856,15 +1870,25 @@ function updateReferenceTooltips() {
     if (!row) return;
 
     const cardNameAttr = row.getAttribute("data-card-name");
+    const cardNameFromBadge = badge.getAttribute("data-card-name");
     const cardNameFromText = row.querySelector("td")?.textContent?.trim();
-    const cardName = cardNameAttr || cardNameFromText;
+    const cardName = cardNameAttr || cardNameFromBadge || cardNameFromText;
 
     if (!cardName) return;
 
     // Get the current reference data for this card
     const referenceData = getReferenceData(cardName);
+    const priceFromBadge = Number(badge.getAttribute("data-price"));
+    const priceFromCell = Number(row.querySelector(".price-cell")?.getAttribute("data-price"));
     const referenceCard = enrichCardWithReference(
-      { cardName, price: parseFloat(row.querySelector(".price-cell")?.textContent || 0) },
+      {
+        cardName,
+        price: Number.isFinite(priceFromBadge)
+          ? priceFromBadge
+          : Number.isFinite(priceFromCell)
+            ? priceFromCell
+            : 0
+      },
       referenceData
     );
 
@@ -1900,35 +1924,44 @@ function formatEstimatedMoney(value) {
 }
 
 async function copyBuyingPlan(result) {
-  const planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
-  const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
-
-  const lines = result.usedSellers.map(({ seller, sellerIndex }) => {
-    const offers = planBySeller.get(sellerIndex) || [];
-    const cost = costBySeller.get(sellerIndex);
-    const totalCost = cost?.totalCost ?? offerSubtotal(offers);
-    const shippingCost = cost?.shippingValue ?? 0;
-    const cardLines = offers.map((offer) =>
-      `  - ${offer.requiredQuantity || offer.quantity}× ${offer.cardName} — ${offer.condition} — ${formatMoney(offer.unitPrice)}`
-    ).join("\n");
-    return `Buy from ${seller.sellerName}\n${cardLines}\nShipping: ${formatMoney(shippingCost)}\nTotal: ${formatEstimatedMoney(totalCost)}`;
-  });
-
-  const text = lines.join("\n\n");
+  const text = buildBuyingPlanText(result);
   const btn = document.querySelector("#copyPlanButton");
 
   try {
     await navigator.clipboard.writeText(text);
     if (btn) {
       btn.textContent = "Copied!";
-      setTimeout(() => { btn.textContent = "Copy buying plan"; }, 2000);
+      setTimeout(() => { btn.textContent = "📋 Copy plan to clipboard"; }, 2000);
     }
   } catch {
     if (btn) {
       btn.textContent = "Copy failed";
-      setTimeout(() => { btn.textContent = "Copy buying plan"; }, 2000);
+      setTimeout(() => { btn.textContent = "📋 Copy plan to clipboard"; }, 2000);
     }
   }
+}
+
+function buildBuyingPlanText(result) {
+  const planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
+  const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
+
+  const lines = result.usedSellers.map(({ seller, sellerIndex }) => {
+    const offers = planBySeller.get(sellerIndex) || [];
+    const cost = costBySeller.get(sellerIndex);
+    const cardTotal = cost?.articleValue ?? offerSubtotal(offers);
+    const fixedTotal = cost?.totalCost ?? 0;
+    const totalCost = Number.isFinite(Number(fixedTotal)) ? roundMoney(cardTotal + fixedTotal) : Number.POSITIVE_INFINITY;
+    const shippingCost = cost?.shippingValue ?? 0;
+    const trusteeCost = cost?.trusteeFeeValue ?? 0;
+    const feeCost = cost?.cardmarketFeeValue ?? 0;
+    const cardLines = offers.map((offer) =>
+      `  - ${offer.requiredQuantity || offer.quantity}× ${offer.cardName} — ${offer.condition} — ${formatMoney(offer.unitPrice)}`
+    ).join("\n");
+
+    return `Buy from ${seller.sellerName}\n${cardLines}\nCards: ${formatMoney(cardTotal)}\nShipping: ${formatMoney(shippingCost)}\nTrustee: ${formatMoney(trusteeCost)}${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `\nFees: ${formatMoney(feeCost)}`}\nTotal: ${formatEstimatedMoney(totalCost)}`;
+  });
+
+  return lines.join("\n\n");
 }
 
 function toReviewData() {
@@ -2063,6 +2096,7 @@ export const __testing = {
   state,
   advancedDetailsTemplate,
   buildOfferGroups,
+  buildBuyingPlanText,
   buildResultWarnings,
   desiredCardsTableTemplate,
   getTotalCopies,
@@ -2112,4 +2146,3 @@ function countryOptions() {
 function setMessage(message) {
   elements.parseMessage.textContent = message;
 }
-
