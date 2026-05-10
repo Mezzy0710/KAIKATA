@@ -1903,6 +1903,18 @@ select {
   .review-action-bar .run-button {
     width: 100%;
   }
+
+  .dropped-sellers-list {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .accordion-header {
+    gap: 2px;
+  }
+
+  .section-hint {
+    font-size: 0.75rem;
+  }
 }
 
 .hidden {
