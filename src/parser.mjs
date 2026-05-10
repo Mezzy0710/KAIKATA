@@ -421,6 +421,7 @@ function matchSellerNames(sellers, cartOverview) {
     if (overviewEntry?.sellerName && shouldReplaceSellerName(seller.sellerName, overviewEntry.sellerName, overviewNames, exactTotalIndex >= 0)) {
       seller.sellerName = overviewEntry.sellerName;
       seller.sellerNameSource = exactTotalIndex >= 0 ? "cart_overview_total" : "cart_overview_order";
+      applySellerNameCountryHint(seller, overviewEntry.sellerName);
     }
   });
 
@@ -442,6 +443,29 @@ function shouldReplaceSellerName(currentName, overviewName, overviewNames, hasEx
   }
 
   return false;
+}
+
+function applySellerNameCountryHint(seller, sellerName) {
+  const suffixCountry = inferCountryBySellerName(sellerName);
+  if (!suffixCountry) {
+    return;
+  }
+
+  const currentConfidence = Number(seller.countryInference?.confidence || 0);
+  const shouldOverride = seller.countrySource !== "explicit" && (
+    !seller.sellerCountry ||
+    seller.sellerCountry === "Unknown" ||
+    seller.countryInference?.ambiguous ||
+    currentConfidence < 0.9
+  );
+
+  if (!shouldOverride) {
+    return;
+  }
+
+  seller.sellerCountry = suffixCountry.country;
+  seller.countrySource = suffixCountry.source;
+  seller.countryInference = suffixCountry;
 }
 
 function splitSellerBlocks(lines) {
@@ -612,22 +636,24 @@ function parseSellerBlock(block, sellerIndex, shippingIndex) {
   const shippingValue = fields.shippingValue.amount ?? shippingSelection.price;
   const trackingStatus = parseTrackingStatus(fields.trackingStatus.value || shippingSelection.trackingText || shippingMethod);
   const explicitCountry = normalizeCountry(fields.sellerCountry.value);
-  const countryInference = inferSellerCountry(shippingMethod, shippingValue, trackingStatus, shippingIndex);
-  const country = explicitCountry || countryInference.country || "Unknown";
+  const countryInference = inferSellerCountry(sellerName, shippingMethod, shippingValue, trackingStatus, shippingIndex);
+  const sellerNameCountry = inferCountryBySellerName(sellerName);
+  const country = explicitCountry || sellerNameCountry?.country || countryInference.country || "Unknown";
   const items = parseCardmarketSinglesRows(block.lines) || parseItemRows(block.lines, usedLineIndexes);
 
   return {
     id: `seller-${sellerIndex + 1}`,
     sellerName,
     shippingMethod,
+    shippingMethodRaw: shippingSelection.rawLine || shippingMethod,
     trackingStatus,
     articleValue,
     shippingValue,
     trusteeValue: fields.trusteeValue.amount,
     total: fields.total.amount,
     sellerCountry: country,
-    countrySource: explicitCountry ? "explicit" : countryInference.source,
-    countryInference,
+    countrySource: explicitCountry ? "explicit" : sellerNameCountry?.source || countryInference.source,
+    countryInference: explicitCountry || sellerNameCountry ? (sellerNameCountry || countryInference) : countryInference,
     items,
     rawText: block.lines.join("\n"),
     sourceLine: block.startLine + 1
@@ -640,16 +666,17 @@ function parseShippingSelection(lines) {
   const selected = candidates.find((line) => isShippingMethodSelectionLine(line));
 
   if (!selected) {
-    return { method: "", price: null, trackingText: "", usedIndexes: [] };
+    return { method: "", price: null, trackingText: "", rawLine: "", usedIndexes: [] };
   }
 
   const price = parseMoney(selected);
   const selectedIndex = lines.indexOf(selected);
-  const method = cleanShippingMethod(selected.replace(/\([^)]*(?:\u20ac|EUR)[^)]*\)/i, "").replace(MONEY_WITH_CURRENCY_RE, ""));
+  const method = cleanShippingMethod(selected.replace(/\(\s*(?:EUR\s*)?\d{1,3}(?:[.\s]\d{3})*[,.]\d{2}\s*(?:\u20ac|EUR)\s*\)/i, ""));
   return {
     method,
     price,
     trackingText: selected,
+    rawLine: selected,
     usedIndexes: [start, selectedIndex].filter((index) => index >= 0)
   };
 }
@@ -931,10 +958,11 @@ function cleanupCardName(value) {
     .trim();
 }
 
-function inferSellerCountry(shippingMethod, shippingValue, trackingStatus, shippingIndex) {
+function inferSellerCountry(sellerName, shippingMethod, shippingValue, trackingStatus, shippingIndex) {
   const fallback = { country: "", source: "unknown", confidence: 0, ambiguous: false, matches: [] };
+  const sellerNameCountry = inferCountryBySellerName(sellerName);
   if (!shippingMethod || !shippingIndex.length) {
-    return fallback;
+    return sellerNameCountry || fallback;
   }
 
   const germanyRows = shippingIndex.filter((record) => !record.destination || record.destination === "Germany");
@@ -993,6 +1021,10 @@ function inferSellerCountry(shippingMethod, shippingValue, trackingStatus, shipp
     };
   }
 
+  if (sellerNameCountry) {
+    return sellerNameCountry;
+  }
+
   const tokenMatches = inferCountryByMethodTokens(shippingMethod, germanyRows);
   if (tokenMatches.country) {
     return tokenMatches;
@@ -1023,7 +1055,7 @@ function inferSellerCountry(shippingMethod, shippingValue, trackingStatus, shipp
     if (aliasedCountry) {
       return aliasedCountry;
     }
-    return fallback;
+    return sellerNameCountry || fallback;
   }
 
   const top = scored[0];
@@ -1042,6 +1074,34 @@ function inferSellerCountry(shippingMethod, shippingValue, trackingStatus, shipp
       price: record.price,
       score: record.score
     }))
+  };
+}
+
+function inferCountryBySellerName(sellerName) {
+  const text = String(sellerName || "").trim();
+  if (!text) {
+    return null;
+  }
+
+  const suffixMatch = text.match(/([A-Z]{2})$/);
+  const countryCode = suffixMatch?.[1];
+  const country = countryCode ? COUNTRY_ALIASES[countryCode] : "";
+  if (!country) {
+    return null;
+  }
+
+  return {
+    country,
+    source: "seller_name_suffix",
+    confidence: 0.83,
+    ambiguous: false,
+    matches: [{
+      country,
+      method: cleanupValue(sellerName),
+      tracked: "unknown",
+      price: null,
+      score: 0.83
+    }]
   };
 }
 

@@ -1142,14 +1142,17 @@ function estimateSelectedSellerCosts(selection, sellers, shippingRecords) {
 function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
   const articleValue = roundMoney(offerSubtotal(offers));
   const quantity = offers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
+  const estimatedWeight = estimateShipmentWeight(quantity);
   const shippingResult = calculateShippingCost({
     shippingRecords,
     country: seller.sellerCountry,
     cardCount: quantity,
     orderValue: articleValue
   });
-  const trusteeMethod = shippingResult.ok ? shippingResult.method : seller.shippingMethod;
-  const trusteeTracked = shippingResult.ok ? shippingResult.tracked : seller.trackingStatus === "tracked";
+  const parsedShippingFallback = resolveParsedShippingFallback(seller, articleValue, quantity, estimatedWeight, shippingResult);
+  const effectiveShipping = parsedShippingFallback || shippingResult;
+  const trusteeMethod = effectiveShipping.ok ? effectiveShipping.method : seller.shippingMethod;
+  const trusteeTracked = effectiveShipping.ok ? effectiveShipping.tracked : seller.trackingStatus === "tracked";
   const trusteeResult = calculateTrusteeFee({
     articleValue,
     shippingMethod: trusteeMethod,
@@ -1161,16 +1164,16 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
   const trusteeSource = exactParsedTrustee !== null ? "parsed_exact" : "estimated_rule";
   const trusteeSourceLabel = exactParsedTrustee !== null ? "Exact from parsed cart" : "Estimated from trustee rule";
 
-  if (!shippingResult.ok) {
+  if (!effectiveShipping.ok) {
     return {
       sellerIndex,
       source: "unresolved",
       sourceLabel: "No valid dynamic shipping row",
       articleValue,
       quantity,
-      estimatedWeight: shippingResult.estimatedWeight,
+      estimatedWeight: effectiveShipping.estimatedWeight,
       shippingMethod: seller.shippingMethod || "Unknown shipping",
-      trackingStatus: shippingResult.tracked ? "tracked" : "untracked",
+      trackingStatus: effectiveShipping.tracked ? "tracked" : "untracked",
       cardmarketFeeValue: 0,
       trusteeFeeValue,
       trusteeRate: trusteeResult.rate,
@@ -1179,23 +1182,23 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
       trusteeSourceLabel,
       shippingValue: Number.POSITIVE_INFINITY,
       totalCost: Number.POSITIVE_INFINITY,
-      shippingDebug: shippingResult,
+      shippingDebug: effectiveShipping,
       trusteeDebug: trusteeResult
     };
   }
 
-  const shippingValue = roundMoney(shippingResult.cost);
+  const shippingValue = roundMoney(effectiveShipping.cost);
 
   return {
     sellerIndex,
-    source: "recalculated",
-    sourceLabel: "Dynamic shipping from table",
+    source: parsedShippingFallback ? "parsed_fallback" : "recalculated",
+    sourceLabel: parsedShippingFallback ? "Parsed cart shipping" : "Dynamic shipping from table",
     articleValue,
     quantity,
-    estimatedWeight: shippingResult.estimatedWeight,
-    shippingMethod: shippingResult.method,
-    trackingStatus: shippingResult.tracked ? "tracked" : "untracked",
-    cardmarketFeeValue: shippingResult.cardmarketFeeValue,
+    estimatedWeight: effectiveShipping.estimatedWeight,
+    shippingMethod: effectiveShipping.method,
+    trackingStatus: effectiveShipping.tracked ? "tracked" : "untracked",
+    cardmarketFeeValue: effectiveShipping.cardmarketFeeValue,
     trusteeFeeValue,
     trusteeRate: trusteeResult.rate,
     trusteeMethodCategory: trusteeResult.methodCategory,
@@ -1203,9 +1206,86 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
     trusteeSourceLabel,
     shippingValue,
     totalCost: roundMoney(shippingValue + trusteeFeeValue),
-    shippingDebug: shippingResult,
+    shippingDebug: effectiveShipping,
     trusteeDebug: trusteeResult
   };
+}
+
+function resolveParsedShippingFallback(seller, articleValue, quantity, estimatedWeight, shippingResult) {
+  const parsedShippingValue = Number(seller.shippingValue);
+  if (!Number.isFinite(parsedShippingValue) || parsedShippingValue < 0) {
+    return null;
+  }
+
+  if (!seller.shippingMethodRaw) {
+    return null;
+  }
+
+  const parsedArticleValue = Number(seller.articleValue);
+  const parsedQuantity = seller.items.reduce((sum, item) => sum + Number(item.quantity || 1), 0);
+  if (Number.isFinite(parsedArticleValue) && articleValue > parsedArticleValue + 0.005) {
+    return null;
+  }
+  if (parsedQuantity > 0 && quantity > parsedQuantity) {
+    return null;
+  }
+
+  const parsedTracked = seller.trackingStatus === "tracked";
+  if (shippingResult.trackedRequired && !parsedTracked) {
+    return null;
+  }
+
+  const limits = extractShippingMethodLimits(seller.shippingMethodRaw || seller.shippingMethod || "");
+  const hasConcreteLimits = Number.isFinite(limits.maxCards) || Number.isFinite(limits.maxValue) || Number.isFinite(limits.maxWeightG);
+  if (!hasConcreteLimits) {
+    return null;
+  }
+  if (Number.isFinite(limits.maxCards) && quantity > limits.maxCards) {
+    return null;
+  }
+  if (Number.isFinite(limits.maxValue) && articleValue > limits.maxValue + 0.005) {
+    return null;
+  }
+  if (Number.isFinite(limits.maxWeightG) && estimatedWeight > limits.maxWeightG + 0.005) {
+    return null;
+  }
+
+  return {
+    ok: true,
+    cost: roundMoney(parsedShippingValue),
+    basePrice: roundMoney(parsedShippingValue),
+    cardmarketFeeValue: 0,
+    method: seller.shippingMethod || seller.shippingMethodRaw || "",
+    tracked: parsedTracked,
+    country: seller.sellerCountry,
+    cardCount: quantity,
+    orderValue: roundMoney(articleValue),
+    estimatedWeight,
+    trackedRequired: shippingResult.trackedRequired,
+    eligibleCount: 1,
+    candidateCount: shippingResult.candidateCount || 0,
+    cardmarketFeeIncluded: SHIPPING_DATA_INCLUDES_CARDMARKET_FEE,
+    reason: "Using parsed Cardmarket shipping because the selected subset still fits the pasted method limits."
+  };
+}
+
+function extractShippingMethodLimits(methodText) {
+  const text = String(methodText || "");
+  const maxCards = extractNumber(text.match(/(\d+)\s*cards?\b/i)?.[1]);
+  const maxValue = extractNumber(text.match(/\bvalue\s*(\d+(?:[.,]\d+)?)\s*(?:\u20ac|EUR)\b/i)?.[1]);
+  const maxWeightG = extractNumber(text.match(/\bmax\.?\s*weight:\s*(\d+(?:[.,]\d+)?)\s*g\b/i)?.[1]);
+
+  return { maxCards, maxValue, maxWeightG };
+}
+
+function extractNumber(value) {
+  if (value === null || value === undefined || value === "") {
+    return Number.NaN;
+  }
+
+  const normalized = String(value).replace(/\./g, "").replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
 function offerSubtotal(offers) {

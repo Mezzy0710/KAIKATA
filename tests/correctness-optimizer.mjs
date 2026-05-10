@@ -106,11 +106,59 @@ assert.equal(result.insufficientGroups[0].cardName, "Sol Ring");
 assert.ok(result.warnings.some((warning) => warning.includes("Sol Ring")));
 assert.ok(__testing.buildResultWarnings(result).some((entry) => entry.severity === "critical" && /desired quantities/i.test(entry.title)));
 
+const czechTrackedRaw = `BoltthebirdCZ
+Summary
+Contents
+5 Articles
+Article Value
+36,89 €
+Shipping
+5,49 €
+Trustee Service
+0,19 €
+Total
+42,57 €
+Select shipping method
+Registered / Tracked Letter - no signature (16 cards, zone 1, value 100€) (5,49 €) max. Weight: 48g
+Tracked
+Magic the Gathering Singles (5)
+1x Rejuvenating Springs
+#325
+NM
+6,95 €
+1x Guardian of Faith
+#148
+NM
+1,29 €
+1x Aggravated Assault
+#1983
+NM
+14,95 €
+1x Akroma's Will
+#165
+NM
+11,95 €
+1x Duelist's Heritage
+#153
+NM
+1,75 €
+Cart overview
+42,57 €
+BoltthebirdCZ
+42,57 €`;
+const parsedCzechTracked = parseCart(czechTrackedRaw, shippingData);
+assert.equal(parsedCzechTracked.sellers[0].sellerCountry, "Czech Republic", "Seller name suffix should recover Czech Republic when shipping method data is sparse.");
+result = optimize(parsedCzechTracked.sellers);
+assert.equal(result.sellerCosts[0].source, "parsed_fallback", "When dynamic shipping data lacks the exact route, the optimizer should fall back to validated parsed shipping.");
+assert.equal(result.sellerCosts[0].shippingValue, 5.49);
+assert.equal(result.sellerCosts[0].trusteeFeeValue, 0.19);
+assert.equal(result.selectedTotal, 42.57, "The parsed Czech seller block should preserve the original seller total when all pasted limits still apply.");
+
 console.log(JSON.stringify({
   quantityPlan: {
     solRing: selectedQuantity(optimize(quantitySellers, { "Sol Ring": 2, "Arcane Signet": 2 }), "Sol Ring"),
     arcaneSignet: selectedQuantity(optimize(quantitySellers, { "Sol Ring": 2, "Arcane Signet": 2 }), "Arcane Signet")
   },
   consolidationSeller: [...new Set(optimize(consolidationSellers, { "Card A": 1, "Card B": 1 }).selectedOffers.map((offer) => offer.sellerName))],
-  insufficientStatus: result.statusLabel
+  insufficientStatus: optimize(parsedInsufficient.sellers, { "Sol Ring": 3, "Arcane Signet": 1 }).statusLabel
 }, null, 2));
