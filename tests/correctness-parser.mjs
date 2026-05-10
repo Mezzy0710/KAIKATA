@@ -50,6 +50,19 @@ assert.equal(desiredByCard["Arcane Signet"], 2, "Desired quantities should initi
 assert.equal(__testing.getTotalCopies(offerGroups), 13);
 assert.ok(offerGroups.length >= 9, "Complex fixture should include at least 9 different cards.");
 
+const variantOfferGroups = __testing.buildOfferGroups([
+  {
+    sellerName: "SellerOne",
+    items: [{ cardName: "Undergrowth Stadium", quantity: 1, price: 7, condition: "Near Mint" }]
+  },
+  {
+    sellerName: "SellerTwo",
+    items: [{ cardName: "Undergrowth Stadium (V.2)", quantity: 1, price: 10.8, condition: "Near Mint" }]
+  }
+]);
+assert.equal(variantOfferGroups.length, 1, "Version suffixes should collapse into one review/optimization group.");
+assert.equal(variantOfferGroups[0].cardName, "Undergrowth Stadium");
+
 console.log(JSON.stringify({
   fixtures: ["sample-cart-basic.txt", "sample-cart-complex-quantity-threshold.txt"],
   parsedSellers: complex.sellerCount,

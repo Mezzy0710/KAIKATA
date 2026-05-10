@@ -78,6 +78,18 @@ assert.deepEqual(new Set(result.selectedOffers.map((offer) => offer.sellerName))
 assert.equal(result.sellerCosts.length, 1);
 assert.notEqual(result.sellerCosts[0].shippingValue, 99, "Final optimized shipping must be dynamically recalculated, not reused from parsed cart shipping.");
 
+const variantSellers = [
+  seller("VersionOneSeller", "Germany", [{ cardName: "Rejuvenating Springs", quantity: 1, price: 6.95 }]),
+  seller("VersionTwoSeller", "Germany", [{ cardName: "Rejuvenating Springs (V.2)", quantity: 1, price: 8.0 }])
+];
+const variantGroups = __testing.buildOfferGroups(variantSellers);
+assert.equal(variantGroups.length, 1, "Version suffixes should be merged into one optimization group.");
+assert.equal(variantGroups[0].cardName, "Rejuvenating Springs");
+assert.deepEqual(new Set(variantGroups[0].variantNames), new Set(["Rejuvenating Springs", "Rejuvenating Springs (V.2)"]));
+result = optimize(variantSellers, { "Rejuvenating Springs": 1 });
+assert.equal(result.selectedOffers.length, 1);
+assert.equal(result.selectedOffers[0].sellerName, "VersionOneSeller", "Merged version groups should still pick the cheapest matching offer.");
+
 const thresholdSellers = [
   seller("ThresholdCheapA", "Germany", [{ cardName: "Threshold A", quantity: 1, price: 24.9 }]),
   seller("ThresholdCheapB", "Germany", [{ cardName: "Threshold B", quantity: 1, price: 0.1 }]),

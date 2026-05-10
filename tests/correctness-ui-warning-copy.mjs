@@ -100,6 +100,7 @@ const sellerPlanHtml = __testing.sellerPlanTemplate(
 );
 assert.match(sellerPlanHtml, /EUR 28\.85/, "Seller plan cards should display full totals including cards plus shipping.");
 assert.doesNotMatch(sellerPlanHtml, />\s*EUR 4\.05\s*<\/strong>\s*<\/div>\s*<\/header>/, "Seller total header must not show shipping-only totals.");
+assert.doesNotMatch(sellerPlanHtml, /Seller 1 · Buy from/, "Seller card headers should not prepend a redundant Seller # label before the seller name.");
 
 const copiedPlanText = __testing.buildBuyingPlanText({
   selectedOffers: [

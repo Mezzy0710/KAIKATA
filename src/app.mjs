@@ -197,7 +197,7 @@ async function enrichParserResultsWithScryfall(sellers, lookupToken) {
     sellers.forEach(seller => {
       seller.items.forEach(item => {
         if (item.cardName) {
-          cardNames.add(item.cardName);
+          cardNames.add(getComparableDisplayName(item.cardName));
         }
       });
     });
@@ -482,10 +482,14 @@ function desiredCardRowTemplate(group) {
   const referenceCard = enrichCardWithReference({ cardName: group.cardName, price: group.lowestUnitPrice }, referenceData);
   const referenceDisplay = referencePriceDisplay(referenceData);
   const deltaDisplay = referenceDeltaDisplay(referenceCard, referenceData);
+  const variantNames = Array.isArray(group.variantNames) ? group.variantNames : [group.cardName];
+  const versionHint = variantNames.length > 1
+    ? `<div class="reference-inline-note">${escapeHtml(`${variantNames.length} versions combined`)}</div>`
+    : "";
 
   return `
     <tr data-card-name="${escapeAttribute(group.cardName)}">
-      <td>${escapeHtml(group.cardName)}</td>
+      <td>${escapeHtml(group.cardName)}${versionHint}</td>
       <td class="qty-cell">
         <button class="qty-button" data-action="decrement-qty" title="Decrease quantity" aria-label="Decrease ${group.cardName} quantity">−</button>
         <input class="qty-input" type="number" data-card-qty min="0" step="1" value="${desiredQty}" aria-label="Desired quantity for ${group.cardName}">
@@ -1768,7 +1772,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
       <header class="seller-card-header">
         <div class="seller-number-badge">${escapeHtml(displayNumber)}</div>
         <div class="seller-info-primary">
-          <h3>Seller ${escapeHtml(displayNumber)} · Buy from ${escapeHtml(seller.sellerName)}</h3>
+          <h3>Buy from ${escapeHtml(seller.sellerName)}</h3>
           <div class="seller-meta">
             ${escapeHtml(seller.sellerCountry || "Unknown")} · ${escapeHtml(trackingLabel)} · ${escapeHtml(`${itemCount} ${itemCount === 1 ? "copy" : "copies"}`)}
           </div>
@@ -1879,9 +1883,13 @@ function getReferenceData(cardName) {
 }
 
 function normalizeReferenceKey(cardName) {
+  return normalizeOfferKey(cardName);
+}
+
+function getComparableDisplayName(cardName) {
   return String(cardName || "")
+    .replace(/\s+\(V\.\d+\)$/i, "")
     .trim()
-    .toLowerCase()
     .replace(/\s+/g, " ");
 }
 
@@ -2090,17 +2098,19 @@ function buildOfferGroups(sellers) {
   sellers.forEach((seller, sellerIndex) => {
     seller.items.forEach((item, itemIndex) => {
       const key = normalizeOfferKey(item.cardName);
+      const comparableName = getComparableDisplayName(item.cardName);
       if (!key) {
         return;
       }
 
       if (!groups.has(key)) {
         groups.set(key, {
-          cardName: item.cardName,
+          cardName: comparableName,
           requiredQuantity: 0,
           sellerCount: 0,
           lowestUnitPrice: Number.POSITIVE_INFINITY,
-          offers: []
+          offers: [],
+          variantNames: []
         });
       }
 
@@ -2109,11 +2119,15 @@ function buildOfferGroups(sellers) {
       const unitPrice = Number(item.price || 0);
       group.requiredQuantity = Math.max(group.requiredQuantity, quantity);
       group.lowestUnitPrice = Math.min(group.lowestUnitPrice, unitPrice);
+      if (!group.variantNames.includes(item.cardName)) {
+        group.variantNames.push(item.cardName);
+      }
       group.offers.push({
         sellerName: seller.sellerName,
         sellerIndex,
         itemIndex,
         cardName: item.cardName,
+        comparableCardName: comparableName,
         condition: item.condition,
         quantity,
         unitPrice,
@@ -2138,7 +2152,7 @@ function getTotalCopies(offerGroups) {
 }
 
 function normalizeOfferKey(cardName) {
-  return String(cardName || "")
+  return getComparableDisplayName(cardName)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
