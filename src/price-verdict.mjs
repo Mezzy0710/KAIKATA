@@ -5,6 +5,8 @@
  * Shows objective data (percentage delta) without subjective labels.
  */
 
+import { escapeHtml } from "./utils.mjs";
+
 /**
  * Calculate absolute and percentage delta between selected and reference price
  *
@@ -168,20 +170,3 @@ export function generateHighPriceNote(cards, threshold = 0.2) {
   `;
 }
 
-/**
- * Escape HTML special characters for safe rendering
- *
- * @param {string} text - Text to escape
- * @returns {string} Escaped text
- */
-function escapeHtml(text) {
-  if (!text) return '';
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-  return text.replace(/[&<>"']/g, char => map[char]);
-}

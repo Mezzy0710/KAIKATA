@@ -1083,6 +1083,47 @@ select {
   font-size: 0.84rem;
 }
 
+.result-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: rgba(120, 120, 120, 0.05);
+  border: 1px solid var(--line);
+}
+
+.summary-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-metric-value {
+  font-size: 1.2em;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.savings-metric .summary-metric-value {
+  color: #4ade80;
+}
+
+.savings-percent {
+  font-size: 0.75em;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
 .seller-card-header {
   display: flex;
   align-items: flex-start;
@@ -1801,6 +1842,46 @@ select {
   margin: 0;
 }
 
+.desired-cards-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(200, 200, 200, 0.01);
+}
+
+.card-search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-base);
+  color: var(--text);
+  font-size: 0.9em;
+}
+
+.card-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.card-search-input:focus {
+  outline: none;
+  border-color: var(--text-muted);
+  box-shadow: 0 0 0 2px rgba(120, 120, 120, 0.1);
+}
+
+.card-count-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(120, 120, 120, 0.1);
+  color: var(--text-muted);
+  font-size: 0.85em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .desired-cards-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -2357,6 +2438,45 @@ select {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
+  }
+
+  .desired-cards-toolbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card-search-input {
+    min-width: 100%;
+  }
+
+  .result-summary-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .desired-cards-table {
+    font-size: 0.8em;
+  }
+
+  .desired-cards-table thead th,
+  .desired-cards-table tbody td {
+    padding: 8px 10px;
+  }
+
+  .reference-cell {
+    display: none;
+  }
+
+  .qty-button {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+
+  .qty-input {
+    width: 50px;
+    height: 28px;
+    padding: 0 6px;
+    font-size: 0.85em;
   }
 
   .plan-pill-row {
