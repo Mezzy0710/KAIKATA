@@ -943,21 +943,16 @@ function updateOptimizationPreview() {
 function attachCountryResolverHandlers() {
   const form = document.getElementById("countryResolverForm");
   const submitBtn = document.getElementById("countryResolverSubmit");
-  const skipBtn = document.getElementById("countryResolverSkip");
 
-  if (!form) return;
+  if (!form || !submitBtn) return;
 
-  // Remove existing listeners to prevent duplicates
-  const newSubmitBtn = submitBtn?.cloneNode(true);
-  const newSkipBtn = skipBtn?.cloneNode(true);
-
-  if (newSubmitBtn && submitBtn) submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
-  if (newSkipBtn && skipBtn) skipBtn.parentNode.replaceChild(newSkipBtn, skipBtn);
+  // Remove existing listener to prevent duplicates
+  const newSubmitBtn = submitBtn.cloneNode(true);
+  submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
 
   const finalSubmitBtn = document.getElementById("countryResolverSubmit");
-  const finalSkipBtn = document.getElementById("countryResolverSkip");
 
-  finalSubmitBtn?.addEventListener("click", (e) => {
+  finalSubmitBtn.addEventListener("click", (e) => {
     e.preventDefault();
     const selects = form.querySelectorAll(".country-selector-select");
     const updates = new Map();
@@ -989,11 +984,6 @@ function attachCountryResolverHandlers() {
     updateWorkflowStatus("Plan updated", "good", "Seller countries resolved. Review the updated plan.");
     render();
     elements.optimizationSummary?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-
-  finalSkipBtn?.addEventListener("click", (e) => {
-    e.preventDefault();
-    updateWorkflowStatus("Plan ready (unresolved countries)", "warning", "Note: Some seller shipping costs may not be accurate.");
   });
 }
 
@@ -1397,30 +1387,22 @@ function countryResolutionTemplate(sellersNeedingCountry) {
   }
 
   return `
-    <section class="country-selector-panel panel result-panel">
-      <div class="panel-heading panel-heading-soft">
-        <div>
-          <p class="eyebrow">Error Resolution</p>
-          <h2>Select seller countries</h2>
-          <p class="panel-description panel-description-tight">Shipping costs depend on seller location. Select the country for each seller below, then recalculate.</p>
-        </div>
+    <section class="country-resolution-section panel result-panel">
+      <div class="panel-heading">
+        <h2>User input required</h2>
       </div>
-      <form class="country-selector-form" id="countryResolverForm">
+      <form class="country-resolution-form" id="countryResolverForm">
         ${sellersNeedingCountry.map(({ seller, sellerIndex }) => `
-          <div class="country-selector-item">
-            <label for="country-${escapeAttribute(String(sellerIndex))}" class="country-selector-label">
-              ${escapeHtml(seller.sellerName)}
-            </label>
+          <div class="country-resolution-item">
+            <h3 class="resolution-seller-name">${escapeHtml(seller.sellerName)}</h3>
+            <p class="resolution-subtitle">country verification required</p>
             <select class="country-selector-select" id="country-${escapeAttribute(String(sellerIndex))}" data-seller-index="${escapeAttribute(String(sellerIndex))}">
               <option value="">-- Select country --</option>
               ${COUNTRY_OPTIONS.map(country => `<option value="${escapeAttribute(country)}">${escapeHtml(country)}</option>`).join("")}
             </select>
           </div>
         `).join("")}
-        <div class="country-selector-actions">
-          <button class="primary-button" type="submit" id="countryResolverSubmit">Update & Recalculate</button>
-          <button class="ghost-button" type="button" id="countryResolverSkip">Skip for now</button>
-        </div>
+        <button class="primary-button" type="submit" id="countryResolverSubmit">Update</button>
       </form>
     </section>
   `;

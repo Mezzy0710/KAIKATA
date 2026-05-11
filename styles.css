@@ -1876,31 +1876,42 @@ select {
   white-space: nowrap;
 }
 
-/* Country selector form for resolving missing seller countries */
-.country-selector-panel {
+/* Country resolution section for missing seller countries */
+.country-resolution-section {
   background: rgba(251, 191, 36, 0.08);
   border: 1px solid rgba(251, 191, 36, 0.2);
 }
 
-.country-selector-form {
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  margin-bottom: 16px;
+.country-resolution-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.country-selector-item {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  gap: 6px;
+.country-resolution-item {
+  padding: 14px;
+  border: 1px solid rgba(217, 144, 61, 0.15);
+  border-radius: 8px;
+  background: rgba(24, 23, 21, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.country-selector-label {
-  font-size: 0.85rem;
+.resolution-seller-name {
+  font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-soft);
-  display: block;
-  padding: 0 4px;
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+}
+
+.resolution-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  padding: 0;
+  text-transform: lowercase;
 }
 
 .country-selector-select {
@@ -1929,18 +1940,6 @@ select {
   outline: none;
   border-color: #C8A75D;
   box-shadow: 0 0 0 3px rgba(200, 167, 93, 0.2);
-}
-
-.country-selector-actions {
-  display: flex;
-  gap: 12px;
-  grid-column: 1 / -1;
-  margin-top: 8px;
-}
-
-.country-selector-actions .primary-button,
-.country-selector-actions .ghost-button {
-  flex: 1;
 }
 
 .advanced-details-panel > summary {
