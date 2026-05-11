@@ -3036,8 +3036,9 @@ input[type="number"] {
 
 /* Accordion body — variant detail table */
 .card-accordion-body {
-  border-top: 1px solid var(--line);
-  background: var(--bg-subtle);
+  border-top: 2px solid var(--line);
+  background: rgba(0, 0, 0, 0.15);
+  padding-bottom: 8px;
 }
 
 .variant-section-title {
@@ -3115,10 +3116,14 @@ input[type="number"] {
 }
 
 .variant-pref-select {
-  width: auto;
-  padding: 4px 8px;
+  width: 130px;
+  padding: 6px 8px;
   font-size: 0.8rem;
   border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg-elevated);
+  color: var(--text-soft);
+  cursor: pointer;
 }
 
 /* Enriched-field badges — appear below inputs in table cells when the field is present */
