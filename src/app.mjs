@@ -257,6 +257,15 @@ function render() {
   const hasOptimization = Boolean(state.optimizationResult);
 
   elements.desiredCardsSection?.classList.toggle("hidden", !hasParsedData);
+  if (hasParsedData && elements.desiredCardsSection) {
+    elements.desiredCardsSection.classList.add("step-active");
+    // Remove accent on first click
+    const removeAccent = () => {
+      elements.desiredCardsSection?.classList.remove("step-active");
+      elements.desiredCardsSection?.removeEventListener("click", removeAccent);
+    };
+    elements.desiredCardsSection.addEventListener("click", removeAccent);
+  }
   elements.summarySection?.classList.toggle("hidden", !hasOptimization);
   elements.recommendationSection?.classList.toggle("hidden", !hasOptimization);
 
