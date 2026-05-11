@@ -1706,39 +1706,51 @@ select {
 
 /* Dropped sellers section styling */
 .dropped-sellers-section {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  margin-top: 8px;
 }
 
 .dropped-sellers-card {
   background: linear-gradient(180deg, rgba(199, 109, 109, 0.08), transparent);
   border: 1px solid rgba(199, 109, 109, 0.25);
   border-radius: 10px;
-  padding: 20px;
+  padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .dropped-sellers-card h3 {
-  margin: 0 0 16px 0;
+  margin: 0 0 20px 0;
   font-size: 0.95rem;
   color: var(--text);
   font-weight: 700;
 }
 
+.dropped-sellers-card p {
+  margin: 0 0 16px 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 .dropped-sellers-list {
-  display: grid;
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .dropped-seller-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 14px 18px;
   border: 1px solid rgba(199, 109, 109, 0.15);
   border-radius: 6px;
   background: var(--bg-subtle);
   font-size: 0.85rem;
   transition: all 0.2s ease;
+  flex: 1;
+  min-width: 200px;
 }
 
 .dropped-seller-item:hover {
