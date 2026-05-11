@@ -79,6 +79,28 @@ const deduped = parseExtractedCartPayload(`CARTFORGE_CART=${JSON.stringify(dupli
 assert.equal(deduped.ok, true);
 assert.equal(deduped.parsed.sellers[0].items.length, 1);
 
+const structuredNumericPricePayload = {
+  source: "cartforge-cardmarket-extension",
+  version: 1,
+  sellers: [
+    {
+      sellerName: "WholeEuroSeller",
+      items: [
+        { cardName: "Aggravated Assault", quantity: 1, price: "12" },
+        { cardName: "Herald of Secret Streams", quantity: 1, price: "4" },
+        { cardName: "Undergrowth Stadium", quantity: 1, price: "10" }
+      ]
+    }
+  ]
+};
+const structuredNumericPrices = parseExtractedCartPayload(`CARTFORGE_CART=${JSON.stringify(structuredNumericPricePayload)}`);
+assert.equal(structuredNumericPrices.ok, true);
+assert.deepEqual(
+  structuredNumericPrices.parsed.sellers[0].items.map((item) => item.price),
+  [12, 4, 10],
+  "Structured extension prices without decimal separators should stay numeric."
+);
+
 console.log({
   direct: direct.parsed.itemCount,
   encoded: encoded.parsed.sellerCount,

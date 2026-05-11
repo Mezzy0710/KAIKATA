@@ -125,7 +125,7 @@ function normalizeItems(items, sellerName, sellerIndex, warnings) {
     const cardName = cleanupValue(item.cardName || item.name);
     const rawSetName = cleanupValue(item.setName || item.set || item.expansion || "");
     const quantity = Math.max(1, Number.parseInt(item.quantity ?? item.qty ?? 1, 10) || 1);
-    const price = parseMoney(item.price ?? item.unitPrice ?? item.unit_price);
+    const price = parseStructuredMoney(item.price ?? item.unitPrice ?? item.unit_price);
 
     if (!cardName) {
       warnings.push(`${sellerName}: item ${itemIndex + 1} is missing a card name.`);
@@ -164,6 +164,25 @@ function normalizeCountry(value) {
 
   const exact = COUNTRY_OPTIONS.find((country) => country.toLowerCase() === text.toLowerCase());
   return exact || text;
+}
+
+function parseStructuredMoney(value) {
+  const parsed = parseMoney(value);
+  if (parsed !== null) {
+    return parsed;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim().replace(",", ".");
+  if (!/^\d+(?:\.\d+)?$/.test(normalized)) {
+    return null;
+  }
+
+  const amount = Number.parseFloat(normalized);
+  return Number.isFinite(amount) ? amount : null;
 }
 
 function normalizeTracking(value) {
