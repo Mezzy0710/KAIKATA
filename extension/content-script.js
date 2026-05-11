@@ -1,5 +1,6 @@
 (() => {
-  const CARTFORGE_URL = "https://kevinsula.github.io/cardmarket-optimizer/";
+  const LOCAL_CARTFORGE_URL = "http://localhost:8000/";
+  const LIVE_CARTFORGE_URL = "https://mezzy0710.github.io/cardmarket-cart-optimizer/";
   const PANEL_ID = "cartforge-cardmarket-extractor";
 
   if (document.getElementById(PANEL_ID)) {
@@ -26,7 +27,8 @@
   panel.innerHTML = `
     <strong style="display:block;margin-bottom:6px;">CartForge</strong>
     <p style="margin:0 0 10px;color:#4f583e;">Extract this Cardmarket cart into structured seller/item data.</p>
-    <button data-cartforge-action="open" style="width:100%;border:0;border-radius:10px;background:#1f4f35;color:white;padding:10px 12px;font-weight:700;cursor:pointer;">Open in CartForge</button>
+    <button data-cartforge-action="open-local" style="width:100%;border:0;border-radius:10px;background:#1f4f35;color:white;padding:10px 12px;font-weight:700;cursor:pointer;">Open local CartForge</button>
+    <button data-cartforge-action="open-live" style="width:100%;border:1px solid #1f4f35;border-radius:10px;background:#fff9ea;color:#1f4f35;padding:9px 12px;font-weight:700;cursor:pointer;margin-top:8px;">Open live CartForge</button>
     <button data-cartforge-action="copy" style="width:100%;border:1px solid #bca971;border-radius:10px;background:white;color:#1f4f35;padding:9px 12px;font-weight:700;cursor:pointer;margin-top:8px;">Copy payload</button>
     <p data-cartforge-status style="margin:10px 0 0;color:#4f583e;font-size:12px;"></p>
   `;
@@ -42,9 +44,14 @@
     const payload = extractCartPayload(document);
     const encoded = encodePayload(payload);
 
-    if (action === "open") {
-      window.open(`${CARTFORGE_URL}#cartforge=${encoded}`, "_blank", "noopener,noreferrer");
-      setStatus(`Opened ${payload.sellers.length} seller(s), ${countItems(payload)} item row(s).`);
+    if (action === "open-local") {
+      window.open(buildTargetUrl(LOCAL_CARTFORGE_URL, encoded), "_blank", "noopener,noreferrer");
+      setStatus(`Opened local CartForge with ${payload.sellers.length} seller(s), ${countItems(payload)} item row(s).`);
+    }
+
+    if (action === "open-live") {
+      window.open(buildTargetUrl(LIVE_CARTFORGE_URL, encoded), "_blank", "noopener,noreferrer");
+      setStatus(`Opened live CartForge with ${payload.sellers.length} seller(s), ${countItems(payload)} item row(s).`);
     }
 
     if (action === "copy") {
@@ -58,6 +65,14 @@
     if (status) {
       status.textContent = message;
     }
+  }
+
+  function buildTargetUrl(baseUrl, encodedPayload) {
+    const targetUrl = new URL(baseUrl);
+    targetUrl.searchParams.set("source", "cardmarket-extension");
+    targetUrl.searchParams.set("t", String(Date.now()));
+    targetUrl.hash = `cartforge=${encodedPayload}`;
+    return targetUrl.toString();
   }
 
   function extractCartPayload(root) {

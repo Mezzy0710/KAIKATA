@@ -76,7 +76,7 @@ if (hasDom) {
   boot();
 }
 
-function boot() {
+async function boot() {
   window.__cartforgeParse = parseCurrentInput;
 
   // Initialize Scryfall cache for reference price lookups
@@ -94,7 +94,7 @@ function boot() {
   elements.desiredCardsReview.addEventListener("change", handleDesiredQuantityChange);
   elements.desiredCardsReview.addEventListener("click", handleDesiredQuantityClick);
 
-  loadShippingData();
+  await loadShippingData();
   loadCartFromUrlHash();
   render();
 }
@@ -161,7 +161,7 @@ function parseCurrentInput() {
   state.activeReferenceLookupToken += 1;
   state.priceReferences = {};
   state.scryallLookupInProgress = false;
-  const imported = parseExtractedCartPayload(elements.cartInput.value);
+  const imported = parseExtractedCartPayload(elements.cartInput.value, state.shippingData);
   state.parsed = imported.ok ? imported.parsed : parseCart(elements.cartInput.value, state.shippingData);
   state.optimizationResult = null;
   state.optimizationStale = true;
@@ -1936,6 +1936,38 @@ function groupSelectedOffersBySeller(offers) {
     grouped.get(offer.sellerIndex).push(offer);
   });
   return grouped;
+}
+
+function buildBuyingPlanText(result) {
+  const groupedOffers = groupSelectedOffersBySeller(result.selectedOffers || []);
+  const lines = [];
+
+  (result.usedSellers || []).forEach(({ seller, sellerIndex }, index) => {
+    const offers = groupedOffers.get(sellerIndex) || [];
+    const sellerCost = (result.sellerCosts || []).find((cost) => cost.sellerIndex === sellerIndex) || {};
+    const cardTotal = sellerCost.articleValue ?? offerSubtotal(offers);
+    const shippingTotal = sellerCost.shippingValue ?? 0;
+    const trusteeTotal = sellerCost.trusteeFeeValue ?? 0;
+    const feeTotal = sellerCost.cardmarketFeeValue ?? 0;
+    const fixedTotal = sellerCost.totalCost ?? (shippingTotal + trusteeTotal + feeTotal);
+    const displayTotal = Number.isFinite(fixedTotal) ? roundMoney(cardTotal + fixedTotal) : Number.POSITIVE_INFINITY;
+
+    lines.push(`Seller ${index + 1}: ${seller?.sellerName || `Seller ${sellerIndex + 1}`}`);
+    offers.forEach((offer) => {
+      const qty = offer.requiredQuantity || offer.quantity || 1;
+      lines.push(`- ${qty}x ${offer.cardName} (${offer.condition}) @ ${formatMoney(offer.unitPrice)}`);
+    });
+    lines.push(`Cards: ${formatMoney(cardTotal)}`);
+    lines.push(`Shipping: ${formatMoney(shippingTotal)}`);
+    lines.push(`Trustee: ${formatMoney(trusteeTotal)}`);
+    if (!SHIPPING_DATA_INCLUDES_CARDMARKET_FEE) {
+      lines.push(`Fees: ${formatMoney(feeTotal)}`);
+    }
+    lines.push(`Total: ${formatEstimatedMoney(displayTotal)}`);
+    lines.push("");
+  });
+
+  return lines.join("\n").trim();
 }
 
 function getReferenceData(cardName) {

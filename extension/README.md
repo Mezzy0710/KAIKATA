@@ -8,6 +8,7 @@ Experimental browser-extension scaffold for extracting structured shopping-cart 
 - Reads seller and item information from the page DOM.
 - Opens CartForge with a structured payload in the URL fragment.
 - Can also copy the payload as `CARTFORGE_CART={...}` for manual import.
+- Supports both local and live CartForge targets.
 
 ## Extracted Fields
 
@@ -40,7 +41,21 @@ Item-level:
 4. Choose "Load unpacked".
 5. Select this `extension/` directory.
 6. Open a Cardmarket shopping cart page.
-7. Click "Open in CartForge" or "Copy payload".
+7. Click `Open local CartForge`, `Open live CartForge`, or `Copy payload`.
+
+## Live Page
+
+The extension's live target is:
+
+`https://mezzy0710.github.io/cardmarket-cart-optimizer/`
+
+The repository now includes a GitHub Pages workflow in [.github/workflows/deploy-pages.yml](/Users/kevinsula/Documents/AI%20Source%20Files/Projects/cardmarket-optimizer/.github/workflows/deploy-pages.yml).
+
+To make the live target work:
+
+1. Push this repository to GitHub.
+2. In GitHub repo settings, enable Pages and choose `GitHub Actions` as the source.
+3. Push to `main` or `master`, or run the workflow manually.
 
 ## Development Notes
 
