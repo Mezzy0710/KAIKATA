@@ -1301,10 +1301,9 @@ function optimizationSummaryTemplate(result) {
   const savingsTone = result.savings > 0.005 ? "good" : Math.abs(result.savings) < 0.005 ? "muted" : "warning";
   const savingsLabel = result.savings > 0.005
     ? `Save ${formatMoney(result.savings)} vs current cart`
-    : `${formatMoney(Math.abs(result.savings))} above current cart`;
-  const savingsSectionHtml = Math.abs(result.savings) > 0.005
-    ? `<p class="summary-savings ${escapeAttribute(savingsTone)}">${escapeHtml(savingsLabel)}</p>`
-    : "";
+    : Math.abs(result.savings) < 0.005
+      ? "No savings vs current cart"
+      : `${formatMoney(Math.abs(result.savings))} above current cart`;
 
   return `
     <div class="summary-hero-card summary-hero-forge">
@@ -1312,7 +1311,7 @@ function optimizationSummaryTemplate(result) {
         <div class="summary-hero-copy">
           <span class="eyebrow">Best buying plan</span>
           <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
-          ${savingsSectionHtml}
+          <p class="summary-savings ${escapeAttribute(savingsTone)}">${escapeHtml(savingsLabel)}</p>
           <p>Buy the cards below from the selected sellers.</p>
         </div>
         <div class="plan-pill-row" aria-label="Buying plan summary">

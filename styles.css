@@ -2321,6 +2321,18 @@ select {
   font-size: 0.9em;
 }
 
+/* Hide number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+
 .qty-input:focus {
   outline: none;
   border-color: var(--accent);
