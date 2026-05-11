@@ -2903,8 +2903,7 @@ input[type="number"] {
 }
 
 /* Hide non-functional minus buttons in seller plan cards */
-.qty-button[data-action="minus"],
-.qty-minus-btn {
+.qty-button[data-action="decrement-qty"] {
   display: none !important;
 }
 
