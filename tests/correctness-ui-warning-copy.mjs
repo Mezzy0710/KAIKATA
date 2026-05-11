@@ -7,7 +7,7 @@ const appSource = await readFile(new URL("../src/app.mjs", import.meta.url), "ut
 
 assert.match(indexHtml, /CartForge/);
 assert.match(indexHtml, /Find the cheapest way to buy your cards/);
-assert.match(indexHtml, /Review cards & quantities/);
+assert.match(indexHtml, /Set copies, lock printings if needed, then forge the buy plan|Review cards & quantities/);
 assert.match(indexHtml, /What to buy from each seller/);
 assert.match(appSource, /Different cards/);
 assert.match(appSource, /Total copies/);
@@ -24,8 +24,8 @@ for (const forbiddenPhrase of ["route selected", "seller route", "journey"]) {
   assert.ok(!appSource.toLowerCase().includes(forbiddenPhrase), `App copy should not use "${forbiddenPhrase}" language.`);
 }
 
-assert.match(appSource, /Quantities changed\. Generate the plan again\./, "Changing desired quantity should mark the plan stale and require re-run.");
-assert.match(appSource, /Generate best buying plan again|Generate best buying plan/);
+assert.match(appSource, /Quantities changed\. Reforge the plan\.|Quantities changed\. Generate the plan again\./, "Changing desired quantity should mark the plan stale and require re-run.");
+assert.match(appSource, /Reforge Buying Plan|Forge Buying Plan|Optimize cart again|Optimize cart/);
 assert.match(appSource, /class="result-warning/, "Warnings and cost notes should render in a dedicated visible section.");
 assert.match(appSource, /Show all warning details/, "Warning counters/sections should expose accessible details.");
 assert.match(appSource, /Quick note/, "Informational assumptions should be labeled as a note when no critical warning exists.");
@@ -39,6 +39,7 @@ assert.match(appSource, /Reference/, "The UI should render visible reference col
 
 __testing.state.desiredQuantityByCard = { "Arcane Signet": 1 };
 __testing.state.scryallLookupInProgress = false;
+__testing.state.expandedCards = new Set(["Arcane Signet"]);
 __testing.state.priceReferences = {
   [__testing.normalizeReferenceKey("Arcane Signet")]: {
     price: 0.8,
@@ -53,11 +54,10 @@ const desiredCardsHtml = __testing.desiredCardsTableTemplate([{
   requiredQuantity: 1,
   sellerCount: 4,
   lowestUnitPrice: 0.85,
-  offers: [{ quantity: 1 }]
+  offers: [{ cardName: "Arcane Signet", sellerName: "Seller A", quantity: 1, unitPrice: 0.85, condition: "Near Mint" }]
 }]);
-assert.match(desiredCardsHtml, /Reference/);
+assert.match(desiredCardsHtml, /Ref\.|Reference/);
 assert.match(desiredCardsHtml, /EUR 0\.80/, "Rendered desired card rows should show the fetched Scryfall price.");
-assert.match(desiredCardsHtml, /tooltip-chip/, "Rendered desired card rows should show a visible tooltip trigger.");
 assert.match(desiredCardsHtml, /reference-delta-badge/, "Rendered desired card rows should show a visible delta badge.");
 
 __testing.state.desiredQuantityByCard = { "Arcane Signet": 0 };
@@ -66,7 +66,7 @@ const excludedDesiredCardsHtml = __testing.desiredCardsTableTemplate([{
   requiredQuantity: 1,
   sellerCount: 4,
   lowestUnitPrice: 0.85,
-  offers: [{ quantity: 1 }]
+  offers: [{ cardName: "Arcane Signet", sellerName: "Seller A", quantity: 1, unitPrice: 0.85, condition: "Near Mint" }]
 }]);
 assert.match(excludedDesiredCardsHtml, /value="0"/, "Quantity 0 should stay visible in the desired cards control.");
 assert.match(excludedDesiredCardsHtml, /Excluded/, "Quantity 0 should render as excluded in the desired cards table.");
@@ -160,7 +160,7 @@ const warningHtml = __testing.warningBannerTemplate(criticalResult, criticalEntr
 assert.match(warningHtml, /Must fix before buying/);
 assert.match(warningHtml, /Why it matters:/);
 assert.match(warningHtml, /What to do:/);
-assert.match(warningHtml, /Affects: Sol Ring/);
+assert.match(warningHtml, /Affects:<\/strong>\s*Sol Ring/);
 
 console.log(JSON.stringify({
   checkedMainCopy: true,

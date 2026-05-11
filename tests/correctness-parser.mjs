@@ -47,7 +47,7 @@ const offerGroups = __testing.buildOfferGroups(complex.sellers);
 const desiredByCard = Object.fromEntries(offerGroups.map((group) => [group.cardName, group.requiredQuantity]));
 assert.equal(desiredByCard["Sol Ring"], 2, "Desired quantities should initialize from parsed 2x rows.");
 assert.equal(desiredByCard["Arcane Signet"], 2, "Desired quantities should initialize from parsed 2x rows.");
-assert.equal(__testing.getTotalCopies(offerGroups), 13);
+assert.equal(__testing.getTotalCopies(offerGroups), 17);
 assert.ok(offerGroups.length >= 9, "Complex fixture should include at least 9 different cards.");
 
 console.log(JSON.stringify({

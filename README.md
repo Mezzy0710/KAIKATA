@@ -8,13 +8,12 @@ The app takes copied Cardmarket cart text as input, extracts sellers, shipping m
 
 ## Primary user journey
 
-1. Copy the full shopping cart text from Cardmarket.
-2. Paste it into the app.
-3. Let the app parse seller blocks and line items.
-4. Review ambiguous country/method matches and correct them if needed.
-5. Run optimization.
-6. Review which sellers to keep, which to drop, and the final total cost.
-7. Manually update the cart on Cardmarket and place the orders.
+1. Import cart data from the Cardmarket extension or paste the full shopping cart text.
+2. Let the app parse seller blocks and line items.
+3. Review ambiguous country/method matches and detected card quantities.
+4. Run optimization.
+5. Review which sellers to keep, which to drop, and the final total cost.
+6. Manually update the cart on Cardmarket and place the orders.
 
 ## Experimental Cardmarket extractor
 
@@ -24,6 +23,7 @@ Current status:
 - The extension injects an "Open in CartForge" panel on Cardmarket shopping-cart pages.
 - CartForge can import extracted payloads from `#cartforge=...` URL fragments or `CARTFORGE_CART={...}` pasted into the input area.
 - Review rows now preserve `setName` and `rarity` when provided by the extractor.
+- Extension-import and manual-paste flows both normalize into the same review and optimization model.
 
 Next hardening step: capture a sanitized Cardmarket cart HTML sample and add fixture tests for the extractor selectors.
 
@@ -111,3 +111,11 @@ The app should run fully client-side with no server requirement.
 ## Quality bar
 
 The app should optimize correctly before it looks polished. Parsing accuracy and transparent review matter more than visual refinement in version 1.
+
+## Product voice (microcopy guardrails)
+
+CartForge should read like a smart TCG friend: concise, practical, hobby-native, and trustworthy.
+
+- Use light wit only in low-risk moments (empty states, successful import/parse, optimization success/loading, optional helper text).
+- Keep warnings, malformed import errors, variant constraints, and cost-critical messages neutral and precise.
+- Prefer clear-before-clever one-liners over jokes.

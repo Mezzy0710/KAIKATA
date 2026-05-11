@@ -43,7 +43,10 @@ const state = {
   priceReferences: {}, // Map<normalizedCardName, referencePriceData>
   scryallLookupInProgress: false, // Show loading state while fetching
   referenceCheckEnabled: true, // Can be disabled in settings (v2)
-  activeReferenceLookupToken: 0
+  activeReferenceLookupToken: 0,
+  inputSource: "manual", // "manual" | "extension"
+  extensionHintFromUrl: false,
+  lastImportedFingerprint: ""
 };
 
 const hasDom = typeof document !== "undefined";
@@ -61,6 +64,8 @@ const elements = hasDom ? {
   summarySection: document.querySelector("#summarySection"),
   optimizationSummary: document.querySelector("#optimizationSummary"),
   parseMessage: document.querySelector("#parseMessage"),
+  inputHeading: document.querySelector("#inputHeading"),
+  inputDescription: document.querySelector("#inputDescription"),
   workflowHint: document.querySelector("#workflowHint"),
   inputEditor: document.querySelector("#inputEditor"),
   inputSummary: document.querySelector("#inputSummary"),
@@ -103,8 +108,16 @@ async function boot() {
 }
 
 function loadCartFromUrlHash() {
+  const sourceParam = new URLSearchParams(window.location.search).get("source");
+  state.extensionHintFromUrl = sourceParam === "cardmarket-extension";
   const decoded = decodeCartForgeHash(window.location.hash);
   if (!decoded.ok) {
+    if (state.extensionHintFromUrl) {
+      state.inputSource = "extension";
+      setMessage("Extension opened CartForge, but no cart payload was found. Try importing again.");
+      updateWorkflowStatus("Waiting for cart", "warning", "Use the extension import again, or paste your cart manually.");
+      render();
+    }
     return;
   }
 
@@ -136,7 +149,7 @@ async function loadShippingData() {
 function updateOptimizeButton() {
   const { shippingDataState } = state;
   elements.parseButton.disabled = false;
-  elements.parseButton.textContent = "Review pasted cart";
+  elements.parseButton.textContent = "Review Cart";
 
   if (shippingDataState === "error" && !state.parsed.sellers?.length && !state.optimizationResult) {
     updateWorkflowStatus("Ready to parse", "warning", "Shipping data is unavailable here. Review still works.");
@@ -167,6 +180,16 @@ function parseCurrentInput() {
   state.expandedCards = new Set();
   state.variantPreferences = {};
   const imported = parseExtractedCartPayload(elements.cartInput.value, state.shippingData);
+  state.inputSource = imported.ok ? "extension" : "manual";
+
+  if (imported.ok) {
+    const fingerprint = JSON.stringify(imported.parsed.rawText || "");
+    if (fingerprint && fingerprint === state.lastImportedFingerprint && state.parsed.sellerCount) {
+      setMessage("Same extension payload received again. Existing review data was refreshed.");
+    }
+    state.lastImportedFingerprint = fingerprint;
+  }
+
   state.parsed = imported.ok ? imported.parsed : parseCart(elements.cartInput.value, state.shippingData);
   state.optimizationResult = null;
   state.optimizationStale = true;
@@ -180,15 +203,22 @@ function parseCurrentInput() {
 
   const totalCopies = getTotalCopies(offerGroups);
   if (!state.parsed.sellerCount || !offerGroups.length) {
-    setMessage("No cards or sellers detected. Make sure you pasted the full Cardmarket cart page.");
+    if (!imported.ok && /CARTFORGE_CART=|^\s*\{/.test(String(elements.cartInput.value || "").trim())) {
+      setMessage("Cart payload could not be read. Please re-import from the extension or paste plain cart text.");
+    } else {
+      setMessage("No cards or sellers detected. Paste the full Cardmarket cart or import from the extension.");
+    }
     updateWorkflowStatus("Parse failed", "warning", "Try again with the complete cart.");
     updateOptimizeButton();
     render();
     return;
   }
-  const sourceText = imported.ok ? " from Cardmarket page extraction" : "";
-  setMessage(`Found ${state.parsed.sellerCount} seller(s) with ${offerGroups.length} card(s) (${totalCopies} total copies)${sourceText}.${warningText}`);
-  updateWorkflowStatus("Ready", state.parsed.warnings.length ? "warning" : "good", "Review quantities below, then find your plan.");
+  const sourceText = imported.ok
+    ? "Cart received from Cardmarket. No copy-paste required."
+    : "Cart detected. No spreadsheet required.";
+  const shippingDetected = state.parsed.sellers.some((seller) => seller.shippingMethod || Number.isFinite(Number(seller.shippingValue)));
+  setMessage(`${sourceText} We found ${state.parsed.sellerCount} seller(s), ${offerGroups.length} card(s), ${totalCopies} total copies. Shipping data ${shippingDetected ? "was" : "was not"} detected.${warningText}`);
+  updateWorkflowStatus("Ready", state.parsed.warnings.length ? "warning" : "good", "Review cards and quantities, then forge your buying plan.");
   updateOptimizeButton();
   render();
 
@@ -265,8 +295,11 @@ function clearInput() {
   state.priceReferences = {}; // Clear reference prices
   state.scryallLookupInProgress = false;
   state.activeReferenceLookupToken += 1;
-  setMessage("No cart parsed yet.");
-  updateWorkflowStatus("Ready to parse", "muted", "Next: confirm the detected shopping list.");
+  state.inputSource = "manual";
+  state.lastImportedFingerprint = "";
+  elements.desiredCardsSection?.removeAttribute("open");
+  setMessage("Paste your Cardmarket cart. We'll handle the seller math.");
+  updateWorkflowStatus("Ready to parse", "muted", "Next: review the detected cards and quantities.");
   render();
 }
 
@@ -292,15 +325,33 @@ function render() {
   elements.recommendationSection?.classList.toggle("hidden", !hasOptimization);
 
   renderStepper(sellers);
+  renderInputCopy();
   renderInputState(sellers, parsedTotal);
   renderSummary(sellers, itemCount, offerGroups, parsedTotal);
   renderDesiredCards(offerGroups);
   renderOptimizationViews();
 }
 
+function renderInputCopy() {
+  if (!elements.inputHeading || !elements.inputDescription) {
+    return;
+  }
+  if (state.inputSource === "extension") {
+    elements.inputHeading.textContent = "CART RECEIVED";
+    elements.inputDescription.textContent = "Cart received from Cardmarket. Review detected cards and quantities below.";
+    return;
+  }
+  elements.inputHeading.textContent = "ADD YOUR CART";
+  elements.inputDescription.textContent = "Paste your Cardmarket cart text or import from the extension.";
+}
+
 function renderStepper(sellers) {
   const stepper = document.querySelector("#appStepper");
   if (!stepper) return;
+  const firstStepLabel = stepper.querySelector(".stepper-item[data-step='1'] .stepper-label");
+  if (firstStepLabel) {
+    firstStepLabel.textContent = state.inputSource === "extension" ? "Import" : "Paste";
+  }
 
   const hasParsedData = sellers.length > 0;
   const hasResult = !!state.optimizationResult;
@@ -346,8 +397,8 @@ function renderInputState(sellers, parsedTotal) {
         <p>${escapeHtml(`${sellers.length} seller${sellers.length === 1 ? "" : "s"} detected, ${state.parsed.itemCount} offer${state.parsed.itemCount === 1 ? "" : "s"} parsed, original total ${formatMoney(parsedTotal)}.`)}</p>
       </div>
       <div class="button-row input-summary-actions">
-        <button id="editCartButton" class="ghost-button" type="button">Edit pasted cart</button>
-        <button id="clearButtonCompact" class="ghost-button" type="button">Clear cart</button>
+        <button id="editCartButton" class="ghost-button" type="button">${state.inputSource === "extension" ? "Replace Imported Cart" : "Edit Pasted Cart"}</button>
+        <button id="clearButtonCompact" class="ghost-button" type="button">Clear Cart</button>
       </div>
     </div>
   `;
@@ -372,11 +423,16 @@ function renderSummary(sellers, itemCount, offerGroups, parsedTotal) {
   const pricedOfferCount = sellers.reduce((sum, seller) => sum + seller.items.filter((item) => Number.isFinite(Number(item.price))).length, 0);
   const warningCount = ambiguousCount + unknownCountryCount + state.parsed.warnings.length;
 
+  const inputSourceLabel = state.inputSource === "extension" ? "Extension import" : "Manual paste";
+  const shippingDetected = sellers.some((seller) => seller.shippingMethod || Number.isFinite(Number(seller.shippingValue)));
   if (elements.summaryStrip) {
     elements.summaryStrip.innerHTML = [
       summaryCard(sellers.length ? "Parsed successfully" : "Waiting for cart", sellers.length ? "Ready" : "Idle", sellers.length ? "good" : "muted"),
+      summaryCard("Input source", inputSourceLabel, state.inputSource === "extension" ? "good" : "muted"),
       summaryCard("Sellers", sellers.length, sellers.length ? "good" : "muted"),
       summaryCard("Offers", itemCount, itemCount ? "good" : "muted"),
+      summaryCard("Total copies", getTotalCopies(offerGroups), itemCount ? "good" : "muted"),
+      summaryCard("Shipping detected", shippingDetected ? "Yes" : "No", shippingDetected ? "good" : "warning"),
       summaryCard("Prices found", pricedOfferCount, pricedOfferCount ? "good" : "muted"),
       summaryCard("Shipping data", state.shippingData ? "Ready" : "Missing", state.shippingData ? "good" : "warning"),
       summaryCard("Warnings", warningCount ? `${warningCount} to review` : "Clear", warningCount ? "warning" : "good")
@@ -447,20 +503,21 @@ function renderDesiredCards(offerGroups) {
   if (!offerGroups.length) {
     return;
   }
+  elements.desiredCardsSection?.setAttribute("open", "true");
 
   const detectedTotal = Object.values(state.desiredQuantityByCard).reduce((sum, qty) => sum + qty, 0);
   const selectedTotal = Object.values(state.desiredQuantityByCard).filter(qty => qty > 0).length;
-  const actionLabel = state.optimizationStale || !state.optimizationResult ? "Optimize cart" : "Optimize cart again";
+  const actionLabel = state.optimizationStale || !state.optimizationResult ? "Forge Buying Plan" : "Reforge Buying Plan";
 
   elements.desiredCardsReview.insertAdjacentHTML("beforeend", `
     <div class="review-action-bar">
-      <div class="review-action-copy">
-        <p class="note-text">Card versions are flexible by default.</p>
-        <p class="note-text reference-status-text">Different cards: ${selectedTotal} · Total copies: ${detectedTotal}</p>
+      <div class="review-action-copy review-action-pills">
+        <span class="status-pill info">${escapeHtml(`${selectedTotal} Cards`)}</span>
+        <span class="status-pill muted">${escapeHtml(`${detectedTotal} Total Copies`)}</span>
+        <span class="status-pill muted">Best cart total beats best single-card prices</span>
       </div>
       <div class="review-cta-group">
         <button id="runOptimizationButton" class="primary-button run-button" type="button">${escapeHtml(actionLabel)}</button>
-        <p class="review-cta-hint">Find the cheapest valid seller combination including shipping.</p>
       </div>
     </div>
     ${referenceStatusTemplate()}
@@ -562,16 +619,11 @@ function variantBodyTemplate(group) {
 
   const variants = [...variantMap.entries()];
   const hasEnriched = variants.some(([, v]) => v.setName || v.collectorNumber || v.language);
-  const hasReference = variants.some(([, v]) => getReferenceData(v.cardName) !== null);
-  const showRef = hasReference || state.scryallLookupInProgress;
+  const showRef = state.referenceCheckEnabled;
 
   return `
     <div class="card-accordion-body">
-      <p class="variant-section-title">Detected variants</p>
-      <p class="variant-hint-text">
-        Version details are shown for transparency. Unless you choose Prefer, Require, or Exclude,
-        CartForge optimizes this card by lowest total price.
-      </p>
+      <p class="variant-section-title">Detected Variants ${tooltipChip("Unless you set Prefer, Require, or Exclude, CartForge optimizes by lowest total cart cost.")}</p>
       <div class="variant-table-wrap">
         <table class="variant-table">
           <thead>
@@ -602,14 +654,20 @@ function variantRowTemplate(cardName, variantKey, offer, hasEnriched, showRef) {
   let refCells = "";
   if (showRef) {
     const refData = getReferenceData(offer.cardName);
-    const referenceCard = refData ? enrichCardWithReference(offer, refData) : null;
+    const selectedPrice = Number(offer.unitPrice);
+    const referencePrice = Number(refData?.price);
+    const delta = Number.isFinite(selectedPrice) && Number.isFinite(referencePrice)
+      ? calculatePriceDelta(selectedPrice, referencePrice)
+      : null;
+    const deltaColor = getDeltaColor(delta?.percentage);
+    const deltaDisplay = formatDeltaDisplay(delta?.percentage);
     const refPrice = state.scryallLookupInProgress && !refData
       ? `<span class="reference-muted">Loading…</span>`
       : refData && !refData.error
         ? escapeHtml(formatReferenceMoney(refData.price, refData.currency))
         : `<span class="reference-muted">—</span>`;
-    const refDelta = referenceCard?.hasReference
-      ? `<span class="reference-delta-badge delta-${escapeAttribute(referenceCard.deltaColor)}">${escapeHtml(referenceCard.deltaDisplay)}</span>`
+    const refDelta = refData && !refData.error && delta
+      ? `<span class="reference-delta-badge delta-${escapeAttribute(deltaColor)}" title="${escapeAttribute(`${formatMoney(selectedPrice)} vs ${formatReferenceMoney(referencePrice, refData.currency)} from ${refData.source || "Scryfall"}`)}">${escapeHtml(deltaDisplay)}</span>`
       : `<span class="reference-muted">—</span>`;
     refCells = `<td class="price-cell">${refPrice}</td><td class="price-cell">${refDelta}</td>`;
   }
@@ -644,12 +702,12 @@ function referenceStatusTemplate() {
   }
 
   if (state.scryallLookupInProgress) {
-    return `<p class="note-text reference-status-text">Loading reference prices…</p>`;
+    return `<p class="note-text reference-status-text">Checking sellers, shipping, and stack-sized cart math…</p>`;
   }
 
   const referenceCount = Object.values(state.priceReferences).filter((entry) => entry && !entry.error).length;
   if (referenceCount > 0) {
-    return `<p class="note-text reference-status-text">Reference prices help spot unusual deals, but do not constrain optimization.</p>`;
+    return `<p class="note-text reference-status-text">Reference prices are for context only; optimization still follows Cardmarket costs.</p>`;
   }
 
   return "";
@@ -909,7 +967,7 @@ function itemRowTemplate(item, itemIndex, sellerName) {
       <td class="price-cell"><input data-item-field="price" value="${escapeAttribute(moneyInputValue(item.price))}" aria-label="Price"></td>
       <td><input value="${escapeAttribute(sellerName || "")}" aria-label="Seller" disabled></td>
       <td><input data-item-field="rawLine" value="${escapeAttribute(item.rawLine || "")}" aria-label="Raw row"></td>
-      <td class="actions-cell"><button class="icon-button" type="button" data-action="delete-item" title="Delete row" aria-label="Delete row">x</button></td>
+      <td class="actions-cell"><button class="icon-button" type="button" data-action="delete-item" title="Delete Row" aria-label="Delete Row">x</button></td>
     </tr>
   `;
 }
@@ -1107,20 +1165,21 @@ function runOptimizationPlaceholder() {
 
   if (!sellers.length || !offerGroups.length) {
     state.optimizationResult = null;
-    updateWorkflowStatus("No cart data", "warning", "Paste a Cardmarket cart to continue.");
+    updateWorkflowStatus("No cart data", "warning", "Paste or import a Cardmarket cart to continue.");
     renderOptimizationViews();
     return;
   }
 
+  updateWorkflowStatus("Optimizing", "muted", "Checking sellers, shipping, and the usual Cardmarket chaos…");
   state.optimizationStale = false;
   state.optimizationResult = optimizeCart(sellers, offerGroups);
   state.inputCollapsed = true;
   updateWorkflowStatus(
-    state.optimizationResult.warnings.length ? "Plan needs review" : "Plan ready",
+    state.optimizationResult.warnings.length ? "Plan Needs Review" : "Buying Plan Forged",
     state.optimizationResult.warnings.length ? "warning" : "good",
     state.optimizationResult.warnings.length
       ? "Check the notes before buying."
-      : "Your buying plan is ready."
+      : "Your buy list is ready."
   );
   render();
   elements.optimizationSummary.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1128,7 +1187,7 @@ function runOptimizationPlaceholder() {
 
 function updateOptimizationPreview() {
   state.optimizationResult = null;
-  updateWorkflowStatus("Needs review", "warning", "Quantities changed. Generate the plan again.");
+  updateWorkflowStatus("Needs Review", "warning", "Quantities changed. Reforge the plan.");
   elements.optimizationOutput.innerHTML = "";
   const sellers = state.parsed.sellers;
   const offerGroups = buildOfferGroups(sellers);
@@ -1510,6 +1569,9 @@ function optimizationSummaryTemplate(result) {
   const hasEstimatedTrustee = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
   const trusteeLabel = hasEstimatedTrustee ? "Fees / trustee" : "Fees / trustee";
   const trusteeNote = hasEstimatedTrustee ? "Estimated · verify at Cardmarket checkout" : "Verify at Cardmarket checkout";
+  const savingsNote = result.savings > 0.1
+    ? "Shipping did not eat the savings this time."
+    : "Your cart is already pretty lean. Shipping did not sabotage you this time.";
   // Savings display removed per UX feedback
 
   return `
@@ -1519,6 +1581,7 @@ function optimizationSummaryTemplate(result) {
           <span class="eyebrow">Best buying plan</span>
           <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
           <p>Buy the cards below from the selected sellers.</p>
+          <p class="note-text">${escapeHtml(savingsNote)}</p>
         </div>
         <div class="plan-pill-row" aria-label="Buying plan summary">
           <span class="plan-pill">${escapeHtml(`Sellers to use: ${result.usedSellers.length}`)}</span>
@@ -1612,7 +1675,7 @@ function countryResolutionTemplate(sellersNeedingCountry) {
             </select>
           </div>
         `).join("")}
-        <button class="primary-button" type="submit" id="countryResolverSubmit">Update</button>
+        <button class="primary-button" type="submit" id="countryResolverSubmit">Update Countries</button>
       </form>
     </section>
   `;
@@ -1660,7 +1723,10 @@ function warningEntryTemplate(entry) {
         <strong>${escapeHtml(entry.title)}</strong>
         <span class="status-pill ${pillClass}">${escapeHtml(entry.severity)}</span>
       </div>
-      <p class="warning-action"><strong>Action:</strong> ${escapeHtml(entry.whatToDo)}</p>
+      <p class="warning-detail"><strong>What happened:</strong> ${escapeHtml(entry.whatHappened || "See warning details.")}</p>
+      <p class="warning-detail"><strong>Why it matters:</strong> ${escapeHtml(entry.whyItMatters || "It may affect total cost or data accuracy.")}</p>
+      <p class="warning-action"><strong>What to do:</strong> ${escapeHtml(entry.whatToDo || "Review and correct this entry.")}</p>
+      ${entry.affected ? `<p class="warning-detail"><strong>Affects:</strong> ${escapeHtml(entry.affected)}</p>` : ""}
     </article>
   `;
 }
@@ -1668,7 +1734,17 @@ function warningEntryTemplate(entry) {
 function buildResultWarnings(result) {
   const entries = [];
 
-  // Only show country warnings - all other issues are handled separately or are not blocking
+  if (result.insufficientGroups?.length) {
+    entries.push({
+      severity: "critical",
+      title: "Desired quantities are not fully available",
+      affected: result.insufficientGroups.map((group) => group.cardName).join(", "),
+      whatHappened: "At least one card does not have enough available copies for your requested quantity.",
+      whyItMatters: "Your current buying plan cannot fulfill the full cart as requested.",
+      whatToDo: "Lower requested quantities or add more offers, then optimize again."
+    });
+  }
+
   if (result.countryWarnings.length) {
     entries.push({
       severity: "critical",
@@ -1677,6 +1753,18 @@ function buildResultWarnings(result) {
       whatHappened: "Country not confirmed for these sellers.",
       whyItMatters: "Shipping costs cannot be calculated accurately.",
       whatToDo: "Select country for each seller below, then recalculate."
+    });
+  }
+
+  const hasEstimatedTrustee = result.sellerCosts?.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
+  if (!entries.length && hasEstimatedTrustee) {
+    entries.push({
+      severity: "info",
+      title: "Trustee and fee values are estimated",
+      affected: "",
+      whatHappened: "At least one seller uses a rule-based trustee estimate.",
+      whyItMatters: "Final checkout fees may differ slightly on Cardmarket.",
+      whatToDo: "Verify final fees during checkout before placing orders."
     });
   }
 
@@ -1825,7 +1913,6 @@ function droppedSellersTemplate(result) {
         ${result.droppedSellers.map(({ seller, sellerIndex }) => `
           <div class="dropped-seller-item">
             <strong>${escapeHtml(seller.sellerName)}</strong>
-            <span class="seller-stats">${escapeHtml(`${seller.items.length} offer(s)`)}</span>
           </div>
         `).join("")}
       </div>
@@ -1906,7 +1993,6 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
   const displayTotal = Number.isFinite(fixedTotal) ? roundMoney(cardTotal + fixedTotal) : Number.POSITIVE_INFINITY;
   const shippingMethod = sellerCost?.shippingMethod || seller.shippingMethod || "Unknown shipping";
   const trackingLabel = sellerCost?.trackingStatus || seller.trackingStatus || "unknown";
-  const shippingSourceClass = sellerCost?.source === "unresolved" ? "warning" : "good";
   const itemCount = offers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
   const estimatedWeight = sellerCost?.estimatedWeight ?? estimateShipmentWeight(offers.length);
 
@@ -1964,13 +2050,13 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
       </div>
 
       <details class="cost-breakdown">
-        <summary class="seller-section-label">Cost breakdown</summary>
+        <summary class="seller-section-label">Cost Breakdown</summary>
         <div class="breakdown-item">
           <span>Cards</span>
           <strong>${escapeHtml(formatMoney(cardTotal))}</strong>
         </div>
         <div class="breakdown-item">
-          <span>Shipping</span>
+          <span>Shipping ${tooltipChip(`${shippingMethod} · ${trackingLabel} · ~${estimatedWeight}g`)}</span>
           <strong>${escapeHtml(formatMoney(shippingTotal))}</strong>
         </div>
         <div class="breakdown-item">
@@ -1991,24 +2077,6 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
       </details>
 
       ${excludedCardsSection}
-
-      <details class="shipping-detail-section">
-        <summary class="shipping-detail-summary">
-          Shipping · ${escapeHtml(shippingMethod)} · ${escapeHtml(trackingLabel)} · ~${escapeHtml(estimatedWeight)}g
-        </summary>
-        <div class="shipping-detail-body">
-          <span class="status-pill ${shippingSourceClass} shipping-source-pill">${escapeHtml(sellerCost?.sourceLabel || "Original pasted shipping")}</span>
-          ${sellerCost?.shippingDebug ? `
-            <div class="shipping-debug ${sellerCost.shippingDebug.trackedRequired ? "tracked-required" : ""}">
-              Order ${escapeHtml(formatMoney(sellerCost.shippingDebug.orderValue))} / ${escapeHtml(sellerCost.shippingDebug.cardCount)} card(s) / ${escapeHtml(`${sellerCost.shippingDebug.estimatedWeight}g`)}<br>
-              Tracking required: <strong>${sellerCost.shippingDebug.trackedRequired ? "yes" : "no"}</strong><br>
-              ${escapeHtml(sellerCost.shippingDebug.reason)}<br>
-              ${Number.isFinite(sellerCost.shippingDebug.basePrice) ? `Base price: ${escapeHtml(formatMoney(sellerCost.shippingDebug.basePrice))}. ` : ""}
-              ${sellerCost.shippingDebug.cardmarketFeeIncluded ? "Cardmarket fee included in shipping data." : ""}
-            </div>
-          ` : ""}
-        </div>
-      </details>
     </article>
   `;
 }
@@ -2016,8 +2084,11 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
 function recommendationOfferRowTemplate(offer) {
   const referenceOffer = enrichOfferWithReference(offer);
   const unitLabel = formatMoney(offer.unitPrice);
-  const referenceBadge = referenceOffer.hasReference
-    ? `<span class="reference-delta-badge delta-${escapeAttribute(referenceOffer.deltaColor)}" data-card-name="${escapeAttribute(offer.cardName)}" data-price="${escapeAttribute(String(offer.unitPrice))}" title="${escapeAttribute(referenceDeltaTitle(referenceOffer, getReferenceData(offer.cardName)))}">${escapeHtml(referenceOffer.deltaDisplay)}</span>`
+  const shouldShowReferenceDelta = referenceOffer.hasReference
+    && referenceOffer.deltaDisplay
+    && referenceOffer.deltaDisplay !== "—";
+  const referenceDelta = shouldShowReferenceDelta
+    ? `<span class="reference-delta-inline delta-${escapeAttribute(referenceOffer.deltaColor)}" data-card-name="${escapeAttribute(offer.cardName)}" data-price="${escapeAttribute(String(offer.unitPrice))}" title="${escapeAttribute(referenceDeltaTitle(referenceOffer, getReferenceData(offer.cardName)))}">${escapeHtml(referenceOffer.deltaDisplay)}</span>`
     : "";
   const referenceHint = referenceOffer.hasReference
     ? `<div class="reference-inline-note">Scryfall ref ${escapeHtml(formatReferenceMoney(referenceOffer.referencePrice, referenceOffer.referenceCurrency))}</div>`
@@ -2034,7 +2105,7 @@ function recommendationOfferRowTemplate(offer) {
       </td>
       <td class="condition-cell">${escapeHtml(offer.condition)}</td>
       <td class="price-cell">
-        <span class="price-with-reference">${escapeHtml(unitLabel)}${referenceBadge}</span>
+        <span class="price-with-reference">${escapeHtml(unitLabel)}${referenceDelta}</span>
       </td>
     </tr>
   `;
