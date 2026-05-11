@@ -382,17 +382,19 @@ function renderOptimizationViews() {
 
   elements.optimizationSummary.innerHTML = optimizationSummaryTemplate(state.optimizationResult);
   const warningEntries = buildResultWarnings(state.optimizationResult);
-  elements.optimizationNotes.innerHTML = warningEntries.length ? warningBannerTemplate(state.optimizationResult, warningEntries) : "";
-  elements.notesPanel.classList.toggle("hidden", warningEntries.length === 0);
 
-  // Show country selector if needed, before recommendations
-  let optimizationContent = "";
-  if (sellersNeedingCountry.length) {
-    optimizationContent = countryResolutionTemplate(sellersNeedingCountry) + recommendationsTemplate(state.optimizationResult);
-  } else {
-    optimizationContent = recommendationsTemplate(state.optimizationResult);
+  // Build notes panel with warning banner and inline country selector if needed
+  let notesContent = "";
+  if (warningEntries.length) {
+    notesContent = warningBannerTemplate(state.optimizationResult, warningEntries);
+    if (sellersNeedingCountry.length) {
+      notesContent += countryResolutionTemplate(sellersNeedingCountry);
+    }
   }
-  elements.optimizationOutput.innerHTML = optimizationContent;
+  elements.optimizationNotes.innerHTML = notesContent;
+  elements.notesPanel.classList.toggle("hidden", notesContent.length === 0);
+
+  elements.optimizationOutput.innerHTML = recommendationsTemplate(state.optimizationResult);
 
   const offerGroups = buildOfferGroups(state.parsed.sellers);
   const advancedContent = advancedDetailsTemplate(state.optimizationResult, offerGroups);
@@ -945,7 +947,17 @@ function attachCountryResolverHandlers() {
 
   if (!form) return;
 
-  submitBtn?.addEventListener("click", (e) => {
+  // Remove existing listeners to prevent duplicates
+  const newSubmitBtn = submitBtn?.cloneNode(true);
+  const newSkipBtn = skipBtn?.cloneNode(true);
+
+  if (newSubmitBtn && submitBtn) submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+  if (newSkipBtn && skipBtn) skipBtn.parentNode.replaceChild(newSkipBtn, skipBtn);
+
+  const finalSubmitBtn = document.getElementById("countryResolverSubmit");
+  const finalSkipBtn = document.getElementById("countryResolverSkip");
+
+  finalSubmitBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     const selects = form.querySelectorAll(".country-selector-select");
     const updates = new Map();
@@ -979,7 +991,7 @@ function attachCountryResolverHandlers() {
     elements.optimizationSummary?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  skipBtn?.addEventListener("click", (e) => {
+  finalSkipBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     updateWorkflowStatus("Plan ready (unresolved countries)", "warning", "Note: Some seller shipping costs may not be accurate.");
   });
@@ -1298,13 +1310,7 @@ function optimizationSummaryTemplate(result) {
   const hasEstimatedTrustee = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
   const trusteeLabel = hasEstimatedTrustee ? "Fees / trustee" : "Fees / trustee";
   const trusteeNote = hasEstimatedTrustee ? "Estimated · verify at Cardmarket checkout" : "Verify at Cardmarket checkout";
-  const savingsTone = result.savings > 0.005 ? "good" : Math.abs(result.savings) < 0.005 ? "muted" : "warning";
-  const savingsLabel = result.savings > 0.005
-    ? `Save ${formatMoney(result.savings)} vs current cart`
-    : `${formatMoney(Math.abs(result.savings))} above current cart`;
-  const savingsSectionHtml = Math.abs(result.savings) > 0.005
-    ? `<p class="summary-savings ${escapeAttribute(savingsTone)}">${escapeHtml(savingsLabel)}</p>`
-    : "";
+  // Savings display removed per UX feedback
 
   return `
     <div class="summary-hero-card summary-hero-forge">
@@ -1312,7 +1318,6 @@ function optimizationSummaryTemplate(result) {
         <div class="summary-hero-copy">
           <span class="eyebrow">Best buying plan</span>
           <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
-          ${savingsSectionHtml}
           <p>Buy the cards below from the selected sellers.</p>
         </div>
         <div class="plan-pill-row" aria-label="Buying plan summary">
@@ -1356,12 +1361,7 @@ function resultSummaryTemplate(result, savingsPercent) {
         <div class="summary-metric-label">Final Total</div>
         <div class="summary-metric-value">${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</div>
       </div>
-      ${isSavingsMeaningful ? `
-        <div class="summary-metric savings-metric">
-          <div class="summary-metric-label">Savings vs Current</div>
-          <div class="summary-metric-value savings-value">${escapeHtml(formatMoney(result.savings))} <span class="savings-percent">(${savingsPercent}%)</span></div>
-        </div>
-      ` : ''}
+
       <div class="summary-metric">
         <div class="summary-metric-label">Sellers to Use</div>
         <div class="summary-metric-value">${escapeHtml(String(result.usedSellers.length))}</div>
@@ -1382,6 +1382,7 @@ function recommendationsTemplate(result) {
   const savingsPercent = result.currentTotal > 0 ? Math.round((result.savings / result.currentTotal) * 100) : 0;
 
   return `
+    ${droppedSellersTemplate(result)}
     ${resultSummaryTemplate(result, savingsPercent)}
     ${highPriceNote}
     <div class="recommendation-grid">
@@ -1467,10 +1468,7 @@ function warningEntryTemplate(entry) {
         <strong>${escapeHtml(entry.title)}</strong>
         <span class="status-pill ${pillClass}">${escapeHtml(entry.severity)}</span>
       </div>
-      ${entry.affected ? `<p class="warning-affected">Affects: ${escapeHtml(entry.affected)}</p>` : ""}
-      <p>${escapeHtml(entry.whatHappened)}</p>
-      <p><strong>Why it matters:</strong> ${escapeHtml(entry.whyItMatters)}</p>
-      <p class="warning-action"><strong>What to do:</strong> ${escapeHtml(entry.whatToDo)}</p>
+      <p class="warning-action"><strong>Action:</strong> ${escapeHtml(entry.whatToDo)}</p>
     </article>
   `;
 }
@@ -1478,81 +1476,15 @@ function warningEntryTemplate(entry) {
 function buildResultWarnings(result) {
   const entries = [];
 
-  if (!Number.isFinite(result.selectedTotal)) {
-    entries.push({
-      severity: "critical",
-      title: "Some selected seller costs could not be priced",
-      affected: result.sellerCosts.filter((sellerCost) => !Number.isFinite(sellerCost.totalCost)).map((sellerCost) => sellerNameForCost(result, sellerCost)).join(", "),
-      whatHappened: "The app could not find a valid dynamic shipping row for one or more selected sellers.",
-      whyItMatters: "The optimized total may be too low or incomplete.",
-      whatToDo: "Review the seller country and shipping method before buying."
-    });
-  }
-
+  // Only show country warnings - all other issues are handled separately or are not blocking
   if (result.countryWarnings.length) {
     entries.push({
-      severity: "warning",
-      title: "Some seller country or shipping matches still need review",
+      severity: "critical",
+      title: "Country verification required",
       affected: result.countryWarnings.map(({ seller }) => seller.sellerName).join(", "),
-      whatHappened: "The parser could not confidently match country or shipping for some selected sellers.",
-      whyItMatters: "Shipping and trustee costs may be estimated from incomplete seller data.",
-      whatToDo: "Treat shipping-related totals as estimated and double-check them on Cardmarket before buying."
-    });
-  }
-
-  if (result.insufficientGroups?.length) {
-    entries.push({
-      severity: "critical",
-      title: "Some desired quantities cannot be fulfilled",
-      affected: result.insufficientGroups.map((group) => group.cardName).join(", "),
-      whatHappened: "The optimizer found fewer available copies than the reviewed desired quantity for one or more cards.",
-      whyItMatters: "The buying plan is incomplete until those quantities are reduced or more seller offers are added.",
-      whatToDo: "Adjust the desired quantity or find additional offers, then re-run optimization."
-    });
-  }
-
-  const estimatedTrusteeSellers = result.sellerCosts.filter((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
-  if (estimatedTrusteeSellers.length) {
-    entries.push({
-      severity: "info",
-      title: "Some trustee fees are estimated",
-      affected: estimatedTrusteeSellers.map((sellerCost) => sellerNameForCost(result, sellerCost)).join(", "),
-      whatHappened: "The app used the trustee rule instead of an exact parsed trustee value for some selected sellers.",
-      whyItMatters: "Final Cardmarket trustee fees may differ slightly when the optimized seller mix changes.",
-      whatToDo: "Treat trustee as an estimate and verify the final checkout total on Cardmarket."
-    });
-  }
-
-  if (result.warnings.some((warning) => /card group\(s\) had no single seller offer/i.test(warning))) {
-    entries.push({
-      severity: "warning",
-      title: "Some cards had quantity coverage issues",
-      affected: "",
-      whatHappened: "At least one card did not have a single seller that covered the full reviewed quantity.",
-      whyItMatters: "The plan may rely on fallback offer grouping rather than a clean one-seller quantity match.",
-      whatToDo: "Review the card assignment details before buying."
-    });
-  }
-
-  if (result.warnings.some((warning) => /Shipping table unavailable/i.test(warning))) {
-    entries.push({
-      severity: "critical",
-      title: "Shipping table unavailable",
-      affected: "All selected sellers",
-      whatHappened: "The optimization could not load the shipping data table.",
-      whyItMatters: "Shipping-sensitive totals may be incorrect.",
-      whatToDo: "Reload the page with shipping data available before trusting the result."
-    });
-  }
-
-  if (result.warnings.some((warning) => /50-iteration safety limit/i.test(warning))) {
-    entries.push({
-      severity: "info",
-      title: "Optimization stopped at the safety limit",
-      affected: "",
-      whatHappened: "The move-based optimizer hit its iteration cap and then stopped.",
-      whyItMatters: "The current plan may still be usable, but the search was not exhaustive.",
-      whatToDo: "Treat the result as a strong candidate and review it before buying."
+      whatHappened: "Country not confirmed for these sellers.",
+      whyItMatters: "Shipping costs cannot be calculated accurately.",
+      whatToDo: "Select country for each seller below, then recalculate."
     });
   }
 
@@ -1682,26 +1614,36 @@ function assumptionsEmptyState() {
   });
 }
 
+
+function droppedSellersTemplate(result) {
+  if (!result.droppedSellers || !result.droppedSellers.length) {
+    return "";
+  }
+
+  return `
+    <section class="panel notes-panel dropped-sellers-section">
+      <div class="panel-heading panel-heading-soft">
+        <div>
+          <p class="eyebrow">Remove from cart</p>
+          <h2>Sellers not in plan</h2>
+          <p class="panel-description panel-description-tight">Remove items from these sellers in your Cardmarket cart first.</p>
+        </div>
+      </div>
+      <div class="dropped-sellers-list">
+        ${result.droppedSellers.map(({ seller, sellerIndex }) => `
+          <div class="dropped-seller-item">
+            <strong>${escapeHtml(seller.sellerName)}</strong>
+            <span class="seller-stats">${escapeHtml(`${seller.items.length} offer(s)`)}</span>
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
 function advancedDetailsTemplate(result, offerGroups) {
   const hasDroppedSellers = result.droppedSellers && result.droppedSellers.length > 0;
   const sections = [];
-
-  if (hasDroppedSellers) {
-    sections.push(`
-      <div class="advanced-section">
-        <h3>Sellers you can drop</h3>
-        <p class="section-description">These sellers are not needed for the optimized buying plan:</p>
-        <div class="dropped-sellers-list">
-          ${result.droppedSellers.map(({ seller, sellerIndex }) => `
-            <div class="dropped-seller-card">
-              <strong>${escapeHtml(seller.sellerName)}</strong>
-              <p class="seller-stats">${escapeHtml(`${seller.items.length} offer(s)`)}</p>
-            </div>
-          `).join("")}
-        </div>
-      </div>
-    `);
-  }
 
   sections.push(`
     <div class="advanced-section">
@@ -1809,7 +1751,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
       <header class="seller-card-header">
         <div class="seller-number-badge">${escapeHtml(displayNumber)}</div>
         <div class="seller-info-primary">
-          <h3>Seller ${escapeHtml(displayNumber)} · Buy from ${escapeHtml(seller.sellerName)}</h3>
+          <h3>${escapeHtml(seller.sellerName)}</h3>
           <div class="seller-meta">
             ${escapeHtml(seller.sellerCountry || "Unknown")} · ${escapeHtml(trackingLabel)} · ${escapeHtml(`${itemCount} ${itemCount === 1 ? "copy" : "copies"}`)}
           </div>
@@ -1829,8 +1771,8 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
         </table>
       </div>
 
-      <div class="cost-breakdown">
-        <div class="seller-section-label">Cost breakdown</div>
+      <details class="cost-breakdown">
+        <summary class="seller-section-label">Cost breakdown</summary>
         <div class="breakdown-item">
           <span>Cards</span>
           <strong>${escapeHtml(formatMoney(cardTotal))}</strong>
@@ -1854,7 +1796,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
           <span>Total</span>
           <strong>${escapeHtml(formatEstimatedMoney(displayTotal))}</strong>
         </div>
-      </div>
+      </details>
 
       ${excludedCardsSection}
 
@@ -1881,7 +1823,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
 
 function recommendationOfferRowTemplate(offer) {
   const referenceOffer = enrichOfferWithReference(offer);
-  const unitLabel = `${formatMoney(offer.unitPrice)} each`;
+  const unitLabel = formatMoney(offer.unitPrice);
   const referenceBadge = referenceOffer.hasReference
     ? `<span class="reference-delta-badge delta-${escapeAttribute(referenceOffer.deltaColor)}" data-card-name="${escapeAttribute(offer.cardName)}" data-price="${escapeAttribute(String(offer.unitPrice))}" title="${escapeAttribute(referenceDeltaTitle(referenceOffer, getReferenceData(offer.cardName)))}">${escapeHtml(referenceOffer.deltaDisplay)}</span>`
     : "";
