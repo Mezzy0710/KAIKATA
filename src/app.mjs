@@ -18,6 +18,7 @@ import {
   hasHighPricedCards,
   generateHighPriceNote
 } from "./price-verdict.mjs?v=20260509m";
+import { decodeCartForgeHash, parseExtractedCartPayload } from "./importer.mjs?v=20260509m";
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
@@ -94,7 +95,19 @@ function boot() {
   elements.desiredCardsReview.addEventListener("click", handleDesiredQuantityClick);
 
   loadShippingData();
+  loadCartFromUrlHash();
   render();
+}
+
+function loadCartFromUrlHash() {
+  const decoded = decodeCartForgeHash(window.location.hash);
+  if (!decoded.ok) {
+    return;
+  }
+
+  elements.cartInput.value = JSON.stringify(decoded.payload, null, 2);
+  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  parseCurrentInput();
 }
 
 async function loadShippingData() {
@@ -148,7 +161,8 @@ function parseCurrentInput() {
   state.activeReferenceLookupToken += 1;
   state.priceReferences = {};
   state.scryallLookupInProgress = false;
-  state.parsed = parseCart(elements.cartInput.value, state.shippingData);
+  const imported = parseExtractedCartPayload(elements.cartInput.value);
+  state.parsed = imported.ok ? imported.parsed : parseCart(elements.cartInput.value, state.shippingData);
   state.optimizationResult = null;
   state.optimizationStale = true;
   const warningText = state.parsed.warnings.length ? ` ${state.parsed.warnings.join(" ")}` : "";
@@ -167,7 +181,8 @@ function parseCurrentInput() {
     render();
     return;
   }
-  setMessage(`Found ${state.parsed.sellerCount} seller(s) with ${offerGroups.length} card(s) (${totalCopies} total copies).${warningText}`);
+  const sourceText = imported.ok ? " from Cardmarket page extraction" : "";
+  setMessage(`Found ${state.parsed.sellerCount} seller(s) with ${offerGroups.length} card(s) (${totalCopies} total copies)${sourceText}.${warningText}`);
   updateWorkflowStatus("Ready", state.parsed.warnings.length ? "warning" : "good", "Review quantities below, then find your plan.");
   updateOptimizeButton();
   render();
@@ -693,6 +708,8 @@ function sellerItemBreakdownTemplate(seller, sellerIndex) {
         <thead>
           <tr>
             <th>Card</th>
+            <th>Set</th>
+            <th>Rarity</th>
             <th class="condition-cell">Condition</th>
             <th class="qty-cell">Qty</th>
             <th class="price-cell">Price</th>
@@ -754,6 +771,8 @@ function itemRowTemplate(item, itemIndex, sellerName) {
   return `
     <tr data-item-index="${itemIndex}">
       <td><input data-item-field="cardName" value="${escapeAttribute(item.cardName)}" aria-label="Card name"></td>
+      <td><input data-item-field="setName" value="${escapeAttribute(item.setName || "")}" aria-label="Set"></td>
+      <td><input data-item-field="rarity" value="${escapeAttribute(item.rarity || "")}" aria-label="Rarity"></td>
       <td class="condition-cell">
         <select data-item-field="condition" aria-label="Condition">
           ${conditionOptions.map((option) => `<option value="${escapeAttribute(option)}" ${option === item.condition ? "selected" : ""}>${escapeHtml(option)}</option>`).join("")}
@@ -828,6 +847,8 @@ function handleReviewClick(event) {
     seller.items.push({
       id: `manual-${Date.now()}`,
       cardName: "New card",
+      setName: "",
+      rarity: "",
       condition: "Unknown",
       quantity: 1,
       price: 0,
@@ -1799,9 +1820,15 @@ function getReferenceData(cardName) {
 }
 
 function normalizeReferenceKey(cardName) {
-  return String(cardName || "")
-    .trim()
+  return getComparableDisplayName(cardName)
     .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function getComparableDisplayName(cardName) {
+  return String(cardName || "")
+    .replace(/\s+\(V\.\d+\)$/i, "")
+    .trim()
     .replace(/\s+/g, " ");
 }
 
@@ -1994,6 +2021,8 @@ function toReviewData() {
       total: seller.total,
       items: seller.items.map((item) => ({
         cardName: item.cardName,
+        setName: item.setName || "",
+        rarity: item.rarity || "",
         condition: item.condition,
         quantity: item.quantity,
         price: item.price,
@@ -2009,14 +2038,16 @@ function buildOfferGroups(sellers) {
 
   sellers.forEach((seller, sellerIndex) => {
     seller.items.forEach((item, itemIndex) => {
-      const key = normalizeOfferKey(item.cardName);
+      const key = normalizeOfferKey(item.cardName, item.setName);
+      const comparableName = getComparableDisplayName(item.cardName);
+      const displayName = item.setName ? `${comparableName} (${item.setName})` : comparableName;
       if (!key) {
         return;
       }
 
       if (!groups.has(key)) {
         groups.set(key, {
-          cardName: item.cardName,
+          cardName: displayName,
           requiredQuantity: 0,
           sellerCount: 0,
           lowestUnitPrice: Number.POSITIVE_INFINITY,
@@ -2034,6 +2065,9 @@ function buildOfferGroups(sellers) {
         sellerIndex,
         itemIndex,
         cardName: item.cardName,
+        comparableCardName: comparableName,
+        setName: item.setName || "",
+        rarity: item.rarity || "",
         condition: item.condition,
         quantity,
         unitPrice,
@@ -2057,9 +2091,10 @@ function getTotalCopies(offerGroups) {
   return offerGroups.reduce((sum, group) => sum + group.requiredQuantity, 0);
 }
 
-function normalizeOfferKey(cardName) {
-  return String(cardName || "")
+function normalizeOfferKey(cardName, setName = "") {
+  return getComparableDisplayName(cardName)
     .toLowerCase()
+    .concat(setName ? ` ${String(setName).toLowerCase()}` : "")
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();

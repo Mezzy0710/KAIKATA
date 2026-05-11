@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "CartForge Cardmarket Extractor",
+  "description": "Extracts structured shopping-cart data from Cardmarket and opens it in CartForge.",
+  "version": "0.1.0",
+  "permissions": ["activeTab", "clipboardWrite"],
+  "host_permissions": ["https://www.cardmarket.com/*", "https://*.cardmarket.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.cardmarket.com/*/ShoppingCart*", "https://*.cardmarket.com/*/ShoppingCart*"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

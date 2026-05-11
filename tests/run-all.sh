@@ -27,6 +27,7 @@ TEST_FILES=(
   "tests/correctness-parser.mjs"
   "tests/correctness-shipping.mjs"
   "tests/correctness-ui-warning-copy.mjs"
+  "tests/importer.mjs"
   "tests/parser-mobile-country-aliases.mjs"
   "tests/parser-mobile-inference.mjs"
   "tests/parser-mobile-overview-seller-names.mjs"

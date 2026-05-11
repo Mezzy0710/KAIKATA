@@ -16,6 +16,17 @@ The app takes copied Cardmarket cart text as input, extracts sellers, shipping m
 6. Review which sellers to keep, which to drop, and the final total cost.
 7. Manually update the cart on Cardmarket and place the orders.
 
+## Experimental Cardmarket extractor
+
+The `extension/` directory contains a browser-extension scaffold that can extract structured cart data directly from a Cardmarket shopping-cart page and open it in CartForge. This avoids copying the entire cart page manually and unlocks additional metadata that pasted text often loses, including set name and rarity.
+
+Current status:
+- The extension injects an "Open in CartForge" panel on Cardmarket shopping-cart pages.
+- CartForge can import extracted payloads from `#cartforge=...` URL fragments or `CARTFORGE_CART={...}` pasted into the input area.
+- Review rows now preserve `setName` and `rarity` when provided by the extractor.
+
+Next hardening step: capture a sanitized Cardmarket cart HTML sample and add fixture tests for the extractor selectors.
+
 ## Version 1 scope
 
 ### Input
@@ -29,6 +40,8 @@ The app takes copied Cardmarket cart text as input, extracts sellers, shipping m
 - Shipping method name
 - Tracking status
 - Card name
+- Set name when available from structured extraction
+- Rarity when available from structured extraction
 - Condition
 - Quantity
 - Unit price
