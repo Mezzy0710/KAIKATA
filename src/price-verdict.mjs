@@ -96,7 +96,12 @@ export function enrichCardWithReference(card, refData) {
     };
   }
 
-  const delta = calculatePriceDelta(card.price, refData.price);
+  const selectedPrice = Number(card.price ?? card.unitPrice);
+  const referencePrice = Number(refData.price);
+  const delta = calculatePriceDelta(
+    Number.isFinite(selectedPrice) ? selectedPrice : null,
+    Number.isFinite(referencePrice) ? referencePrice : null
+  );
   const color = getDeltaColor(delta?.percentage);
   const display = formatDeltaDisplay(delta?.percentage);
 
@@ -169,4 +174,3 @@ export function generateHighPriceNote(cards, threshold = 0.2) {
     </div>
   `;
 }
-

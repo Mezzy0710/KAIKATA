@@ -67,6 +67,7 @@ textarea {
 
 button {
   cursor: pointer;
+  text-transform: uppercase;
 }
 
 h1,
@@ -750,30 +751,28 @@ select {
 
 .review-action-bar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-elevated);
 }
 
 .review-action-copy {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .review-cta-group {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
   flex-shrink: 0;
-}
-
-.review-cta-hint {
-  font-size: 0.76rem;
-  color: var(--text-muted);
-  text-align: right;
-  margin: 0;
 }
 
 .note-text {
@@ -878,21 +877,20 @@ select {
   align-items: center;
   min-height: 34px;
   padding: 0 12px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(200, 167, 93, 0.42);
   border-radius: 999px;
-  background: var(--bg-subtle);
-  color: var(--text-soft);
+  background: rgba(200, 167, 93, 0.14);
+  color: var(--accent);
   font-size: 0.76rem;
   font-weight: 600;
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
   transition: all 0.2s ease;
-  cursor: pointer;
 }
 
 .plan-pill:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(200, 167, 93, 0.06);
+  border-color: rgba(200, 167, 93, 0.62);
+  color: var(--accent-strong);
+  background: rgba(200, 167, 93, 0.2);
 }
 
 .summary-breakdown-card {
@@ -1725,6 +1723,14 @@ select {
   margin-top: 8px;
 }
 
+.dropped-sellers-section .panel-heading {
+  padding: 14px 14px 8px;
+}
+
+.dropped-sellers-section .panel-description {
+  margin-top: 4px;
+}
+
 .dropped-sellers-card {
   background: linear-gradient(180deg, rgba(199, 109, 109, 0.08), transparent);
   border: 1px solid rgba(199, 109, 109, 0.25);
@@ -2149,24 +2155,71 @@ select {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
+  padding: 0 14px 14px;
 }
 
-.dropped-seller-card {
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: rgba(253, 123, 65, 0.05);
-}
-
-.dropped-seller-card strong {
+.dropped-seller-item {
   display: block;
-  margin-bottom: 4px;
-  color: var(--text);
+  padding: 10px 12px;
+  border: 1px solid rgba(198, 92, 92, 0.42);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(198, 92, 92, 0.2), rgba(198, 92, 92, 0.1));
+  min-width: 0;
+  box-shadow: inset 0 0 0 1px rgba(198, 92, 92, 0.18), 0 6px 16px rgba(129, 35, 35, 0.2);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
 }
 
-.seller-stats {
-  font-size: 0.85em;
+.dropped-seller-item strong {
+  display: block;
+  color: #ffd9d9;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.32);
+}
+
+.dropped-seller-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(222, 112, 112, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(222, 112, 112, 0.24), 0 9px 20px rgba(129, 35, 35, 0.28);
+}
+
+.breakdown-inline-muted {
   color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-transform: none;
+  text-align: right;
+}
+
+.recommendation-panel h2 {
+  text-transform: uppercase;
+}
+
+.breakdown-item-stacked {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "label value"
+    "meta meta";
+  align-items: baseline;
+}
+
+.breakdown-item-stacked > span {
+  grid-area: label;
+}
+
+.breakdown-item-stacked > strong {
+  grid-area: value;
+}
+
+.breakdown-subline {
+  grid-area: meta;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-transform: none;
+  margin-top: 2px;
 }
 
 .accordion-body {
@@ -2201,6 +2254,8 @@ select {
 @media (max-width: 720px) {
   .review-action-bar {
     flex-direction: column;
+    align-items: stretch;
+    padding: 10px;
   }
 
   .review-action-bar .run-button {
@@ -2513,6 +2568,27 @@ input[type="number"] {
   border-top: 1px solid var(--line);
 }
 
+.cost-breakdown > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.cost-breakdown > summary::-webkit-details-marker {
+  display: none;
+}
+
+.cost-breakdown > summary::after {
+  content: "Show";
+  float: right;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.cost-breakdown[open] > summary::after {
+  content: "Hide";
+}
+
 .breakdown-item {
   display: flex;
   justify-content: space-between;
@@ -2673,7 +2749,7 @@ input[type="number"] {
 .tooltip-chip::after {
   content: attr(data-tooltip);
   position: absolute;
-  right: calc(100% + 8px);
+  left: calc(100% + 8px);
   top: 50%;
   transform: translateY(-50%);
   min-width: 180px;
@@ -2685,6 +2761,7 @@ input[type="number"] {
   color: var(--text);
   font-size: 0.76rem;
   font-weight: 500;
+  text-transform: none;
   line-height: 1.45;
   white-space: normal;
   text-align: left;
@@ -2699,12 +2776,12 @@ input[type="number"] {
 .tooltip-chip::before {
   content: "";
   position: absolute;
-  right: calc(100% + 2px);
+  left: calc(100% + 2px);
   top: 50%;
   transform: translateY(-50%);
   border-width: 6px;
   border-style: solid;
-  border-color: transparent transparent transparent #171717;
+  border-color: transparent #171717 transparent transparent;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.14s ease, visibility 0.14s ease;
@@ -2743,6 +2820,25 @@ input[type="number"] {
   margin-top: 2px;
   color: var(--text-muted);
   font-size: 0.75rem;
+}
+
+.reference-delta-inline {
+  margin-left: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.reference-delta-inline.delta-positive {
+  color: var(--success);
+}
+
+.reference-delta-inline.delta-neutral {
+  color: var(--text-muted);
+}
+
+.reference-delta-inline.delta-negative {
+  color: var(--danger);
 }
 
 /* High-price review note */

@@ -28,6 +28,7 @@ TEST_FILES=(
   "tests/correctness-shipping.mjs"
   "tests/correctness-ui-warning-copy.mjs"
   "tests/importer.mjs"
+  "tests/integration-input-paths.mjs"
   "tests/parser-mobile-country-aliases.mjs"
   "tests/parser-mobile-inference.mjs"
   "tests/parser-mobile-overview-seller-names.mjs"

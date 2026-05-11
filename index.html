@@ -99,19 +99,19 @@
         <section class="panel input-panel forge-intro-panel">
           <div class="panel-heading panel-heading-stack">
             <div>
-              <h2>Paste your cart</h2>
+              <h2 id="inputHeading">Add your cart</h2>
             </div>
             <span id="optimizationState" class="status-pill muted" aria-live="polite">Ready</span>
           </div>
           <div id="inputEditor" class="input-editor">
-            <p class="panel-description">Copy the full cart page from Cardmarket (Ctrl+A → Ctrl+C) and paste it below.</p>
+            <p id="inputDescription" class="panel-description">Paste your Cardmarket cart text or import from the extension.</p>
             <label class="field-label" for="cartInput">Cart content</label>
             <textarea id="cartInput" spellcheck="false" placeholder="Paste your Cardmarket cart here..."></textarea>
-            <p id="parseMessage" class="parse-message">No cart parsed yet.</p>
-            <p id="workflowHint" class="workflow-hint">Next: confirm the detected shopping list.</p>
+            <p id="parseMessage" class="parse-message">Paste your Cardmarket cart. We'll handle the seller math.</p>
+            <p id="workflowHint" class="workflow-hint">Next: Review the detected cards and quantities.</p>
             <div class="button-row button-row-input">
-              <button id="parseButton" class="primary-button" type="button" onclick="window.__cartforgeParse && window.__cartforgeParse()">Parse cart</button>
-              <button id="clearButton" class="ghost-button" type="button">Clear</button>
+              <button id="parseButton" class="primary-button" type="button" onclick="window.__cartforgeParse && window.__cartforgeParse()">Review Cart</button>
+              <button id="clearButton" class="ghost-button" type="button">Clear Cart</button>
             </div>
           </div>
           <div id="inputSummary" class="input-summary hidden" aria-live="polite"></div>
@@ -121,8 +121,8 @@
           <summary>
             <div class="accordion-header">
               <p class="eyebrow">Step 2</p>
-              <h2>Review your cart</h2>
-              <p class="section-hint">Adjust quantities or review optional version preferences.</p>
+              <h2>REVIEW YOUR CART</h2>
+              <p class="section-hint">Set copies, lock printings if needed, then forge the buy plan.</p>
             </div>
           </summary>
           <div id="desiredCardsReview" class="desired-cards-review" aria-live="polite"></div>
@@ -132,7 +132,7 @@
           <div class="panel-heading panel-heading-soft">
             <div>
               <p class="eyebrow">Your plan</p>
-              <h2>Buy from these sellers</h2>
+              <h2>BUY FROM THESE SELLERS</h2>
             </div>
           </div>
           <div id="optimizationSummary" class="summary-output" aria-live="polite"></div>
@@ -152,7 +152,7 @@
             <div>
               <p class="eyebrow">Breakdown</p>
               <h2>What to buy from each seller</h2>
-              <p class="panel-description panel-description-tight">Update your Cardmarket cart with these sellers and cards.</p>
+              <p class="panel-description panel-description-tight">Use this as your buy list back on Cardmarket.</p>
             </div>
           </div>
           <div id="optimizationOutput" class="optimization-output" aria-live="polite"></div>
@@ -180,7 +180,7 @@
           </svg>
         </div>
         <h3>No offers yet</h3>
-        <p>Paste a cart and parse it to review seller fixed costs and competing card offers.</p>
+        <p>Paste your Cardmarket cart. We'll handle the seller math.</p>
       </div>
     </template>
 

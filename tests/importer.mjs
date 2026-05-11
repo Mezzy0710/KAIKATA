@@ -43,7 +43,44 @@ assert.equal(encoded.parsed.sellers[0].items[0].quantity, 2);
 const plainText = parseExtractedCartPayload("Summary\nNot structured JSON");
 assert.equal(plainText.ok, false);
 
+const malformed = parseExtractedCartPayload("CARTFORGE_CART={\"source\":\"x\",\"sellers\":[}");
+assert.equal(malformed.ok, false);
+
+const partialPayload = {
+  source: "cartforge-cardmarket-extension",
+  version: 1,
+  sellers: [
+    {
+      sellerName: "PartialSeller",
+      items: [{ quantity: 1, price: "1,20 €" }]
+    }
+  ]
+};
+const partial = parseExtractedCartPayload(`CARTFORGE_CART=${JSON.stringify(partialPayload)}`);
+assert.equal(partial.ok, true);
+assert.equal(partial.parsed.sellerCount, 1);
+assert.equal(partial.parsed.sellers[0].items[0].cardName, "Unknown card");
+assert.ok(partial.parsed.warnings.some((warning) => /missing a card name/i.test(warning)));
+
+const duplicateRowsPayload = {
+  source: "cartforge-cardmarket-extension",
+  version: 1,
+  sellers: [
+    {
+      sellerName: "DupSeller",
+      items: [
+        { cardName: "Island", quantity: 1, price: "0,10 €", setName: "Set A" },
+        { cardName: "Island", quantity: 1, price: "0,10 €", setName: "Set A" }
+      ]
+    }
+  ]
+};
+const deduped = parseExtractedCartPayload(`CARTFORGE_CART=${JSON.stringify(duplicateRowsPayload)}`);
+assert.equal(deduped.ok, true);
+assert.equal(deduped.parsed.sellers[0].items.length, 1);
+
 console.log({
   direct: direct.parsed.itemCount,
-  encoded: encoded.parsed.sellerCount
+  encoded: encoded.parsed.sellerCount,
+  partialWarnings: partial.parsed.warnings.length
 });
