@@ -450,15 +450,18 @@ function renderDesiredCards(offerGroups) {
 
   const detectedTotal = Object.values(state.desiredQuantityByCard).reduce((sum, qty) => sum + qty, 0);
   const selectedTotal = Object.values(state.desiredQuantityByCard).filter(qty => qty > 0).length;
-  const actionLabel = state.optimizationStale || !state.optimizationResult ? "Generate best buying plan" : "Generate best buying plan again";
+  const actionLabel = state.optimizationStale || !state.optimizationResult ? "Optimize cart" : "Optimize cart again";
 
   elements.desiredCardsReview.insertAdjacentHTML("beforeend", `
     <div class="review-action-bar">
       <div class="review-action-copy">
-        <p class="note-text">Check quantities.</p>
+        <p class="note-text">Card versions are flexible by default.</p>
         <p class="note-text reference-status-text">Different cards: ${selectedTotal} · Total copies: ${detectedTotal}</p>
       </div>
-      <button id="runOptimizationButton" class="primary-button run-button" type="button">${escapeHtml(actionLabel)}</button>
+      <div class="review-cta-group">
+        <button id="runOptimizationButton" class="primary-button run-button" type="button">${escapeHtml(actionLabel)}</button>
+        <p class="review-cta-hint">Find the cheapest valid seller combination including shipping.</p>
+      </div>
     </div>
     ${referenceStatusTemplate()}
     ${desiredCardsTableTemplate(offerGroups)}
@@ -494,7 +497,7 @@ function desiredCardsTableTemplate(offerGroups) {
   return `
     <section class="panel desired-cards-panel">
       <div class="desired-cards-toolbar">
-        <input type="text" id="cardSearchInput" class="card-search-input" placeholder="Search cards..." aria-label="Search cards">
+        <input type="text" id="cardSearchInput" class="card-search-input" placeholder="Search cards" aria-label="Search cards">
         <div class="card-count-badge" id="cardCountBadge">${cardCount} cards</div>
       </div>
       <div class="card-accordion-list" role="list">
@@ -508,16 +511,21 @@ function desiredCardTemplate(group) {
   const cardName = group.cardName;
   const desiredQty = state.desiredQuantityByCard[cardName] ?? group.requiredQuantity;
   const isAvailable = group.requiredQuantity >= desiredQty;
-  const statusLabel = desiredQty === 0 ? "Excluded" : isAvailable ? "Ready" : "Insufficient";
+  const statusLabel = desiredQty === 0 ? "Excluded" : isAvailable ? "Ready" : "Needs review";
   const statusClass = desiredQty === 0 ? "muted" : isAvailable ? "good" : "warning";
   const isExpanded = state.expandedCards.has(cardName);
   const prefLabel = hasAnyPreference(cardName) ? "Preferences set" : "Any version";
-  const priceDisplay = group.highestUnitPrice > group.lowestUnitPrice + 0.005
-    ? `${escapeHtml(formatMoney(group.lowestUnitPrice))} – ${escapeHtml(formatMoney(group.highestUnitPrice))}`
-    : escapeHtml(formatMoney(group.lowestUnitPrice));
+
+  const copiesWord = desiredQty === 1 ? "copy" : "copies";
+  const variantWord = group.variantCount === 1 ? "variant" : "variants";
   const variantHint = group.variantCount > 1
-    ? `${group.variantCount} variants · ${prefLabel}`
-    : prefLabel;
+    ? `${desiredQty} ${copiesWord} · ${group.variantCount} ${variantWord} detected · ${prefLabel}`
+    : `${desiredQty} ${copiesWord} · ${prefLabel}`;
+
+  const hasRange = group.highestUnitPrice > group.lowestUnitPrice + 0.005;
+  const priceHint = hasRange
+    ? `Lowest: ${formatMoney(group.lowestUnitPrice)} · Range: ${formatMoney(group.lowestUnitPrice)}–${formatMoney(group.highestUnitPrice)}`
+    : `${formatMoney(group.lowestUnitPrice)}`;
 
   return `
     <div class="card-accordion ${isExpanded ? "is-expanded" : ""}" data-card-name="${escapeAttribute(cardName)}" role="listitem">
@@ -525,15 +533,15 @@ function desiredCardTemplate(group) {
         <div class="card-accordion-info">
           <span class="card-name-label">${escapeHtml(cardName)}</span>
           <span class="card-variant-hint">${escapeHtml(variantHint)}</span>
+          <span class="card-price-hint">${escapeHtml(priceHint)}</span>
         </div>
         <div class="card-accordion-controls">
+          <span class="status-pill ${statusClass}">${escapeHtml(statusLabel)}</span>
           <div class="card-qty-group">
             <button class="qty-button" data-action="decrement-qty" aria-label="Decrease ${escapeAttribute(cardName)} quantity">−</button>
             <input class="qty-input" type="number" data-card-qty data-action="noop" min="0" step="1" value="${desiredQty}" aria-label="Copies of ${escapeAttribute(cardName)}">
             <button class="qty-button" data-action="increment-qty" aria-label="Increase ${escapeAttribute(cardName)} quantity">+</button>
           </div>
-          <span class="card-price-range">${priceDisplay}</span>
-          <span class="status-pill ${statusClass}">${escapeHtml(statusLabel)}</span>
           <span class="card-chevron" aria-hidden="true">▾</span>
         </div>
       </div>
@@ -554,12 +562,15 @@ function variantBodyTemplate(group) {
 
   const variants = [...variantMap.entries()];
   const hasEnriched = variants.some(([, v]) => v.setName || v.collectorNumber || v.language);
+  const hasReference = variants.some(([, v]) => getReferenceData(v.cardName) !== null);
+  const showRef = hasReference || state.scryallLookupInProgress;
 
   return `
     <div class="card-accordion-body">
+      <p class="variant-section-title">Detected variants</p>
       <p class="variant-hint-text">
-        Version details shown for transparency. Unless you set a preference below,
-        CartForge optimizes for lowest total price across all valid versions.
+        Version details are shown for transparency. Unless you choose Prefer, Require, or Exclude,
+        CartForge optimizes this card by lowest total price.
       </p>
       <div class="variant-table-wrap">
         <table class="variant-table">
@@ -569,12 +580,13 @@ function variantBodyTemplate(group) {
               <th>Condition</th>
               <th>Qty</th>
               <th>Price</th>
+              ${showRef ? `<th>Ref.</th><th>Δ</th>` : ""}
               <th>Seller</th>
               <th>Preference</th>
             </tr>
           </thead>
           <tbody>
-            ${variants.map(([vk, v]) => variantRowTemplate(group.cardName, vk, v, hasEnriched)).join("")}
+            ${variants.map(([vk, v]) => variantRowTemplate(group.cardName, vk, v, hasEnriched, showRef)).join("")}
           </tbody>
         </table>
       </div>
@@ -582,10 +594,25 @@ function variantBodyTemplate(group) {
   `;
 }
 
-function variantRowTemplate(cardName, variantKey, offer, hasEnriched) {
+function variantRowTemplate(cardName, variantKey, offer, hasEnriched, showRef) {
   const pref = (state.variantPreferences[cardName] || {})[variantKey] || "any";
   const prefClass = pref === "require" ? "pref-require" : pref === "prefer" ? "pref-prefer" : pref === "exclude" ? "pref-exclude" : "";
   const sellers = offer.allSellers ? [...new Set(offer.allSellers)].join(", ") : offer.sellerName || "";
+
+  let refCells = "";
+  if (showRef) {
+    const refData = getReferenceData(offer.cardName);
+    const referenceCard = refData ? enrichCardWithReference(offer, refData) : null;
+    const refPrice = state.scryallLookupInProgress && !refData
+      ? `<span class="reference-muted">Loading…</span>`
+      : refData && !refData.error
+        ? escapeHtml(formatReferenceMoney(refData.price, refData.currency))
+        : `<span class="reference-muted">—</span>`;
+    const refDelta = referenceCard?.hasReference
+      ? `<span class="reference-delta-badge delta-${escapeAttribute(referenceCard.deltaColor)}">${escapeHtml(referenceCard.deltaDisplay)}</span>`
+      : `<span class="reference-muted">—</span>`;
+    refCells = `<td class="price-cell">${refPrice}</td><td class="price-cell">${refDelta}</td>`;
+  }
 
   return `
     <tr class="${prefClass}" data-variant-key="${escapeAttribute(variantKey)}">
@@ -597,12 +624,13 @@ function variantRowTemplate(cardName, variantKey, offer, hasEnriched) {
       <td>${escapeHtml(offer.condition || "Unknown")}</td>
       <td>${escapeHtml(String(offer.quantity))}</td>
       <td class="price-cell">${escapeHtml(formatMoney(offer.unitPrice))}</td>
+      ${refCells}
       <td class="variant-seller-cell">${escapeHtml(sellers)}</td>
       <td>
         <select class="variant-pref-select" data-variant-pref data-variant-key="${escapeAttribute(variantKey)}" aria-label="Preference for this version">
           <option value="any" ${pref === "any" ? "selected" : ""}>Any version</option>
-          <option value="prefer" ${pref === "prefer" ? "selected" : ""}>Prefer</option>
-          <option value="require" ${pref === "require" ? "selected" : ""}>Require</option>
+          <option value="prefer" ${pref === "prefer" ? "selected" : ""}>Prefer this</option>
+          <option value="require" ${pref === "require" ? "selected" : ""}>Require this</option>
           <option value="exclude" ${pref === "exclude" ? "selected" : ""}>Exclude</option>
         </select>
       </td>
@@ -616,15 +644,15 @@ function referenceStatusTemplate() {
   }
 
   if (state.scryallLookupInProgress) {
-    return `<p class="note-text reference-status-text" title="Scryfall shows market averages. We use Cardmarket prices to optimize.">Market prices loading...</p>`;
+    return `<p class="note-text reference-status-text">Loading reference prices…</p>`;
   }
 
   const referenceCount = Object.values(state.priceReferences).filter((entry) => entry && !entry.error).length;
   if (referenceCount > 0) {
-    return `<p class="note-text reference-status-text" title="Scryfall shows market averages. We use Cardmarket prices to optimize.">Market prices loaded (for comparison).</p>`;
+    return `<p class="note-text reference-status-text">Reference prices help spot unusual deals, but do not constrain optimization.</p>`;
   }
 
-  return `<p class="note-text reference-status-text" title="Optimization still works without market prices.">Market prices unavailable (optimization still works).</p>`;
+  return "";
 }
 
 function referencePriceDisplay(referenceData) {
@@ -1001,8 +1029,13 @@ function handleDesiredQuantityChange(event) {
       const offerGroups = buildOfferGroups(state.parsed.sellers);
       const group = offerGroups.find((g) => g.cardName === cardName);
       const variantCount = group?.variantCount || 1;
+      const desiredQty = state.desiredQuantityByCard[cardName] ?? group?.requiredQuantity ?? 1;
+      const copiesWord = desiredQty === 1 ? "copy" : "copies";
+      const variantWord = variantCount === 1 ? "variant" : "variants";
       const prefLabel = hasAnyPreference(cardName) ? "Preferences set" : "Any version";
-      hintEl.textContent = variantCount > 1 ? `${variantCount} variants · ${prefLabel}` : prefLabel;
+      hintEl.textContent = variantCount > 1
+        ? `${desiredQty} ${copiesWord} · ${variantCount} ${variantWord} detected · ${prefLabel}`
+        : `${desiredQty} ${copiesWord} · ${prefLabel}`;
     }
     state.optimizationStale = true;
     updateOptimizationPreview();
@@ -2062,7 +2095,7 @@ function normalizeReferenceKey(cardName) {
 
 function getComparableDisplayName(cardName) {
   return String(cardName || "")
-    .replace(/\s+\(V\.\d+\)$/i, "")
+    .replace(/\s+\([^)]+\)$/i, "")
     .trim()
     .replace(/\s+/g, " ");
 }
@@ -2251,8 +2284,14 @@ function buildOfferGroups(sellers) {
       const quantity = Number(item.quantity || 1);
       const unitPrice = Number(item.price || 0);
 
+      // If the parser embedded the set name inside the card name as "(Set Name)",
+      // extract it so variant deduplication and the variant table both work correctly.
+      const rawCardName = String(item.cardName || "");
+      const embeddedSet = !item.setName ? (rawCardName.match(/\s+\(([^)]+)\)$/)?.[1] || "") : "";
+      const effectiveSetName = item.setName || embeddedSet;
+
       // Track max qty per unique variant — same variant from competing sellers does not add up
-      const vk = makeVariantKey(item);
+      const vk = makeVariantKey({ ...item, setName: effectiveSetName });
       group.variantMaxQty.set(vk, Math.max(group.variantMaxQty.get(vk) || 0, quantity));
 
       group.lowestUnitPrice = Math.min(group.lowestUnitPrice, unitPrice);
@@ -2263,7 +2302,7 @@ function buildOfferGroups(sellers) {
         itemIndex,
         cardName: item.cardName,
         comparableCardName: cardName,
-        setName: item.setName || "",
+        setName: effectiveSetName,
         collectorNumber: item.collectorNumber || "",
         rarity: item.rarity || "",
         condition: item.condition,
