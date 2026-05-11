@@ -817,24 +817,6 @@ select {
   max-width: 40rem;
 }
 
-.summary-hero-copy .summary-savings {
-  color: var(--text);
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.summary-hero-copy .summary-savings.good {
-  color: var(--success);
-}
-
-.summary-hero-copy .summary-savings.warning {
-  color: var(--warning);
-}
-
-.summary-hero-copy .summary-savings.muted {
-  color: var(--text-soft);
-}
-
 .plan-pill-row {
   display: flex;
   flex-wrap: wrap;
@@ -1085,10 +1067,6 @@ select {
   margin-bottom: 12px;
 }
 
-.copy-plan-button {
-  font-size: 0.84rem;
-}
-
 .result-summary-strip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1118,16 +1096,6 @@ select {
   font-size: 1.2em;
   font-weight: 700;
   color: var(--text);
-}
-
-.savings-metric .summary-metric-value {
-  color: var(--success);
-}
-
-.savings-percent {
-  font-size: 0.75em;
-  font-weight: 500;
-  opacity: 0.8;
 }
 
 .seller-card-header {
@@ -1216,7 +1184,15 @@ select {
   overflow: hidden;
 }
 
-.shipping-detail-summary {
+.seller-detail-section {
+  margin: 12px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.shipping-detail-summary,
+.seller-detail-summary {
   padding: 8px 10px;
   cursor: pointer;
   color: var(--text-muted);
@@ -1225,11 +1201,13 @@ select {
   background: var(--bg-panel-soft);
 }
 
-.shipping-detail-summary::-webkit-details-marker {
+.shipping-detail-summary::-webkit-details-marker,
+.seller-detail-summary::-webkit-details-marker {
   display: none;
 }
 
-.shipping-detail-body {
+.shipping-detail-body,
+.seller-detail-body {
   padding: 8px 10px;
   border-top: 1px solid var(--line);
   background: var(--bg-panel-soft);

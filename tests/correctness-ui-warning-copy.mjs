@@ -103,27 +103,11 @@ const sellerPlanHtml = __testing.sellerPlanTemplate(
 );
 assert.match(sellerPlanHtml, /EUR 28\.85/, "Seller plan cards should display full totals including cards plus shipping.");
 assert.doesNotMatch(sellerPlanHtml, />\s*EUR 4\.05\s*<\/strong>\s*<\/div>\s*<\/header>/, "Seller total header must not show shipping-only totals.");
-assert.doesNotMatch(sellerPlanHtml, /Seller 1 · Buy from/, "Seller card headers should not prepend a redundant Seller # label before the seller name.");
+assert.doesNotMatch(sellerPlanHtml, /Buy from ItalianValue/, "Seller card headers should now use only the seller name.");
+assert.match(sellerPlanHtml, />ItalianValue<\/h3>/, "Seller card headers should show the seller name plainly.");
+assert.match(sellerPlanHtml, /Cost breakdown · EUR 28\.85/, "Seller cost details should be collapsed into an accordion summary.");
 assert.match(sellerPlanHtml, /Remove from this seller/, "Seller cards should show cards to remove when only part of a seller's cart is kept.");
 assert.match(sellerPlanHtml, /Smothering Tithe/);
-
-const copiedPlanText = __testing.buildBuyingPlanText({
-  selectedOffers: [
-    { sellerIndex: 0, sellerName: "ItalianValue", cardName: "Rhystic Study", requiredQuantity: 1, quantity: 1, condition: "Excellent", unitPrice: 24.8 }
-  ],
-  sellerCosts: [{
-    sellerIndex: 0,
-    articleValue: 24.8,
-    shippingValue: 4.05,
-    trusteeFeeValue: 0,
-    cardmarketFeeValue: 0,
-    totalCost: 4.05
-  }],
-  usedSellers: [{ sellerIndex: 0, seller: { sellerName: "ItalianValue" } }]
-});
-assert.match(copiedPlanText, /Cards: EUR 24\.80/, "Copied plans should include the cards subtotal.");
-assert.match(copiedPlanText, /Shipping: EUR 4\.05/, "Copied plans should include shipping.");
-assert.match(copiedPlanText, /Total: EUR 28\.85/, "Copied plans should report the same full total as the on-screen seller card.");
 
 const droppedSellersHtml = __testing.droppedSellersTemplate([
   { seller: { sellerName: "UnusedSeller", items: [{}, {}] } }

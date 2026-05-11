@@ -388,11 +388,6 @@ function renderOptimizationViews() {
     const advancedSection = elements.advancedDetails.parentElement;
     advancedSection.classList.toggle("hidden", !advancedContent.trim());
   }
-
-  const copyBtn = document.querySelector("#copyPlanButton");
-  if (copyBtn) {
-    copyBtn.addEventListener("click", () => copyBuyingPlan(state.optimizationResult));
-  }
 }
 
 function renderDesiredCards(offerGroups) {
@@ -1322,12 +1317,6 @@ function optimizationSummaryTemplate(result) {
   const hasEstimatedTrustee = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
   const trusteeLabel = hasEstimatedTrustee ? "Fees / trustee" : "Fees / trustee";
   const trusteeNote = hasEstimatedTrustee ? "Estimated · verify at Cardmarket checkout" : "Verify at Cardmarket checkout";
-  const savingsTone = result.savings > 0.005 ? "good" : Math.abs(result.savings) < 0.005 ? "muted" : "warning";
-  const savingsLabel = result.savings > 0.005
-    ? `Save ${formatMoney(result.savings)} vs current cart`
-    : Math.abs(result.savings) < 0.005
-      ? "No savings vs current cart"
-      : `${formatMoney(Math.abs(result.savings))} above current cart`;
 
   return `
     <div class="summary-hero-card summary-hero-forge">
@@ -1335,7 +1324,6 @@ function optimizationSummaryTemplate(result) {
         <div class="summary-hero-copy">
           <span class="eyebrow">Best buying plan</span>
           <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
-          <p class="summary-savings ${escapeAttribute(savingsTone)}">${escapeHtml(savingsLabel)}</p>
           <p>Buy the cards below from the selected sellers.</p>
         </div>
         <div class="plan-pill-row" aria-label="Buying plan summary">
@@ -1369,9 +1357,8 @@ function optimizationSummaryTemplate(result) {
   `;
 }
 
-function resultSummaryTemplate(result, savingsPercent) {
+function resultSummaryTemplate(result) {
   const totalItems = result.selectedOffers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
-  const isSavingsMeaningful = result.savings > 0.1;
 
   return `
     <div class="result-summary-strip">
@@ -1379,12 +1366,6 @@ function resultSummaryTemplate(result, savingsPercent) {
         <div class="summary-metric-label">Final Total</div>
         <div class="summary-metric-value">${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</div>
       </div>
-      ${isSavingsMeaningful ? `
-        <div class="summary-metric savings-metric">
-          <div class="summary-metric-label">Savings vs Current</div>
-          <div class="summary-metric-value savings-value">${escapeHtml(formatMoney(result.savings))} <span class="savings-percent">(${savingsPercent}%)</span></div>
-        </div>
-      ` : ''}
       <div class="summary-metric">
         <div class="summary-metric-label">Sellers to Use</div>
         <div class="summary-metric-value">${escapeHtml(String(result.usedSellers.length))}</div>
@@ -1406,13 +1387,9 @@ function recommendationsTemplate(result) {
   ]));
   const enrichedSelectedOffers = result.selectedOffers.map((offer) => enrichOfferWithReference(offer));
   const highPriceNote = hasHighPricedCards(enrichedSelectedOffers) ? generateHighPriceNote(enrichedSelectedOffers) : "";
-  const savingsPercent = result.currentTotal > 0 ? Math.round((result.savings / result.currentTotal) * 100) : 0;
 
   return `
-    <div class="recommendations-header">
-      <button class="ghost-button copy-plan-button" type="button" id="copyPlanButton">📋 Copy plan to clipboard</button>
-    </div>
-    ${resultSummaryTemplate(result, savingsPercent)}
+    ${resultSummaryTemplate(result)}
     ${highPriceNote}
     ${droppedSellersTemplate(result.droppedSellers)}
     <div class="recommendation-grid">
@@ -1438,7 +1415,6 @@ function droppedSellersTemplate(droppedSellers) {
         ${droppedSellers.map(({ seller }) => `
           <article class="dropped-seller-card dropped-seller-card-main">
             <strong>${escapeHtml(seller.sellerName)}</strong>
-            <p class="seller-stats">${escapeHtml(`${seller.items.length} card${seller.items.length === 1 ? "" : "s"} to remove`)}</p>
           </article>
         `).join("")}
       </div>
@@ -1829,7 +1805,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
       <header class="seller-card-header">
         <div class="seller-number-badge">${escapeHtml(displayNumber)}</div>
         <div class="seller-info-primary">
-          <h3>Buy from ${escapeHtml(seller.sellerName)}</h3>
+          <h3>${escapeHtml(seller.sellerName)}</h3>
           <div class="seller-meta">
             ${escapeHtml(seller.sellerCountry || "Unknown")} · ${escapeHtml(trackingLabel)} · ${escapeHtml(`${itemCount} ${itemCount === 1 ? "copy" : "copies"}`)}
           </div>
@@ -1870,32 +1846,36 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
         </div>
       ` : ""}
 
-      <div class="cost-breakdown">
-        <div class="seller-section-label">Cost breakdown</div>
-        <div class="breakdown-item">
-          <span>Cards</span>
-          <strong>${escapeHtml(formatMoney(cardTotal))}</strong>
-        </div>
-        <div class="breakdown-item">
-          <span>Shipping</span>
-          <strong>${escapeHtml(formatMoney(shippingTotal))}</strong>
-        </div>
-        <div class="breakdown-item">
-          <span>Trustee</span>
-          <strong>${escapeHtml(formatMoney(trusteeTotal))}</strong>
-        </div>
-        ${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `
+      <details class="seller-detail-section cost-breakdown-section">
+        <summary class="seller-detail-summary">
+          Cost breakdown · ${escapeHtml(formatEstimatedMoney(displayTotal))}
+        </summary>
+        <div class="seller-detail-body cost-breakdown">
           <div class="breakdown-item">
-            <span>Fees</span>
-            <strong>${escapeHtml(formatMoney(feeTotal))}</strong>
+            <span>Cards</span>
+            <strong>${escapeHtml(formatMoney(cardTotal))}</strong>
           </div>
-        `}
-        <div class="breakdown-divider"></div>
-        <div class="breakdown-item breakdown-total">
-          <span>Total</span>
-          <strong>${escapeHtml(formatEstimatedMoney(displayTotal))}</strong>
+          <div class="breakdown-item">
+            <span>Shipping</span>
+            <strong>${escapeHtml(formatMoney(shippingTotal))}</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Trustee</span>
+            <strong>${escapeHtml(formatMoney(trusteeTotal))}</strong>
+          </div>
+          ${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `
+            <div class="breakdown-item">
+              <span>Fees</span>
+              <strong>${escapeHtml(formatMoney(feeTotal))}</strong>
+            </div>
+          `}
+          <div class="breakdown-divider"></div>
+          <div class="breakdown-item breakdown-total">
+            <span>Total</span>
+            <strong>${escapeHtml(formatEstimatedMoney(displayTotal))}</strong>
+          </div>
         </div>
-      </div>
+      </details>
 
       <details class="shipping-detail-section">
         <summary class="shipping-detail-summary">
@@ -2089,47 +2069,6 @@ function formatEstimatedMoney(value) {
   return Number.isFinite(Number(value)) ? formatMoney(value) : "Needs review";
 }
 
-async function copyBuyingPlan(result) {
-  const text = buildBuyingPlanText(result);
-  const btn = document.querySelector("#copyPlanButton");
-
-  try {
-    await navigator.clipboard.writeText(text);
-    if (btn) {
-      btn.textContent = "Copied!";
-      setTimeout(() => { btn.textContent = "📋 Copy plan to clipboard"; }, 2000);
-    }
-  } catch {
-    if (btn) {
-      btn.textContent = "Copy failed";
-      setTimeout(() => { btn.textContent = "📋 Copy plan to clipboard"; }, 2000);
-    }
-  }
-}
-
-function buildBuyingPlanText(result) {
-  const planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
-  const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
-
-  const lines = result.usedSellers.map(({ seller, sellerIndex }) => {
-    const offers = planBySeller.get(sellerIndex) || [];
-    const cost = costBySeller.get(sellerIndex);
-    const cardTotal = cost?.articleValue ?? offerSubtotal(offers);
-    const fixedTotal = cost?.totalCost ?? 0;
-    const totalCost = Number.isFinite(Number(fixedTotal)) ? roundMoney(cardTotal + fixedTotal) : Number.POSITIVE_INFINITY;
-    const shippingCost = cost?.shippingValue ?? 0;
-    const trusteeCost = cost?.trusteeFeeValue ?? 0;
-    const feeCost = cost?.cardmarketFeeValue ?? 0;
-    const cardLines = offers.map((offer) =>
-      `  - ${offer.requiredQuantity || offer.quantity}× ${offer.cardName} — ${offer.condition} — ${formatMoney(offer.unitPrice)}`
-    ).join("\n");
-
-    return `Buy from ${seller.sellerName}\n${cardLines}\nCards: ${formatMoney(cardTotal)}\nShipping: ${formatMoney(shippingCost)}\nTrustee: ${formatMoney(trusteeCost)}${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `\nFees: ${formatMoney(feeCost)}`}\nTotal: ${formatEstimatedMoney(totalCost)}`;
-  });
-
-  return lines.join("\n\n");
-}
-
 function toReviewData() {
   const offerGroups = buildOfferGroups(state.parsed.sellers);
   return {
@@ -2268,7 +2207,6 @@ export const __testing = {
   state,
   advancedDetailsTemplate,
   buildOfferGroups,
-  buildBuyingPlanText,
   buildResultWarnings,
   desiredCardsTableTemplate,
   droppedSellersTemplate,
