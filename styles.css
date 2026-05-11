@@ -2886,8 +2886,8 @@ input[type="number"] {
   }
 }
 
-/* Hide before-you-buy notes section completely */
-.notes-panel {
+/* Hide before-you-buy notes section (but not dropped sellers) */
+.notes-panel:not(.dropped-sellers-section) {
   display: none !important;
 }
 
