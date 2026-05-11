@@ -101,6 +101,7 @@ function normalizeSellers(sellers, warnings, shippingIndex) {
     return {
       id: seller.id || `seller-${sellerIndex + 1}`,
       sellerName,
+      sellerType: cleanupValue(seller.sellerType || seller.type || ""),
       shippingMethod,
       shippingMethodRaw: cleanupValue(seller.shippingMethodRaw || shippingMethod),
       trackingStatus,
@@ -140,6 +141,7 @@ function normalizeItems(items, sellerName, sellerIndex, warnings) {
       collectorNumber: cleanupValue(item.collectorNumber || (/^#\d+[a-z]?$/i.test(rawSetName) ? rawSetName : "")),
       rarity: normalizeRarity(item.rarity),
       condition: normalizeCondition(item.condition),
+      language: cleanupValue(item.language || item.lang || ""),
       quantity,
       price,
       rawLine: item.rawLine || buildRawLine(item),

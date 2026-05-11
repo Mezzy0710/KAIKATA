@@ -22,7 +22,6 @@ import { decodeCartForgeHash, parseExtractedCartPayload } from "./importer.mjs?v
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
-const conditionOptions = ["Unknown", "Near Mint", "Mint", "Excellent", "Good", "Light Played", "Played", "Poor"];
 const MAX_OPTIMIZATION_ITERATIONS = 50;
 
 const ICON_CHART = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-4"></path></svg>`;
@@ -38,6 +37,8 @@ const state = {
   inputCollapsed: false,
   desiredQuantityByCard: {},
   optimizationStale: false,
+  expandedCards: new Set(),
+  variantPreferences: {},
   // Reference price check feature
   priceReferences: {}, // Map<normalizedCardName, referencePriceData>
   scryallLookupInProgress: false, // Show loading state while fetching
@@ -93,6 +94,8 @@ async function boot() {
   elements.clearButton.addEventListener("click", clearInput);
   elements.desiredCardsReview.addEventListener("change", handleDesiredQuantityChange);
   elements.desiredCardsReview.addEventListener("click", handleDesiredQuantityClick);
+  elements.desiredCardsReview.addEventListener("change", handleReviewChange);
+  elements.desiredCardsReview.addEventListener("click", handleReviewClick);
 
   await loadShippingData();
   loadCartFromUrlHash();
@@ -161,6 +164,8 @@ function parseCurrentInput() {
   state.activeReferenceLookupToken += 1;
   state.priceReferences = {};
   state.scryallLookupInProgress = false;
+  state.expandedCards = new Set();
+  state.variantPreferences = {};
   const imported = parseExtractedCartPayload(elements.cartInput.value, state.shippingData);
   state.parsed = imported.ok ? imported.parsed : parseCart(elements.cartInput.value, state.shippingData);
   state.optimizationResult = null;
@@ -255,6 +260,8 @@ function clearInput() {
   state.inputCollapsed = false;
   state.desiredQuantityByCard = {};
   state.optimizationStale = false;
+  state.expandedCards = new Set();
+  state.variantPreferences = {};
   state.priceReferences = {}; // Clear reference prices
   state.scryallLookupInProgress = false;
   state.activeReferenceLookupToken += 1;
@@ -465,13 +472,13 @@ function renderDesiredCards(offerGroups) {
   if (cardSearchInput) {
     cardSearchInput.addEventListener("input", (e) => {
       const query = e.target.value.toLowerCase();
-      const rows = document.querySelectorAll(".desired-cards-table tbody tr");
+      const cards = document.querySelectorAll(".card-accordion");
       let visibleCount = 0;
 
-      rows.forEach((row) => {
-        const cardName = row.querySelector("td")?.textContent.toLowerCase() || "";
-        const isMatch = cardName.includes(query);
-        row.style.display = isMatch ? "" : "none";
+      cards.forEach((card) => {
+        const name = (card.dataset.cardName || "").toLowerCase();
+        const isMatch = name.includes(query);
+        card.style.display = isMatch ? "" : "none";
         if (isMatch) visibleCount += 1;
       });
 
@@ -487,58 +494,118 @@ function desiredCardsTableTemplate(offerGroups) {
   return `
     <section class="panel desired-cards-panel">
       <div class="desired-cards-toolbar">
-        <input type="text" id="cardSearchInput" class="card-search-input" placeholder="Search cards..." aria-label="Search cards in the review table">
+        <input type="text" id="cardSearchInput" class="card-search-input" placeholder="Search cards..." aria-label="Search cards">
         <div class="card-count-badge" id="cardCountBadge">${cardCount} cards</div>
       </div>
-      <div class="desired-cards-wrap">
-        <table class="desired-cards-table">
-          <thead>
-            <tr>
-              <th title="Detected card name from the pasted cart.">Card</th>
-              <th title="Click to edit how many copies you want to buy.">Copies</th>
-              <th title="How many sellers offer this card.">Sellers</th>
-              <th title="Lowest price available.">Lowest $</th>
-              <th title="Market comparison from Scryfall. Does not affect optimization.">Reference</th>
-              <th title="Whether this quantity can be fulfilled.">Ready?</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${offerGroups.map(desiredCardRowTemplate).join("")}
-          </tbody>
-        </table>
+      <div class="card-accordion-list" role="list">
+        ${offerGroups.map(desiredCardTemplate).join("")}
       </div>
     </section>
   `;
 }
 
-function desiredCardRowTemplate(group) {
-  const desiredQty = state.desiredQuantityByCard[group.cardName] ?? group.requiredQuantity;
-  const availableQty = Math.max(...group.offers.map(o => o.quantity), 0);
-  const isAvailable = availableQty >= desiredQty;
+function desiredCardTemplate(group) {
+  const cardName = group.cardName;
+  const desiredQty = state.desiredQuantityByCard[cardName] ?? group.requiredQuantity;
+  const isAvailable = group.requiredQuantity >= desiredQty;
   const statusLabel = desiredQty === 0 ? "Excluded" : isAvailable ? "Ready" : "Insufficient";
   const statusClass = desiredQty === 0 ? "muted" : isAvailable ? "good" : "warning";
-  const referenceData = getReferenceData(group.cardName);
-  const referenceCard = enrichCardWithReference({ cardName: group.cardName, price: group.lowestUnitPrice }, referenceData);
-  const referenceDisplay = referencePriceDisplay(referenceData);
-  const deltaDisplay = referenceDeltaDisplay(referenceCard, referenceData);
+  const isExpanded = state.expandedCards.has(cardName);
+  const prefLabel = hasAnyPreference(cardName) ? "Preferences set" : "Any version";
+  const priceDisplay = group.highestUnitPrice > group.lowestUnitPrice + 0.005
+    ? `${escapeHtml(formatMoney(group.lowestUnitPrice))} – ${escapeHtml(formatMoney(group.highestUnitPrice))}`
+    : escapeHtml(formatMoney(group.lowestUnitPrice));
+  const variantHint = group.variantCount > 1
+    ? `${group.variantCount} variants · ${prefLabel}`
+    : prefLabel;
 
   return `
-    <tr data-card-name="${escapeAttribute(group.cardName)}">
-      <td>${escapeHtml(group.cardName)}</td>
-      <td class="qty-cell">
-        <button class="qty-button" data-action="decrement-qty" title="Decrease quantity" aria-label="Decrease ${group.cardName} quantity">−</button>
-        <input class="qty-input" type="number" data-card-qty min="0" step="1" value="${desiredQty}" aria-label="Desired quantity for ${group.cardName}">
-        <button class="qty-button" data-action="increment-qty" title="Increase quantity" aria-label="Increase ${group.cardName} quantity">+</button>
-      </td>
-      <td>${escapeHtml(group.sellerCount)}</td>
-      <td class="price-cell" data-price="${escapeAttribute(String(group.lowestUnitPrice))}">${escapeHtml(formatMoney(group.lowestUnitPrice))}</td>
-      <td class="reference-cell">
-        <div class="reference-stack">
-          ${referenceDisplay}
-          ${deltaDisplay}
+    <div class="card-accordion ${isExpanded ? "is-expanded" : ""}" data-card-name="${escapeAttribute(cardName)}" role="listitem">
+      <div class="card-accordion-header" data-action="toggle-card" role="button" tabindex="0" aria-expanded="${isExpanded}">
+        <div class="card-accordion-info">
+          <span class="card-name-label">${escapeHtml(cardName)}</span>
+          <span class="card-variant-hint">${escapeHtml(variantHint)}</span>
         </div>
+        <div class="card-accordion-controls">
+          <div class="card-qty-group">
+            <button class="qty-button" data-action="decrement-qty" aria-label="Decrease ${escapeAttribute(cardName)} quantity">−</button>
+            <input class="qty-input" type="number" data-card-qty data-action="noop" min="0" step="1" value="${desiredQty}" aria-label="Copies of ${escapeAttribute(cardName)}">
+            <button class="qty-button" data-action="increment-qty" aria-label="Increase ${escapeAttribute(cardName)} quantity">+</button>
+          </div>
+          <span class="card-price-range">${priceDisplay}</span>
+          <span class="status-pill ${statusClass}">${escapeHtml(statusLabel)}</span>
+          <span class="card-chevron" aria-hidden="true">▾</span>
+        </div>
+      </div>
+      ${isExpanded ? variantBodyTemplate(group) : ""}
+    </div>
+  `;
+}
+
+function variantBodyTemplate(group) {
+  const variantMap = new Map();
+  group.offers.forEach((offer) => {
+    const vk = makeVariantKey(offer);
+    if (!variantMap.has(vk)) {
+      variantMap.set(vk, { ...offer, allSellers: [] });
+    }
+    variantMap.get(vk).allSellers.push(offer.sellerName);
+  });
+
+  const variants = [...variantMap.entries()];
+  const hasEnriched = variants.some(([, v]) => v.setName || v.collectorNumber || v.language);
+
+  return `
+    <div class="card-accordion-body">
+      <p class="variant-hint-text">
+        Version details shown for transparency. Unless you set a preference below,
+        CartForge optimizes for lowest total price across all valid versions.
+      </p>
+      <div class="variant-table-wrap">
+        <table class="variant-table">
+          <thead>
+            <tr>
+              ${hasEnriched ? `<th>Set</th><th>#</th><th>Lang</th>` : ""}
+              <th>Condition</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Seller</th>
+              <th>Preference</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${variants.map(([vk, v]) => variantRowTemplate(group.cardName, vk, v, hasEnriched)).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function variantRowTemplate(cardName, variantKey, offer, hasEnriched) {
+  const pref = (state.variantPreferences[cardName] || {})[variantKey] || "any";
+  const prefClass = pref === "require" ? "pref-require" : pref === "prefer" ? "pref-prefer" : pref === "exclude" ? "pref-exclude" : "";
+  const sellers = offer.allSellers ? [...new Set(offer.allSellers)].join(", ") : offer.sellerName || "";
+
+  return `
+    <tr class="${prefClass}" data-variant-key="${escapeAttribute(variantKey)}">
+      ${hasEnriched ? `
+        <td>${escapeHtml(offer.setName || "—")}</td>
+        <td>${escapeHtml(offer.collectorNumber || "—")}</td>
+        <td>${escapeHtml(offer.language || "—")}</td>
+      ` : ""}
+      <td>${escapeHtml(offer.condition || "Unknown")}</td>
+      <td>${escapeHtml(String(offer.quantity))}</td>
+      <td class="price-cell">${escapeHtml(formatMoney(offer.unitPrice))}</td>
+      <td class="variant-seller-cell">${escapeHtml(sellers)}</td>
+      <td>
+        <select class="variant-pref-select" data-variant-pref data-variant-key="${escapeAttribute(variantKey)}" aria-label="Preference for this version">
+          <option value="any" ${pref === "any" ? "selected" : ""}>Any version</option>
+          <option value="prefer" ${pref === "prefer" ? "selected" : ""}>Prefer</option>
+          <option value="require" ${pref === "require" ? "selected" : ""}>Require</option>
+          <option value="exclude" ${pref === "exclude" ? "selected" : ""}>Exclude</option>
+        </select>
       </td>
-      <td><span class="status-pill ${statusClass}">${escapeHtml(statusLabel)}</span></td>
     </tr>
   `;
 }
@@ -686,10 +753,13 @@ function sellerSummaryRowTemplate(seller, sellerIndex) {
 
   return `
     <tr data-seller-index="${sellerIndex}">
-      <td><input data-field="sellerName" value="${escapeAttribute(seller.sellerName)}" aria-label="Seller name"></td>
-      <td>${selectFieldTemplate("", "sellerCountry", seller.sellerCountry || "Unknown", countryOptions())}</td>
-      <td><input data-field="shippingMethod" value="${escapeAttribute(seller.shippingMethod)}" aria-label="Shipping method"></td>
-      <td>${selectFieldTemplate("", "trackingStatus", seller.trackingStatus || "unknown", ["unknown", "tracked", "untracked"])}</td>
+      <td>
+        <input data-field="sellerName" value="${escapeAttribute(seller.sellerName)}" aria-label="Seller name">
+        ${seller.sellerType ? `<span class="item-meta-badge">${escapeHtml(seller.sellerType)}</span>` : ""}
+      </td>
+      <td><span class="seller-field-label">${escapeHtml(seller.sellerCountry || "Unknown")}</span></td>
+      <td><span class="seller-field-label">${escapeHtml(seller.shippingMethod || "—")}</span></td>
+      <td><span class="seller-field-label">${escapeHtml(seller.trackingStatus || "unknown")}</span></td>
       <td><input data-field="articleValue" value="${escapeAttribute(moneyInputValue(seller.articleValue))}" aria-label="Article value"></td>
       <td><input data-field="shippingValue" value="${escapeAttribute(moneyInputValue(seller.shippingValue))}" aria-label="Shipping cost"></td>
       <td><input data-field="trusteeValue" value="${escapeAttribute(moneyInputValue(seller.trusteeValue))}" aria-label="Trustee cost"></td>
@@ -719,6 +789,7 @@ function sellerItemBreakdownTemplate(seller, sellerIndex) {
       <div class="seller-chips">
         <span class="status-pill ${inferenceClass}">${escapeHtml(inferenceLabel)}</span>
         <span class="status-pill info">${escapeHtml(seller.trackingStatus || "unknown")}</span>
+        ${seller.sellerType ? `<span class="status-pill muted">${escapeHtml(seller.sellerType)}</span>` : ""}
         <span class="status-pill muted">${seller.items.length} item(s)</span>
       </div>
     </div>
@@ -794,13 +865,17 @@ function matchPanelTemplate(seller) {
 function itemRowTemplate(item, itemIndex, sellerName) {
   return `
     <tr data-item-index="${itemIndex}">
-      <td><input data-item-field="cardName" value="${escapeAttribute(item.cardName)}" aria-label="Card name"></td>
-      <td><input data-item-field="setName" value="${escapeAttribute(item.setName || "")}" aria-label="Set"></td>
+      <td>
+        <input data-item-field="cardName" value="${escapeAttribute(item.cardName)}" aria-label="Card name">
+        ${item.language ? `<span class="item-meta-badge lang-badge">${escapeHtml(item.language)}</span>` : ""}
+      </td>
+      <td>
+        <input data-item-field="setName" value="${escapeAttribute(item.setName || "")}" aria-label="Set">
+        ${item.collectorNumber ? `<span class="item-meta-badge coll-badge">${escapeHtml(item.collectorNumber)}</span>` : ""}
+      </td>
       <td><input data-item-field="rarity" value="${escapeAttribute(item.rarity || "")}" aria-label="Rarity"></td>
       <td class="condition-cell">
-        <select data-item-field="condition" aria-label="Condition">
-          ${conditionOptions.map((option) => `<option value="${escapeAttribute(option)}" ${option === item.condition ? "selected" : ""}>${escapeHtml(option)}</option>`).join("")}
-        </select>
+        <span class="condition-label">${escapeHtml(item.condition || "Unknown")}</span>
       </td>
       <td class="qty-cell"><input data-item-field="quantity" type="number" min="1" step="1" value="${escapeAttribute(item.quantity)}" aria-label="Quantity"></td>
       <td class="price-cell"><input data-item-field="price" value="${escapeAttribute(moneyInputValue(item.price))}" aria-label="Price"></td>
@@ -901,6 +976,39 @@ function handleReviewClick(event) {
 }
 
 function handleDesiredQuantityChange(event) {
+  if (event.target.dataset.variantPref !== undefined) {
+    const accordion = event.target.closest(".card-accordion");
+    if (!accordion) return;
+    const cardName = accordion.dataset.cardName;
+    const variantKey = event.target.dataset.variantKey;
+    const value = event.target.value;
+    if (!state.variantPreferences[cardName]) {
+      state.variantPreferences[cardName] = {};
+    }
+    if (value === "any") {
+      delete state.variantPreferences[cardName][variantKey];
+    } else {
+      state.variantPreferences[cardName][variantKey] = value;
+    }
+    // Update row highlight
+    const variantRow = event.target.closest("tr");
+    if (variantRow) {
+      variantRow.className = value === "require" ? "pref-require" : value === "prefer" ? "pref-prefer" : value === "exclude" ? "pref-exclude" : "";
+    }
+    // Update the collapsed-row variant hint
+    const hintEl = accordion.querySelector(".card-variant-hint");
+    if (hintEl) {
+      const offerGroups = buildOfferGroups(state.parsed.sellers);
+      const group = offerGroups.find((g) => g.cardName === cardName);
+      const variantCount = group?.variantCount || 1;
+      const prefLabel = hasAnyPreference(cardName) ? "Preferences set" : "Any version";
+      hintEl.textContent = variantCount > 1 ? `${variantCount} variants · ${prefLabel}` : prefLabel;
+    }
+    state.optimizationStale = true;
+    updateOptimizationPreview();
+    return;
+  }
+
   if (event.target.dataset.cardQty !== undefined) {
     const row = event.target.closest("[data-card-name]");
     if (!row) return;
@@ -913,11 +1021,36 @@ function handleDesiredQuantityChange(event) {
 }
 
 function handleDesiredQuantityClick(event) {
+  const actionEl = event.target.closest("[data-action]");
+  const action = actionEl?.dataset.action;
+  if (!action || action === "noop") return;
+
+  if (action === "toggle-card") {
+    const accordion = event.target.closest(".card-accordion");
+    if (!accordion) return;
+    const cardName = accordion.dataset.cardName;
+    const isExpanded = state.expandedCards.has(cardName);
+    if (isExpanded) {
+      state.expandedCards.delete(cardName);
+      accordion.classList.remove("is-expanded");
+      accordion.querySelector(".card-accordion-body")?.remove();
+      accordion.querySelector(".card-accordion-header")?.setAttribute("aria-expanded", "false");
+    } else {
+      state.expandedCards.add(cardName);
+      accordion.classList.add("is-expanded");
+      accordion.querySelector(".card-accordion-header")?.setAttribute("aria-expanded", "true");
+      const offerGroups = buildOfferGroups(state.parsed.sellers);
+      const group = offerGroups.find((g) => g.cardName === cardName);
+      if (group) {
+        accordion.querySelector(".card-accordion-header").insertAdjacentHTML("afterend", variantBodyTemplate(group));
+      }
+    }
+    return;
+  }
+
   const row = event.target.closest("[data-card-name]");
   if (!row) return;
-
   const cardName = row.dataset.cardName;
-  const action = event.target.dataset.action;
   const input = row.querySelector("[data-card-qty]");
 
   if (action === "increment-qty") {
@@ -1029,14 +1162,28 @@ function optimizeCart(sellers, offerGroups) {
         candidates: []
       };
     }
-    const validOffers = group.offers.filter((offer) => offer.quantity >= desiredQty);
+    const prefs = state.variantPreferences[group.cardName] || {};
+    const hasRequire = Object.values(prefs).some((p) => p === "require");
+    const eligibleOffers = group.offers.filter((offer) => {
+      const pref = prefs[makeVariantKey(offer)] || "any";
+      if (pref === "exclude") return false;
+      if (hasRequire) return pref === "require";
+      return true;
+    });
+    const validOffers = eligibleOffers.filter((offer) => offer.quantity >= desiredQty);
     return {
       ...group,
       requiredQuantity: desiredQty,
       desiredQuantity: desiredQty,
-      candidates: (validOffers.length ? validOffers : group.offers)
+      candidates: (validOffers.length ? validOffers : eligibleOffers.length ? eligibleOffers : group.offers)
         .map((offer) => ({ ...offer, requiredQuantity: desiredQty }))
-        .sort((a, b) => a.unitPrice - b.unitPrice)
+        .sort((a, b) => {
+          const aPref = prefs[makeVariantKey(a)] || "any";
+          const bPref = prefs[makeVariantKey(b)] || "any";
+          if (aPref === "prefer" && bPref !== "prefer") return -1;
+          if (bPref === "prefer" && aPref !== "prefer") return 1;
+          return a.unitPrice - b.unitPrice;
+        })
     };
   });
   const warnings = [];
@@ -2086,37 +2233,41 @@ function buildOfferGroups(sellers) {
 
   sellers.forEach((seller, sellerIndex) => {
     seller.items.forEach((item, itemIndex) => {
-      const key = normalizeOfferKey(item.cardName, item.setName);
-      const comparableName = getComparableDisplayName(item.cardName);
-      const displayName = item.setName ? `${comparableName} (${item.setName})` : comparableName;
-      if (!key) {
-        return;
-      }
+      const cardKey = normalizeOfferKey(item.cardName);
+      const cardName = getComparableDisplayName(item.cardName);
+      if (!cardKey) return;
 
-      if (!groups.has(key)) {
-        groups.set(key, {
-          cardName: displayName,
-          requiredQuantity: 0,
-          sellerCount: 0,
+      if (!groups.has(cardKey)) {
+        groups.set(cardKey, {
+          cardName,
+          variantMaxQty: new Map(),
           lowestUnitPrice: Number.POSITIVE_INFINITY,
+          highestUnitPrice: 0,
           offers: []
         });
       }
 
-      const group = groups.get(key);
+      const group = groups.get(cardKey);
       const quantity = Number(item.quantity || 1);
       const unitPrice = Number(item.price || 0);
-      group.requiredQuantity = Math.max(group.requiredQuantity, quantity);
+
+      // Track max qty per unique variant — same variant from competing sellers does not add up
+      const vk = makeVariantKey(item);
+      group.variantMaxQty.set(vk, Math.max(group.variantMaxQty.get(vk) || 0, quantity));
+
       group.lowestUnitPrice = Math.min(group.lowestUnitPrice, unitPrice);
+      group.highestUnitPrice = Math.max(group.highestUnitPrice, unitPrice);
       group.offers.push({
         sellerName: seller.sellerName,
         sellerIndex,
         itemIndex,
         cardName: item.cardName,
-        comparableCardName: comparableName,
+        comparableCardName: cardName,
         setName: item.setName || "",
+        collectorNumber: item.collectorNumber || "",
         rarity: item.rarity || "",
         condition: item.condition,
+        language: item.language || "",
         quantity,
         unitPrice,
         sellerCountry: seller.sellerCountry,
@@ -2127,12 +2278,28 @@ function buildOfferGroups(sellers) {
   });
 
   return [...groups.values()]
-    .map((group) => ({
-      ...group,
-      sellerCount: new Set(group.offers.map((offer) => offer.sellerName)).size,
-      lowestUnitPrice: Number.isFinite(group.lowestUnitPrice) ? group.lowestUnitPrice : 0
-    }))
+    .map((group) => {
+      const requiredQuantity = [...group.variantMaxQty.values()].reduce((a, b) => a + b, 0);
+      return {
+        cardName: group.cardName,
+        requiredQuantity,
+        variantCount: group.variantMaxQty.size,
+        sellerCount: new Set(group.offers.map((o) => o.sellerName)).size,
+        lowestUnitPrice: Number.isFinite(group.lowestUnitPrice) ? group.lowestUnitPrice : 0,
+        highestUnitPrice: Number.isFinite(group.highestUnitPrice) ? group.highestUnitPrice : 0,
+        offers: group.offers
+      };
+    })
     .sort((a, b) => a.cardName.localeCompare(b.cardName));
+}
+
+function makeVariantKey(item) {
+  return [item.setName || "", item.collectorNumber || "", item.language || "", item.condition || ""].join("|");
+}
+
+function hasAnyPreference(cardName) {
+  const prefs = state.variantPreferences[cardName] || {};
+  return Object.values(prefs).some((p) => p !== "any");
 }
 
 function getTotalCopies(offerGroups) {
