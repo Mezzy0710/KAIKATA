@@ -2885,3 +2885,23 @@ input[type="number"] {
     display: none;
   }
 }
+
+/* Hide before-you-buy notes section completely */
+.notes-panel {
+  display: none !important;
+}
+
+/* Hide non-functional minus buttons in seller plan cards */
+.qty-button[data-action="minus"],
+.qty-minus-btn {
+  display: none !important;
+}
+
+/* Hide savings metrics */
+.savings-metric {
+  display: none !important;
+}
+
+.summary-savings {
+  display: none !important;
+}
