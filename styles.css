@@ -2014,6 +2014,17 @@ select {
   background: rgba(253, 123, 65, 0.05);
 }
 
+/* Active state for Step 2 when cart is parsed */
+.shopping-list-accordion.step-active {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, rgba(200, 167, 93, 0.1) 0%, rgba(200, 167, 93, 0.05) 100%);
+}
+
+.shopping-list-accordion.step-active > summary {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
 .accordion-header {
   display: flex;
   flex: 1;
@@ -2886,8 +2897,8 @@ input[type="number"] {
   }
 }
 
-/* Hide before-you-buy notes section completely */
-.notes-panel {
+/* Hide before-you-buy notes section (but not dropped sellers) */
+.notes-panel:not(.dropped-sellers-section) {
   display: none !important;
 }
 
