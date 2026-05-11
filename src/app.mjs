@@ -46,7 +46,8 @@ const state = {
   activeReferenceLookupToken: 0,
   inputSource: "manual", // "manual" | "extension"
   extensionHintFromUrl: false,
-  lastImportedFingerprint: ""
+  lastImportedFingerprint: "",
+  reviewUnlocked: false
 };
 
 const hasDom = typeof document !== "undefined";
@@ -92,7 +93,7 @@ async function boot() {
     });
   }
 
-  elements.parseButton.addEventListener("click", parseCurrentInput);
+  elements.parseButton.addEventListener("click", () => parseCurrentInput({ autoReveal: true }));
   if (elements.loadSampleButton) {
     elements.loadSampleButton.addEventListener("click", loadSampleCart);
   }
@@ -123,7 +124,7 @@ function loadCartFromUrlHash() {
 
   elements.cartInput.value = JSON.stringify(decoded.payload, null, 2);
   window.history.replaceState(null, "", window.location.pathname + window.location.search);
-  parseCurrentInput();
+  parseCurrentInput({ autoReveal: false });
 }
 
 async function loadShippingData() {
@@ -169,7 +170,8 @@ async function loadSampleCart() {
   }
 }
 
-function parseCurrentInput() {
+function parseCurrentInput(options = {}) {
+  const { autoReveal = true } = options;
   if (elements.parseButton) {
     elements.parseButton.textContent = "Parsing…";
   }
@@ -191,6 +193,7 @@ function parseCurrentInput() {
   }
 
   state.parsed = imported.ok ? imported.parsed : parseCart(elements.cartInput.value, state.shippingData);
+  state.reviewUnlocked = autoReveal;
   state.optimizationResult = null;
   state.optimizationStale = true;
   const warningText = state.parsed.warnings.length ? ` ${state.parsed.warnings.join(" ")}` : "";
@@ -218,7 +221,11 @@ function parseCurrentInput() {
     : "Cart detected. No spreadsheet required.";
   const shippingDetected = state.parsed.sellers.some((seller) => seller.shippingMethod || Number.isFinite(Number(seller.shippingValue)));
   setMessage(`${sourceText} We found ${state.parsed.sellerCount} seller(s), ${offerGroups.length} card(s), ${totalCopies} total copies. Shipping data ${shippingDetected ? "was" : "was not"} detected.${warningText}`);
-  updateWorkflowStatus("Ready", state.parsed.warnings.length ? "warning" : "good", "Review cards and quantities, then forge your buying plan.");
+  if (!autoReveal && imported.ok) {
+    updateWorkflowStatus("Ready to review", state.parsed.warnings.length ? "warning" : "good", "Click Review Cart to open Step 2.");
+  } else {
+    updateWorkflowStatus("Ready", state.parsed.warnings.length ? "warning" : "good", "Review cards and quantities, then forge your buying plan.");
+  }
   updateOptimizeButton();
   render();
 
@@ -297,6 +304,7 @@ function clearInput() {
   state.activeReferenceLookupToken += 1;
   state.inputSource = "manual";
   state.lastImportedFingerprint = "";
+  state.reviewUnlocked = false;
   elements.desiredCardsSection?.removeAttribute("open");
   setMessage("Paste your Cardmarket cart. We'll handle the seller math.");
   updateWorkflowStatus("Ready to parse", "muted", "Next: review the detected cards and quantities.");
@@ -311,8 +319,9 @@ function render() {
   const hasParsedData = sellers.length > 0;
   const hasOptimization = Boolean(state.optimizationResult);
 
-  elements.desiredCardsSection?.classList.toggle("hidden", !hasParsedData);
-  if (hasParsedData && elements.desiredCardsSection) {
+  const showReviewStep = hasParsedData && state.reviewUnlocked;
+  elements.desiredCardsSection?.classList.toggle("hidden", !showReviewStep);
+  if (showReviewStep && elements.desiredCardsSection) {
     elements.desiredCardsSection.classList.add("step-active");
     // Remove accent on first click
     const removeAccent = () => {
@@ -359,7 +368,7 @@ function renderStepper(sellers) {
   let activeStep = 1;
   if (hasResult) {
     activeStep = 3;
-  } else if (hasParsedData) {
+  } else if (hasParsedData && state.reviewUnlocked) {
     activeStep = 2;
   }
 
