@@ -3164,8 +3164,47 @@ input[type="number"] {
 
 .variant-table {
   width: 100%;
+  min-width: 1080px;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 0.85rem;
+}
+
+.variant-col-set {
+  width: 25%;
+}
+
+.variant-col-number {
+  width: 6%;
+}
+
+.variant-col-lang {
+  width: 8%;
+}
+
+.variant-col-condition {
+  width: 11%;
+}
+
+.variant-col-qty {
+  width: 5%;
+}
+
+.variant-col-price,
+.variant-col-ref {
+  width: 10%;
+}
+
+.variant-col-delta {
+  width: 8%;
+}
+
+.variant-col-seller {
+  width: 11%;
+}
+
+.variant-col-preference {
+  width: 14%;
 }
 
 .variant-table th {
@@ -3185,6 +3224,7 @@ input[type="number"] {
   color: var(--text-soft);
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
+  overflow-wrap: anywhere;
 }
 
 .variant-table tr:last-child td {
