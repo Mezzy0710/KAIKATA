@@ -11,11 +11,51 @@
       <header class="workspace-header page-header forge-header">
         <div class="brand">
           <div class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="10" y="16" width="24" height="32" rx="5"></rect>
-              <rect x="18" y="11" width="24" height="32" rx="5"></rect>
-              <rect x="26" y="6" width="24" height="32" rx="5"></rect>
-              <path d="M35 21l4 4 8-10"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-label="CartForge">
+              <defs>
+                <linearGradient id="cf-gold" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#fff5d8"></stop>
+                  <stop offset=".55" stop-color="#c8a857"></stop>
+                  <stop offset="1" stop-color="#6b5418"></stop>
+                </linearGradient>
+                <linearGradient id="cf-fire" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#fdba6a"></stop>
+                  <stop offset=".6" stop-color="#f97316"></stop>
+                  <stop offset="1" stop-color="#9a3412"></stop>
+                </linearGradient>
+                <radialGradient id="cf-spark" cx="50%" cy="40%" r="60%">
+                  <stop offset="0" stop-color="#fff5d8"></stop>
+                  <stop offset=".5" stop-color="#fbbf24" stop-opacity=".7"></stop>
+                  <stop offset="1" stop-color="#f97316" stop-opacity="0"></stop>
+                </radialGradient>
+              </defs>
+              <g transform="translate(8 18) rotate(-12 12 16)">
+                <rect width="22" height="30" rx="3" fill="#1a1a1a" stroke="#3a3528" stroke-width="1.2"></rect>
+                <rect x="2.5" y="2.5" width="17" height="13" rx="1.5" fill="#2a2418"></rect>
+                <rect x="2.5" y="18" width="17" height="2" rx="1" fill="#3a3528"></rect>
+                <rect x="2.5" y="22" width="13" height="2" rx="1" fill="#3a3528"></rect>
+              </g>
+              <g transform="translate(34 18) rotate(12 12 16)">
+                <rect width="22" height="30" rx="3" fill="#1a1a1a" stroke="#3a3528" stroke-width="1.2"></rect>
+                <rect x="2.5" y="2.5" width="17" height="13" rx="1.5" fill="#2a2418"></rect>
+                <rect x="2.5" y="18" width="17" height="2" rx="1" fill="#3a3528"></rect>
+                <rect x="2.5" y="22" width="13" height="2" rx="1" fill="#3a3528"></rect>
+              </g>
+              <circle cx="32" cy="34" r="22" fill="url(#cf-spark)" opacity=".8"></circle>
+              <g transform="translate(20 14)">
+                <rect x="-1" y="-1" width="26" height="38" rx="4" fill="url(#cf-gold)"></rect>
+                <rect width="24" height="36" rx="3" fill="#1a1208" stroke="#6b5418" stroke-width=".6"></rect>
+                <rect x="2.5" y="2.5" width="19" height="16" rx="1.5" fill="url(#cf-fire)"></rect>
+                <path d="M6 14 L18 14 L17 11.5 L7 11.5 Z M9 11.5 L15 11.5 L14 9 L10 9 Z" fill="#1a0a02" opacity=".7"></path>
+                <rect x="2.5" y="20.5" width="19" height="2.2" rx="1" fill="#c8a857" opacity=".55"></rect>
+                <rect x="2.5" y="24.5" width="19" height="1.4" rx=".7" fill="#6b5418" opacity=".55"></rect>
+                <rect x="2.5" y="27" width="14" height="1.4" rx=".7" fill="#6b5418" opacity=".55"></rect>
+                <rect x="2.5" y="29.5" width="16" height="1.4" rx=".7" fill="#6b5418" opacity=".55"></rect>
+              </g>
+              <g transform="translate(43 14)">
+                <circle r="7" fill="#1a0a02" stroke="url(#cf-gold)" stroke-width="1.4"></circle>
+                <path d="M0 -4 L1 -1 L4 0 L1 1 L0 4 L-1 1 L-4 0 L-1 -1 Z" fill="url(#cf-gold)"></path>
+              </g>
             </svg>
           </div>
           <div class="brand-copy">
@@ -26,6 +66,34 @@
           </div>
         </div>
       </header>
+
+      <nav id="appStepper" class="stepper">
+        <ul class="stepper-list">
+          <li class="stepper-item active" data-step="1">
+            <div class="stepper-circle">
+              <span class="stepper-number">1</span>
+              <span class="stepper-check" aria-hidden="true">✓</span>
+            </div>
+            <p class="stepper-label">Paste</p>
+          </li>
+          <div class="stepper-line" data-from="1"></div>
+          <li class="stepper-item" data-step="2">
+            <div class="stepper-circle">
+              <span class="stepper-number">2</span>
+              <span class="stepper-check" aria-hidden="true">✓</span>
+            </div>
+            <p class="stepper-label">Review</p>
+          </li>
+          <div class="stepper-line" data-from="2"></div>
+          <li class="stepper-item" data-step="3">
+            <div class="stepper-circle">
+              <span class="stepper-number">3</span>
+              <span class="stepper-check" aria-hidden="true">✓</span>
+            </div>
+            <p class="stepper-label">Optimize</p>
+          </li>
+        </ul>
+      </nav>
 
       <main class="workspace">
         <section class="panel input-panel forge-intro-panel">
