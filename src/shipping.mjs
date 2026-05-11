@@ -5,25 +5,11 @@ export const ESTIMATED_CARD_WEIGHT_G = 1.8;
 export const TRACKED_VALUE_THRESHOLD = 25;
 export const SHIPPING_DATA_INCLUDES_CARDMARKET_FEE = true;
 export const TRUSTEE_VALUE_THRESHOLD = 25;
-export const DEFAULT_TRUSTEE_RATE = 0.0075;
-
-const TRUSTEE_RATE_MAP = {
-  letter_basic: 0.005,
-  letter_standard: 0.005,
-  letter_basic_tracked: 0.005,
-  letter_registered: 0.0075,
-  letter_signed: 0.0075,
-  parcel_standard: 0.0075,
-  parcel_tracked: 0.0075,
-  parcel_insured: 0.01,
-  parcel_priority: 0.01,
-  parcel_fast: 0.01,
-  parcel_international: 0.01,
-  parcel_international_tracked: 0.01
-};
+export const REGISTERED_TRUSTEE_RATE = 0.01;
+export const TRACKED_TRUSTEE_RATE = 0.005;
 
 export function calculateShippingCost({ shippingRecords, country, cardCount, orderValue, destinationCountry = DESTINATION_COUNTRY }) {
-  const trackedRequired = Number(orderValue || 0) >= TRACKED_VALUE_THRESHOLD;
+  const trackedRequired = moneyToCents(orderValue) >= moneyToCents(TRACKED_VALUE_THRESHOLD);
   const estimatedWeight = estimateShipmentWeight(cardCount);
   const normalizedCountry = normalizeCountryForLookup(country);
   const normalizedDestination = normalizeCountryForLookup(destinationCountry);
@@ -103,6 +89,7 @@ export function calculateShippingCost({ shippingRecords, country, cardCount, ord
     cardmarketFeeValue: 0,
     method: selected.method,
     tracked: recordIsTracked(selected),
+    isRegistered: recordIsRegistered(selected),
     country,
     cardCount,
     orderValue: roundMoney(orderValue),
@@ -121,14 +108,15 @@ export function estimateShipmentWeight(cardCount) {
   return Math.round(Math.max(0, Number(cardCount || 0) * ESTIMATED_CARD_WEIGHT_G) * 10) / 10;
 }
 
-export function calculateTrusteeFee({ articleValue, shippingMethod, tracked = false, sellerLifetimeSales = null }) {
+export function calculateTrusteeFee({ articleValue, shippingMethod, tracked = false, isRegistered = false, sellerLifetimeSales = null }) {
   const normalizedArticleValue = roundMoney(articleValue);
   const hasLowSalesData = sellerLifetimeSales !== null && sellerLifetimeSales !== undefined && sellerLifetimeSales !== "" && Number.isFinite(Number(sellerLifetimeSales));
   const lowSalesTrigger = hasLowSalesData && Number(sellerLifetimeSales) < 5;
-  const valueTrigger = normalizedArticleValue >= TRUSTEE_VALUE_THRESHOLD;
+  const valueTrigger = moneyToCents(normalizedArticleValue) >= moneyToCents(TRUSTEE_VALUE_THRESHOLD);
   const applies = valueTrigger || lowSalesTrigger;
   const methodCategory = classifyTrusteeMethod(shippingMethod, tracked);
-  const rate = TRUSTEE_RATE_MAP[methodCategory] ?? DEFAULT_TRUSTEE_RATE;
+  const registered = isRegistered === true;
+  const rate = registered ? REGISTERED_TRUSTEE_RATE : TRACKED_TRUSTEE_RATE;
 
   if (!applies) {
     return {
@@ -137,6 +125,7 @@ export function calculateTrusteeFee({ articleValue, shippingMethod, tracked = fa
       rawFee: 0,
       rate,
       methodCategory,
+      isRegistered: registered,
       articleValue: normalizedArticleValue,
       valueTrigger,
       lowSalesTrigger,
@@ -157,6 +146,7 @@ export function calculateTrusteeFee({ articleValue, shippingMethod, tracked = fa
     rawFee,
     rate,
     methodCategory,
+    isRegistered: registered,
     articleValue: normalizedArticleValue,
     valueTrigger,
     lowSalesTrigger,
@@ -170,6 +160,35 @@ export function calculateTrusteeFee({ articleValue, shippingMethod, tracked = fa
 
 export function recordIsTracked(record) {
   return record?.tracked === true || record?.tracked === "tracked";
+}
+
+export function recordIsRegistered(record) {
+  const raw = record?.raw || {};
+  const value = raw.isRegistered
+    ?? raw.is_registered
+    ?? raw.registered
+    ?? raw.registeredMail
+    ?? raw.registered_mail
+    ?? raw.isRegisteredMail
+    ?? raw.is_registered_mail
+    ?? raw.registration
+    ?? raw.registration_type
+    ?? raw.registrationType
+    ?? record?.isRegistered
+    ?? record?.is_registered
+    ?? record?.registered;
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "number") {
+    return value === 1;
+  }
+  const text = String(value ?? "").toLowerCase().trim();
+  if (!text) {
+    return false;
+  }
+  return ["true", "yes", "y", "1", "registered", "registered_mail", "registered-mail"].includes(text);
 }
 
 function unresolvedShipping(details) {
@@ -222,6 +241,10 @@ function normalizeCountryForLookup(value) {
 
 function roundMoney(value) {
   return Math.round(Number(value || 0) * 100) / 100;
+}
+
+function moneyToCents(value) {
+  return Math.round(Number(value || 0) * 100);
 }
 
 function classifyTrusteeMethod(method, tracked) {

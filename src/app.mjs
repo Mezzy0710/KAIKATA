@@ -1494,6 +1494,7 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
     articleValue,
     shippingMethod: trusteeMethod,
     tracked: trusteeTracked,
+    isRegistered: shippingResult.ok ? shippingResult.isRegistered : false,
     sellerLifetimeSales: seller.sellerLifetimeSales ?? seller.completedSales ?? null
   });
   const exactParsedTrustee = exactParsedTrusteeValue(seller, articleValue, quantity, trusteeMethod, trusteeTracked);
@@ -1511,6 +1512,7 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
       estimatedWeight: shippingResult.estimatedWeight,
       shippingMethod: seller.shippingMethod || "Unknown shipping",
       trackingStatus: shippingResult.tracked ? "tracked" : "untracked",
+      isRegistered: shippingResult.isRegistered || false,
       cardmarketFeeValue: 0,
       trusteeFeeValue,
       trusteeRate: trusteeResult.rate,
@@ -1535,6 +1537,7 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
     estimatedWeight: shippingResult.estimatedWeight,
     shippingMethod: shippingResult.method,
     trackingStatus: shippingResult.tracked ? "tracked" : "untracked",
+    isRegistered: shippingResult.isRegistered || false,
     cardmarketFeeValue: shippingResult.cardmarketFeeValue,
     trusteeFeeValue,
     trusteeRate: trusteeResult.rate,
