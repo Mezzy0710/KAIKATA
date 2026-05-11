@@ -34,7 +34,7 @@ const italyAtThreshold = calculateShippingCost({
 });
 assert.equal(italyAtThreshold.ok, true);
 assert.equal(italyAtThreshold.trackedRequired, true, "Tracking threshold must be orderValue >= EUR 25.00.");
-assert.equal(italyAtThreshold.tracked, true, "Italy to Germany at exactly EUR 25.00 must not receive untracked shipping.");
+assert.equal(italyAtThreshold.tracked, true, "Italy to Germany at exactly EUR 25.00 must use tracked shipping.");
 
 const italyAbove = calculateShippingCost({
   shippingRecords,
@@ -58,7 +58,7 @@ const germanyTwoAssignment = calculateShippingCost({
   orderValue: 25.98
 });
 assert.equal(germanyOneAssignment.trackedRequired, false);
-assert.equal(germanyTwoAssignment.trackedRequired, true, "Shipping must be recalculated when assignment value changes.");
+assert.equal(germanyTwoAssignment.trackedRequired, true, "Shipping must be recalculated when assignment value reaches EUR 25.00.");
 assert.notEqual(germanyOneAssignment.cost, germanyTwoAssignment.cost);
 
 const unusedSellerShipping = 0;

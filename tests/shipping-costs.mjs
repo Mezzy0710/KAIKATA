@@ -5,6 +5,7 @@ import {
   calculateShippingCost,
   calculateTrusteeFee,
   estimateShipmentWeight,
+  recordIsRegistered,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
 } from "../src/shipping.mjs";
 
@@ -86,6 +87,28 @@ assert.equal(trusteeAtThreshold.applies, true);
 assert.equal(trusteeAtThreshold.fee, 0.13);
 assert.equal(trusteeAtThreshold.methodCategory, "letter_standard");
 
+const trusteeTrackedAtThreshold = calculateTrusteeFee({
+  articleValue: 25,
+  shippingMethod: "DHL Kleinpaket",
+  tracked: true,
+  isRegistered: false
+});
+
+assert.equal(trusteeTrackedAtThreshold.applies, true);
+assert.equal(trusteeTrackedAtThreshold.fee, 0.13);
+assert.equal(trusteeTrackedAtThreshold.rate, 0.005);
+
+const trusteeRegistered = calculateTrusteeFee({
+  articleValue: 25.71,
+  shippingMethod: "Kompaktbrief + Einschreiben EINWURF",
+  tracked: true,
+  isRegistered: true
+});
+
+assert.equal(trusteeRegistered.applies, true);
+assert.equal(trusteeRegistered.fee, 0.26);
+assert.equal(trusteeRegistered.rate, 0.01);
+
 const trusteeBelowThreshold = calculateTrusteeFee({
   articleValue: 24.99,
   shippingMethod: "Standardbrief",
@@ -103,8 +126,33 @@ const trusteeLowSales = calculateTrusteeFee({
 });
 
 assert.equal(trusteeLowSales.applies, true);
-assert.equal(trusteeLowSales.fee, 0.08);
+assert.equal(trusteeLowSales.fee, 0.05);
 assert.equal(trusteeLowSales.methodCategory, "letter_registered");
+
+const verifiedTrusteeExamples = [
+  { country: "Germany", method: "DHL Kleinpaket", isRegistered: false, articleValue: 25, fee: 0.13 },
+  { country: "Germany", method: "Kompaktbrief + Einschreiben EINWURF", isRegistered: true, articleValue: 25.71, fee: 0.26 },
+  { country: "Germany", method: "Kompaktbrief + Einschreiben EINWURF", isRegistered: true, articleValue: 34.5, fee: 0.35 },
+  { country: "Germany", method: "DHL Paket", isRegistered: false, articleValue: 196.53, fee: 0.99 },
+  { country: "Netherlands", method: "Buspakje / Tracked Letterbox Packet", isRegistered: false, articleValue: 55.72, fee: 0.28 },
+  { country: "Romania", method: "Registered Priority Letter", isRegistered: true, articleValue: 69, fee: 0.69 },
+  { country: "Greece", method: "EPG Parcel", isRegistered: false, articleValue: 12.8, fee: 0 },
+  { country: "Spain", method: "Paq Light Internacional (Registered Parcel)", isRegistered: true, articleValue: 28.51, fee: 0.29 }
+];
+
+for (const example of verifiedTrusteeExamples) {
+  const fee = calculateTrusteeFee({
+    articleValue: example.articleValue,
+    shippingMethod: example.method,
+    tracked: true,
+    isRegistered: example.isRegistered
+  });
+  assert.equal(fee.fee, example.fee, `${example.country} ${example.method} should match verified Trustee fee.`);
+}
+
+assert.equal(recordIsRegistered({ raw: { isRegistered: true } }), true);
+assert.equal(recordIsRegistered({ raw: { isRegistered: false } }), false);
+assert.equal(recordIsRegistered({ raw: { registered_mail: "true" } }), true);
 
 console.log(JSON.stringify({
   italyAtThreshold: {

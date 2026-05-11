@@ -24,6 +24,7 @@ TOTAL=0
 # Test files to run
 TEST_FILES=(
   "tests/correctness-optimizer.mjs"
+  "tests/optimizer-dynamic-basket-costs.mjs"
   "tests/correctness-parser.mjs"
   "tests/correctness-shipping.mjs"
   "tests/correctness-ui-warning-copy.mjs"
