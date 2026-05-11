@@ -542,8 +542,8 @@ function desiredCardTemplate(group) {
             <input class="qty-input" type="number" data-card-qty data-action="noop" min="0" step="1" value="${desiredQty}" aria-label="Copies of ${escapeAttribute(cardName)}">
             <button class="qty-button" data-action="increment-qty" aria-label="Increase ${escapeAttribute(cardName)} quantity">+</button>
           </div>
-          <span class="card-chevron" aria-hidden="true">▾</span>
         </div>
+        <span class="card-chevron" aria-hidden="true">▾</span>
       </div>
       ${isExpanded ? variantBodyTemplate(group) : ""}
     </div>

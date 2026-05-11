@@ -2953,7 +2953,7 @@ input[type="number"] {
 }
 
 .card-accordion {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px solid var(--accent);
 }
 
 .card-accordion:last-child {
@@ -2961,9 +2961,10 @@ input[type="number"] {
 }
 
 .card-accordion-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   padding: 12px 14px;
   cursor: pointer;
   user-select: none;
@@ -3005,7 +3006,7 @@ input[type="number"] {
 .card-accordion-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-shrink: 0;
 }
 
@@ -3013,6 +3014,7 @@ input[type="number"] {
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .card-price-range {
