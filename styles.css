@@ -1704,6 +1704,233 @@ select {
   line-height: 1.55;
 }
 
+/* Dropped sellers section styling */
+.dropped-sellers-section {
+  margin-bottom: 20px;
+}
+
+.dropped-sellers-card {
+  background: linear-gradient(180deg, rgba(199, 109, 109, 0.08), transparent);
+  border: 1px solid rgba(199, 109, 109, 0.25);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dropped-sellers-card h3 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.dropped-sellers-list {
+  display: grid;
+  gap: 8px;
+}
+
+.dropped-seller-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid rgba(199, 109, 109, 0.15);
+  border-radius: 6px;
+  background: var(--bg-subtle);
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.dropped-seller-item:hover {
+  border-color: rgba(199, 109, 109, 0.3);
+  background: rgba(199, 109, 109, 0.05);
+}
+
+.dropped-seller-name {
+  color: var(--text-soft);
+  font-weight: 600;
+}
+
+.dropped-seller-count {
+  color: var(--text-muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 700;
+  font-size: 0.74rem;
+}
+
+/* Excluded cards subsection (cards cheaper elsewhere) */
+.seller-excluded-section {
+  padding-top: 12px;
+  border-top: 1px dashed rgba(251, 191, 36, 0.2);
+  margin: 0;
+}
+
+.seller-excluded-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #D9903D;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  background: none;
+  border: none;
+  list-style: none;
+  transition: color 140ms ease;
+}
+
+.seller-excluded-button:hover {
+  color: #FBBF24;
+}
+
+.seller-excluded-section[open] .seller-excluded-button {
+  color: #FBBF24;
+}
+
+.seller-excluded-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  transition: transform 140ms ease;
+  transform: rotate(0deg);
+}
+
+.seller-excluded-section[open] .seller-excluded-icon {
+  transform: rotate(180deg);
+}
+
+.seller-excluded-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.seller-excluded-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-left: 2px solid #D9903D;
+  background: rgba(217, 144, 61, 0.06);
+  border-radius: 4px;
+  gap: 12px;
+  transition: background 140ms ease;
+}
+
+.seller-excluded-item:hover {
+  background: rgba(217, 144, 61, 0.12);
+}
+
+.excluded-card-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  flex: 1;
+}
+
+.excluded-card-name {
+  color: var(--text-soft);
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+}
+
+.excluded-card-qty {
+  color: var(--text-muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.excluded-card-price {
+  color: var(--text-muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.excluded-reason {
+  color: #D9903D;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Country selector form for resolving missing seller countries */
+.country-selector-panel {
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.country-selector-form {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin-bottom: 16px;
+}
+
+.country-selector-item {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 6px;
+}
+
+.country-selector-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  display: block;
+  padding: 0 4px;
+}
+
+.country-selector-select {
+  padding: 10px 12px;
+  border: 1px solid rgba(200, 200, 200, 0.15);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e5e5e5' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 18px;
+  padding-right: 36px;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.country-selector-select:hover {
+  border-color: rgba(200, 200, 200, 0.25);
+}
+
+.country-selector-select:focus {
+  outline: none;
+  border-color: #C8A75D;
+  box-shadow: 0 0 0 3px rgba(200, 167, 93, 0.2);
+}
+
+.country-selector-actions {
+  display: flex;
+  gap: 12px;
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+
+.country-selector-actions .primary-button,
+.country-selector-actions .ghost-button {
+  flex: 1;
+}
+
 .advanced-details-panel > summary {
   display: flex;
   align-items: center;

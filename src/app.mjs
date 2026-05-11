@@ -390,11 +390,24 @@ function renderOptimizationViews() {
     return;
   }
 
+  // Detect sellers needing country resolution
+  const sellersNeedingCountry = state.optimizationResult.usedSellers.filter(({ seller }) => {
+    return !seller.sellerCountry || seller.sellerCountry === "Unknown";
+  });
+
   elements.optimizationSummary.innerHTML = optimizationSummaryTemplate(state.optimizationResult);
   const warningEntries = buildResultWarnings(state.optimizationResult);
   elements.optimizationNotes.innerHTML = warningEntries.length ? warningBannerTemplate(state.optimizationResult, warningEntries) : "";
   elements.notesPanel.classList.toggle("hidden", warningEntries.length === 0);
-  elements.optimizationOutput.innerHTML = recommendationsTemplate(state.optimizationResult);
+
+  // Show country selector if needed, before recommendations
+  let optimizationContent = "";
+  if (sellersNeedingCountry.length) {
+    optimizationContent = countryResolutionTemplate(sellersNeedingCountry) + recommendationsTemplate(state.optimizationResult);
+  } else {
+    optimizationContent = recommendationsTemplate(state.optimizationResult);
+  }
+  elements.optimizationOutput.innerHTML = optimizationContent;
 
   const offerGroups = buildOfferGroups(state.parsed.sellers);
   const advancedContent = advancedDetailsTemplate(state.optimizationResult, offerGroups);
@@ -404,9 +417,9 @@ function renderOptimizationViews() {
     advancedSection.classList.toggle("hidden", !advancedContent.trim());
   }
 
-  const copyBtn = document.querySelector("#copyPlanButton");
-  if (copyBtn) {
-    copyBtn.addEventListener("click", () => copyBuyingPlan(state.optimizationResult));
+  // Attach country resolver form handlers
+  if (sellersNeedingCountry.length) {
+    attachCountryResolverHandlers();
   }
 }
 
@@ -946,6 +959,53 @@ function updateOptimizationPreview() {
   elements.notesPanel.classList.add("hidden");
 }
 
+function attachCountryResolverHandlers() {
+  const form = document.getElementById("countryResolverForm");
+  const submitBtn = document.getElementById("countryResolverSubmit");
+  const skipBtn = document.getElementById("countryResolverSkip");
+
+  if (!form) return;
+
+  submitBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    const selects = form.querySelectorAll(".country-selector-select");
+    const updates = new Map();
+
+    selects.forEach(select => {
+      const sellerIndex = Number(select.dataset.sellerIndex);
+      const selectedCountry = select.value;
+      if (selectedCountry && selectedCountry !== "Unknown") {
+        updates.set(sellerIndex, selectedCountry);
+      }
+    });
+
+    if (updates.size === 0) {
+      updateWorkflowStatus("No countries selected", "warning", "Please select at least one seller country.");
+      return;
+    }
+
+    // Update sellers with selected countries
+    updates.forEach((country, sellerIndex) => {
+      if (state.parsed.sellers[sellerIndex]) {
+        state.parsed.sellers[sellerIndex].sellerCountry = country;
+        state.parsed.sellers[sellerIndex].countrySource = "manual";
+      }
+    });
+
+    // Re-run optimization with updated countries
+    const offerGroups = buildOfferGroups(state.parsed.sellers);
+    state.optimizationResult = optimizeCart(state.parsed.sellers, offerGroups);
+    updateWorkflowStatus("Plan updated", "good", "Seller countries resolved. Review the updated plan.");
+    render();
+    elements.optimizationSummary?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  skipBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    updateWorkflowStatus("Plan ready (unresolved countries)", "warning", "Note: Some seller shipping costs may not be accurate.");
+  });
+}
+
 function optimizeCart(sellers, offerGroups) {
   const shippingRecords = buildShippingIndex(state.shippingData);
   const groups = offerGroups.map((group) => {
@@ -1342,14 +1402,46 @@ function recommendationsTemplate(result) {
   const savingsPercent = result.currentTotal > 0 ? Math.round((result.savings / result.currentTotal) * 100) : 0;
 
   return `
-    <div class="recommendations-header">
-      <button class="ghost-button copy-plan-button" type="button" id="copyPlanButton">📋 Copy plan to clipboard</button>
-    </div>
     ${resultSummaryTemplate(result, savingsPercent)}
     ${highPriceNote}
     <div class="recommendation-grid">
       ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
     </div>
+  `;
+}
+
+function countryResolutionTemplate(sellersNeedingCountry) {
+  if (!sellersNeedingCountry.length) {
+    return "";
+  }
+
+  return `
+    <section class="country-selector-panel panel result-panel">
+      <div class="panel-heading panel-heading-soft">
+        <div>
+          <p class="eyebrow">Error Resolution</p>
+          <h2>Select seller countries</h2>
+          <p class="panel-description panel-description-tight">Shipping costs depend on seller location. Select the country for each seller below, then recalculate.</p>
+        </div>
+      </div>
+      <form class="country-selector-form" id="countryResolverForm">
+        ${sellersNeedingCountry.map(({ seller, sellerIndex }) => `
+          <div class="country-selector-item">
+            <label for="country-${escapeAttribute(String(sellerIndex))}" class="country-selector-label">
+              ${escapeHtml(seller.sellerName)}
+            </label>
+            <select class="country-selector-select" id="country-${escapeAttribute(String(sellerIndex))}" data-seller-index="${escapeAttribute(String(sellerIndex))}">
+              <option value="">-- Select country --</option>
+              ${COUNTRY_OPTIONS.map(country => `<option value="${escapeAttribute(country)}">${escapeHtml(country)}</option>`).join("")}
+            </select>
+          </div>
+        `).join("")}
+        <div class="country-selector-actions">
+          <button class="primary-button" type="submit" id="countryResolverSubmit">Update & Recalculate</button>
+          <button class="ghost-button" type="button" id="countryResolverSkip">Skip for now</button>
+        </div>
+      </form>
+    </section>
   `;
 }
 
@@ -1704,6 +1796,34 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
   const itemCount = offers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
   const estimatedWeight = sellerCost?.estimatedWeight ?? estimateShipmentWeight(offers.length);
 
+  // Compute excluded cards (available from this seller but not selected)
+  const selectedCardNames = new Set(offers.map(offer => normalizeOfferKey(offer.cardName)));
+  const excludedCards = (seller.items || []).filter(item => {
+    const normalizedName = normalizeOfferKey(item.cardName);
+    return normalizedName && !selectedCardNames.has(normalizedName);
+  });
+
+  const excludedCardsSection = excludedCards.length ? `
+    <details class="seller-excluded-section">
+      <summary class="seller-excluded-button">
+        <span class="seller-excluded-icon">▼</span>
+        <span>${escapeHtml(excludedCards.length)} card(s) cheaper elsewhere</span>
+      </summary>
+      <div class="seller-excluded-list">
+        ${excludedCards.map(item => `
+          <div class="seller-excluded-item">
+            <div class="excluded-card-details">
+              <span class="excluded-card-name">${escapeHtml(item.cardName)}</span>
+              <span class="excluded-card-qty">${escapeHtml(item.quantity || 1)}×</span>
+              <span class="excluded-card-price">${escapeHtml(formatMoney(item.price || 0))}</span>
+            </div>
+            <span class="excluded-reason">Cheaper elsewhere</span>
+          </div>
+        `).join("")}
+      </div>
+    </details>
+  ` : "";
+
   return `
     <article class="recommendation-card premium-seller-card">
       <header class="seller-card-header">
@@ -1755,6 +1875,8 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
           <strong>${escapeHtml(formatEstimatedMoney(displayTotal))}</strong>
         </div>
       </div>
+
+      ${excludedCardsSection}
 
       <details class="shipping-detail-section">
         <summary class="shipping-detail-summary">
@@ -1950,46 +2072,6 @@ function formatEstimatedMoney(value) {
   return Number.isFinite(Number(value)) ? formatMoney(value) : "Needs review";
 }
 
-async function copyBuyingPlan(result) {
-  const text = buildBuyingPlanText(result);
-  const btn = document.querySelector("#copyPlanButton");
-
-  try {
-    await navigator.clipboard.writeText(text);
-    if (btn) {
-      btn.textContent = "Copied!";
-      setTimeout(() => { btn.textContent = "📋 Copy plan to clipboard"; }, 2000);
-    }
-  } catch {
-    if (btn) {
-      btn.textContent = "Copy failed";
-      setTimeout(() => { btn.textContent = "📋 Copy plan to clipboard"; }, 2000);
-    }
-  }
-}
-
-function buildBuyingPlanText(result) {
-  const planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
-  const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
-
-  const lines = result.usedSellers.map(({ seller, sellerIndex }) => {
-    const offers = planBySeller.get(sellerIndex) || [];
-    const cost = costBySeller.get(sellerIndex);
-    const cardTotal = cost?.articleValue ?? offerSubtotal(offers);
-    const fixedTotal = cost?.totalCost ?? 0;
-    const totalCost = Number.isFinite(Number(fixedTotal)) ? roundMoney(cardTotal + fixedTotal) : Number.POSITIVE_INFINITY;
-    const shippingCost = cost?.shippingValue ?? 0;
-    const trusteeCost = cost?.trusteeFeeValue ?? 0;
-    const feeCost = cost?.cardmarketFeeValue ?? 0;
-    const cardLines = offers.map((offer) =>
-      `  - ${offer.requiredQuantity || offer.quantity}× ${offer.cardName} — ${offer.condition} — ${formatMoney(offer.unitPrice)}`
-    ).join("\n");
-
-    return `Buy from ${seller.sellerName}\n${cardLines}\nCards: ${formatMoney(cardTotal)}\nShipping: ${formatMoney(shippingCost)}\nTrustee: ${formatMoney(trusteeCost)}${SHIPPING_DATA_INCLUDES_CARDMARKET_FEE ? "" : `\nFees: ${formatMoney(feeCost)}`}\nTotal: ${formatEstimatedMoney(totalCost)}`;
-  });
-
-  return lines.join("\n\n");
-}
 
 function toReviewData() {
   const offerGroups = buildOfferGroups(state.parsed.sellers);
