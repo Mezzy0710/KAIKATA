@@ -2916,3 +2916,206 @@ input[type="number"] {
 .summary-savings {
   display: none !important;
 }
+
+/* Seller-level fields sourced from Cardmarket — display only */
+.seller-field-label {
+  color: var(--text-soft);
+  font-size: 0.88rem;
+}
+
+/* Condition is seller-determined — display only, not editable */
+.condition-label {
+  color: var(--text-soft);
+  font-size: 0.88rem;
+}
+
+/* Card accordion list — replaces the flat desired-cards table */
+.card-accordion-list {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+.card-accordion {
+  border-bottom: 1px solid var(--line);
+}
+
+.card-accordion:last-child {
+  border-bottom: none;
+}
+
+.card-accordion-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 140ms ease;
+}
+
+.card-accordion-header:hover {
+  background: rgba(200, 200, 200, 0.03);
+}
+
+.card-accordion-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-name-label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-variant-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.card-accordion-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.card-qty-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-price-range {
+  font-size: 0.84rem;
+  color: var(--text-soft);
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: right;
+}
+
+.card-chevron {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  transition: transform 200ms ease;
+  display: inline-block;
+}
+
+.card-accordion.is-expanded .card-chevron {
+  transform: rotate(180deg);
+}
+
+/* Accordion body — variant detail table */
+.card-accordion-body {
+  border-top: 1px solid var(--line);
+  background: var(--bg-subtle);
+}
+
+.variant-hint-text {
+  margin: 0;
+  padding: 10px 14px 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--line);
+  font-style: italic;
+}
+
+.variant-table-wrap {
+  overflow-x: auto;
+}
+
+.variant-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.variant-table th {
+  padding: 8px 12px;
+  text-align: left;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-elevated);
+}
+
+.variant-table td {
+  padding: 8px 12px;
+  color: var(--text-soft);
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.variant-table tr:last-child td {
+  border-bottom: none;
+}
+
+.variant-table tr.pref-require {
+  background: rgba(111, 191, 138, 0.06);
+}
+
+.variant-table tr.pref-prefer {
+  background: rgba(200, 167, 93, 0.06);
+}
+
+.variant-table tr.pref-exclude {
+  background: rgba(199, 109, 109, 0.06);
+  opacity: 0.6;
+}
+
+.variant-seller-cell {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.variant-pref-select {
+  width: auto;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+}
+
+/* Enriched-field badges — appear below inputs in table cells when the field is present */
+.item-meta-badge {
+  display: block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: 0.70rem;
+  font-weight: 500;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.item-meta-badge.lang-badge {
+  border-color: rgba(111, 191, 138, 0.25);
+  color: var(--success);
+  background: rgba(111, 191, 138, 0.06);
+}
+
+.item-meta-badge.coll-badge {
+  border-color: rgba(200, 167, 93, 0.3);
+  color: var(--accent-strong);
+  background: rgba(200, 167, 93, 0.06);
+  font-family: "IBM Plex Mono", monospace;
+}
