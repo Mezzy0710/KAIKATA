@@ -635,9 +635,10 @@ function variantBodyTemplate(group) {
       <p class="variant-section-title">Detected Variants ${tooltipChip("Unless you set Prefer, Require, or Exclude, CartForge optimizes by lowest total cart cost.")}</p>
       <div class="variant-table-wrap">
         <table class="variant-table">
+          ${variantColumnGroupTemplate(hasEnriched, showRef)}
           <thead>
             <tr>
-              ${hasEnriched ? `<th>Set</th><th>#</th><th>Lang</th>` : ""}
+              ${hasEnriched ? `<th class="variant-col-set">Set</th><th class="variant-col-number">#</th><th class="variant-col-lang">Lang</th>` : ""}
               <th>Condition</th>
               <th>Qty</th>
               <th>Price</th>
@@ -652,6 +653,20 @@ function variantBodyTemplate(group) {
         </table>
       </div>
     </div>
+  `;
+}
+
+function variantColumnGroupTemplate(hasEnriched, showRef) {
+  return `
+    <colgroup>
+      ${hasEnriched ? `<col class="variant-col-set"><col class="variant-col-number"><col class="variant-col-lang">` : ""}
+      <col class="variant-col-condition">
+      <col class="variant-col-qty">
+      <col class="variant-col-price">
+      ${showRef ? `<col class="variant-col-ref"><col class="variant-col-delta">` : ""}
+      <col class="variant-col-seller">
+      <col class="variant-col-preference">
+    </colgroup>
   `;
 }
 
