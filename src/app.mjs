@@ -155,7 +155,7 @@ function loadCartFromUrlHash() {
 
   elements.cartInput.value = JSON.stringify(decoded.payload, null, 2);
   window.history.replaceState(null, "", window.location.pathname + window.location.search);
-  parseCurrentInput({ autoReveal: false });
+  parseCurrentInput({ autoReveal: true });
 }
 
 async function loadShippingData() {
