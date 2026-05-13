@@ -4,9 +4,14 @@ import { encodeCartForgePayload, parseExtractedCartPayload } from "../src/import
 const payload = {
   source: "cartforge-cardmarket-extension",
   version: 1,
+  url: "https://www.cardmarket.com/en/Magic/ShoppingCart",
+  extractedAt: "2026-05-11T18:00:00.000Z",
   sellers: [
     {
+      sellerId: "13779",
       sellerName: "StructuredSeller",
+      sellerProfileUrl: "https://www.cardmarket.com/en/Magic/Users/StructuredSeller",
+      shipmentId: "1274779948",
       sellerCountry: "Germany",
       shippingMethod: "Standardbrief",
       tracked: false,
@@ -14,12 +19,20 @@ const payload = {
       shippingValue: "1,10 €",
       items: [
         {
+          articleId: "2073188352",
+          productId: "772256",
+          productUrl: "https://www.cardmarket.com/en/Magic/Products/Singles/Commander-Masters/Sol-Ring",
           cardName: "Sol Ring",
+          expansionId: "1718316000",
           setName: "Commander Masters",
           rarity: "uncommon",
+          rarityCode: "40",
           condition: "Near Mint",
+          conditionCode: "2",
+          languageCode: "1",
           quantity: 2,
-          price: "2,10 €"
+          price: "2,10 €",
+          comment: "a CMM001"
         }
       ]
     }
@@ -30,10 +43,23 @@ const direct = parseExtractedCartPayload(`CARTFORGE_CART=${JSON.stringify(payloa
 assert.equal(direct.ok, true);
 assert.equal(direct.parsed.sellerCount, 1);
 assert.equal(direct.parsed.itemCount, 1);
+assert.equal(direct.parsed.sourceUrl, "https://www.cardmarket.com/en/Magic/ShoppingCart");
+assert.equal(direct.parsed.extractedAt, "2026-05-11T18:00:00.000Z");
 assert.equal(direct.parsed.sellers[0].sellerCountry, "Germany");
+assert.equal(direct.parsed.sellers[0].sellerId, "13779");
+assert.equal(direct.parsed.sellers[0].sellerProfileUrl, "https://www.cardmarket.com/en/Magic/Users/StructuredSeller");
+assert.equal(direct.parsed.sellers[0].shipmentId, "1274779948");
 assert.equal(direct.parsed.sellers[0].trackingStatus, "untracked");
+assert.equal(direct.parsed.sellers[0].items[0].articleId, "2073188352");
+assert.equal(direct.parsed.sellers[0].items[0].productId, "772256");
+assert.equal(direct.parsed.sellers[0].items[0].productUrl, "https://www.cardmarket.com/en/Magic/Products/Singles/Commander-Masters/Sol-Ring");
+assert.equal(direct.parsed.sellers[0].items[0].expansionId, "1718316000");
 assert.equal(direct.parsed.sellers[0].items[0].setName, "Commander Masters");
 assert.equal(direct.parsed.sellers[0].items[0].rarity, "Uncommon");
+assert.equal(direct.parsed.sellers[0].items[0].rarityCode, "40");
+assert.equal(direct.parsed.sellers[0].items[0].conditionCode, "2");
+assert.equal(direct.parsed.sellers[0].items[0].languageCode, "1");
+assert.equal(direct.parsed.sellers[0].items[0].comment, "a CMM001");
 assert.equal(direct.parsed.sellers[0].items[0].price, 2.1);
 
 const encoded = parseExtractedCartPayload(encodeCartForgePayload(payload));

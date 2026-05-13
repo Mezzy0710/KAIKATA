@@ -18,7 +18,9 @@ import {
   hasHighPricedCards,
   generateHighPriceNote
 } from "./price-verdict.mjs?v=20260509m";
-import { decodeCartForgeHash, parseExtractedCartPayload } from "./importer.mjs?v=20260509m";
+import { decodeCartForgeHash, decodeCartForgePayload, parseExtractedCartPayload } from "./importer.mjs?v=20260509m";
+import { buildConfirmedPlan } from "./confirmed-plan.mjs?v=20260511a";
+import { sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260511a";
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
@@ -45,6 +47,7 @@ const state = {
   referenceCheckEnabled: true, // Can be disabled in settings (v2)
   activeReferenceLookupToken: 0,
   inputSource: "manual", // "manual" | "extension"
+  showManualFallback: false,
   extensionHintFromUrl: false,
   lastImportedFingerprint: "",
   reviewUnlocked: false
@@ -65,10 +68,14 @@ const elements = hasDom ? {
   summarySection: document.querySelector("#summarySection"),
   optimizationSummary: document.querySelector("#optimizationSummary"),
   parseMessage: document.querySelector("#parseMessage"),
+  inputEyebrow: document.querySelector("#inputEyebrow"),
   inputHeading: document.querySelector("#inputHeading"),
   inputDescription: document.querySelector("#inputDescription"),
   workflowHint: document.querySelector("#workflowHint"),
   inputEditor: document.querySelector("#inputEditor"),
+  extensionImportCard: document.querySelector("#extensionImportCard"),
+  cartInputFieldWrap: document.querySelector("#cartInputFieldWrap"),
+  extensionManualFallbackToggle: document.querySelector("#extensionManualFallbackToggle"),
   inputSummary: document.querySelector("#inputSummary"),
   optimizationState: document.querySelector("#optimizationState"),
   optimizationNotes: document.querySelector("#optimizationNotes"),
@@ -85,6 +92,8 @@ if (hasDom) {
 
 async function boot() {
   window.__cartforgeParse = parseCurrentInput;
+  window.__cartforgeBuildConfirmedPlan = buildCurrentConfirmedPlan;
+  window.__cartforgeSendConfirmedPlan = sendCurrentConfirmedPlanToExtension;
 
   // Initialize Scryfall cache for reference price lookups
   if (state.referenceCheckEnabled) {
@@ -106,6 +115,28 @@ async function boot() {
   await loadShippingData();
   loadCartFromUrlHash();
   render();
+}
+
+async function buildCurrentConfirmedPlan() {
+  if (!state.optimizationResult) {
+    return {
+      ok: false,
+      error: "Build an optimized buying plan before creating a confirmed plan."
+    };
+  }
+
+  return {
+    ok: true,
+    plan: await buildConfirmedPlan(state.parsed, state.optimizationResult)
+  };
+}
+
+async function sendCurrentConfirmedPlanToExtension() {
+  const result = await buildCurrentConfirmedPlan();
+  if (!result.ok) {
+    return result;
+  }
+  return sendConfirmedPlanToExtension(result.plan);
 }
 
 function loadCartFromUrlHash() {
@@ -182,7 +213,8 @@ function parseCurrentInput(options = {}) {
   state.expandedCards = new Set();
   state.variantPreferences = {};
   const imported = parseExtractedCartPayload(elements.cartInput.value, state.shippingData);
-  state.inputSource = imported.ok ? "extension" : "manual";
+  const extensionDecoded = decodeCartForgePayload(elements.cartInput.value);
+  state.inputSource = imported.ok || extensionDecoded.ok ? "extension" : "manual";
 
   if (imported.ok) {
     const fingerprint = JSON.stringify(imported.parsed.rawText || "");
@@ -303,6 +335,7 @@ function clearInput() {
   state.scryallLookupInProgress = false;
   state.activeReferenceLookupToken += 1;
   state.inputSource = "manual";
+  state.showManualFallback = false;
   state.lastImportedFingerprint = "";
   state.reviewUnlocked = false;
   elements.desiredCardsSection?.removeAttribute("open");
@@ -335,7 +368,7 @@ function render() {
 
   renderStepper(sellers);
   renderInputCopy();
-  renderInputState(sellers, parsedTotal);
+  renderInputState(sellers, parsedTotal, offerGroups);
   renderSummary(sellers, itemCount, offerGroups, parsedTotal);
   renderDesiredCards(offerGroups);
   renderOptimizationViews();
@@ -345,22 +378,16 @@ function renderInputCopy() {
   if (!elements.inputHeading || !elements.inputDescription) {
     return;
   }
-  if (state.inputSource === "extension") {
-    elements.inputHeading.textContent = "CART RECEIVED";
-    elements.inputDescription.textContent = "Cart received from Cardmarket. Review detected cards and quantities below.";
-    return;
+  if (elements.inputEyebrow) {
+    elements.inputEyebrow.textContent = "STEP 1 — IMPORT";
   }
-  elements.inputHeading.textContent = "ADD YOUR CART";
+  elements.inputHeading.textContent = "Import Your Cart";
   elements.inputDescription.textContent = "Paste your Cardmarket cart text or import from the extension.";
 }
 
 function renderStepper(sellers) {
   const stepper = document.querySelector("#appStepper");
   if (!stepper) return;
-  const firstStepLabel = stepper.querySelector(".stepper-item[data-step='1'] .stepper-label");
-  if (firstStepLabel) {
-    firstStepLabel.textContent = state.inputSource === "extension" ? "Import" : "Paste";
-  }
 
   const hasParsedData = sellers.length > 0;
   const hasResult = !!state.optimizationResult;
@@ -388,14 +415,129 @@ function renderStepper(sellers) {
   });
 }
 
-function renderInputState(sellers, parsedTotal) {
+function formatExtractedAtClock(iso) {
+  if (!iso || typeof iso !== "string") {
+    return "";
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return "";
+  }
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+function renderExtensionImportSection(sellers, offerGroups) {
+  const cardEl = elements.extensionImportCard;
+  const wrap = elements.cartInputFieldWrap;
+  const toggleSlot = elements.extensionManualFallbackToggle;
+  if (!cardEl || !wrap) {
+    return;
+  }
+
+  if (toggleSlot) {
+    toggleSlot.classList.add("hidden");
+    toggleSlot.innerHTML = "";
+  }
+
+  const isExtension = state.inputSource === "extension";
+  const parseOk = sellers.length > 0;
+
+  if (!isExtension) {
+    cardEl.classList.add("hidden");
+    cardEl.innerHTML = "";
+    wrap.classList.remove("hidden");
+    return;
+  }
+
+  const showSuccessCard = parseOk && !state.showManualFallback;
+  const showFailCard = !parseOk;
+  const showTextarea = showFailCard || state.showManualFallback;
+
+  wrap.classList.toggle("hidden", !showTextarea);
+
+  const sellerCount = sellers.length;
+  const cardTypes = offerGroups.length;
+  const totalCopies = getTotalCopies(offerGroups);
+  const clock = formatExtractedAtClock(state.parsed.extractedAt || "");
+  const summaryParts = [
+    `${sellerCount} seller${sellerCount === 1 ? "" : "s"}`,
+    `${cardTypes} card${cardTypes === 1 ? "" : "s"}`,
+    `${totalCopies} total copies`
+  ];
+  if (clock) {
+    summaryParts.push(`extracted at ${clock}`);
+  }
+  const summaryLine = summaryParts.join(" · ");
+
+  if (showSuccessCard) {
+    cardEl.classList.remove("hidden");
+    cardEl.innerHTML = `
+      <div class="input-summary-card panel" role="region" aria-label="Extension import status">
+        <div class="input-summary-copy">
+          <span class="status-pill good">${escapeHtml("Cart received")}</span>
+          <h3>${escapeHtml("Import Your Cart")}</h3>
+          <p>${escapeHtml(summaryLine)}</p>
+          <button type="button" class="ghost-button extension-import-toggle" data-action="toggle-extension-manual">${escapeHtml("Paste manually instead ↓")}</button>
+        </div>
+      </div>
+    `;
+    const revealBtn = cardEl.querySelector("[data-action=\"toggle-extension-manual\"]");
+    revealBtn?.addEventListener("click", () => {
+      state.showManualFallback = true;
+      render();
+    });
+    return;
+  }
+
+  cardEl.classList.add("hidden");
+  cardEl.innerHTML = "";
+
+  if (showFailCard) {
+    cardEl.classList.remove("hidden");
+    cardEl.innerHTML = `
+      <div class="input-summary-card panel" role="alert">
+        <div class="input-summary-copy">
+          <span class="status-pill warning">${escapeHtml("Import failed")}</span>
+          <p>${escapeHtml("CartForge couldn't read the cart data. Try importing again or paste manually below.")}</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (parseOk && state.showManualFallback && toggleSlot) {
+    toggleSlot.classList.remove("hidden");
+    toggleSlot.innerHTML = `<button type="button" class="ghost-button extension-import-toggle" data-action="hide-extension-manual">${escapeHtml("Hide raw data ↑")}</button>`;
+    toggleSlot.querySelector("[data-action=\"hide-extension-manual\"]")?.addEventListener("click", () => {
+      state.showManualFallback = false;
+      render();
+    });
+  }
+}
+
+function renderInputState(sellers, parsedTotal, offerGroups) {
   const canCollapse = state.inputCollapsed && state.optimizationResult && sellers.length;
   elements.inputEditor.classList.toggle("hidden", Boolean(canCollapse));
   elements.inputSummary.classList.toggle("hidden", !canCollapse);
 
   if (!canCollapse) {
     elements.inputSummary.innerHTML = "";
+    renderExtensionImportSection(sellers, offerGroups);
     return;
+  }
+
+  if (elements.extensionImportCard) {
+    elements.extensionImportCard.innerHTML = "";
+    elements.extensionImportCard.classList.add("hidden");
+  }
+  if (elements.cartInputFieldWrap) {
+    elements.cartInputFieldWrap.classList.remove("hidden");
+  }
+  if (elements.extensionManualFallbackToggle) {
+    elements.extensionManualFallbackToggle.classList.add("hidden");
+    elements.extensionManualFallbackToggle.innerHTML = "";
   }
 
   elements.inputSummary.innerHTML = `
@@ -1605,7 +1747,7 @@ function optimizationSummaryTemplate(result) {
     <div class="summary-hero-card summary-hero-forge">
       <div class="summary-hero-main">
         <div class="summary-hero-copy">
-          <span class="eyebrow">Best buying plan</span>
+          <span class="eyebrow">STEP 3 — OPTIMIZE</span>
           <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
           <p>Buy the cards below from the selected sellers.</p>
           <p class="note-text">${escapeHtml(savingsNote)}</p>
@@ -2396,15 +2538,27 @@ function buildOfferGroups(sellers) {
       group.highestUnitPrice = Math.max(group.highestUnitPrice, unitPrice);
       group.offers.push({
         sellerName: seller.sellerName,
+        sellerId: seller.sellerId || "",
+        sellerProfileUrl: seller.sellerProfileUrl || "",
+        shipmentId: seller.shipmentId || "",
         sellerIndex,
         itemIndex,
+        itemId: item.id || "",
+        articleId: item.articleId || "",
+        productId: item.productId || "",
+        productUrl: item.productUrl || "",
         cardName: item.cardName,
         comparableCardName: cardName,
         setName: effectiveSetName,
+        expansionId: item.expansionId || "",
         collectorNumber: item.collectorNumber || "",
         rarity: item.rarity || "",
+        rarityCode: item.rarityCode || "",
         condition: item.condition,
+        conditionCode: item.conditionCode || "",
         language: item.language || "",
+        languageCode: item.languageCode || "",
+        comment: item.comment || "",
         quantity,
         unitPrice,
         sellerCountry: seller.sellerCountry,

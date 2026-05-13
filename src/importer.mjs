@@ -27,6 +27,7 @@ export function parseExtractedCartPayload(rawInput, shippingData = null) {
         recordCount: shippingIndex.length
       },
       source: decoded.payload.source || "cartforge-extracted-cart",
+      sourceUrl: decoded.payload.url || decoded.payload.sourceUrl || "",
       extractedAt: decoded.payload.extractedAt || ""
     }
   };
@@ -43,7 +44,7 @@ export function encodeCartForgePayload(payload) {
   return base64UrlEncode(JSON.stringify(payload));
 }
 
-function decodeCartForgePayload(value) {
+export function decodeCartForgePayload(value) {
   const text = String(value || "").trim();
   if (!text) {
     return { ok: false, error: "No payload provided." };
@@ -99,8 +100,11 @@ function normalizeSellers(sellers, warnings, shippingIndex) {
     }
 
     return {
-      id: seller.id || `seller-${sellerIndex + 1}`,
+      id: seller.id || (seller.sellerId ? `seller-${seller.sellerId}` : `seller-${sellerIndex + 1}`),
+      sellerId: cleanupValue(seller.sellerId || seller.idSeller || ""),
       sellerName,
+      sellerProfileUrl: cleanupValue(seller.sellerProfileUrl || seller.profileUrl || ""),
+      shipmentId: cleanupValue(seller.shipmentId || seller.idShipment || ""),
       sellerType: cleanupValue(seller.sellerType || seller.type || ""),
       shippingMethod,
       shippingMethodRaw: cleanupValue(seller.shippingMethodRaw || shippingMethod),
@@ -135,15 +139,23 @@ function normalizeItems(items, sellerName, sellerIndex, warnings) {
     }
 
     return {
-      id: item.id || `item-${sellerIndex + 1}-${itemIndex + 1}`,
+      id: item.id || (item.articleId ? `article-${item.articleId}` : `item-${sellerIndex + 1}-${itemIndex + 1}`),
+      articleId: cleanupValue(item.articleId || item.idArticle || ""),
+      productId: cleanupValue(item.productId || item.idProduct || ""),
+      productUrl: cleanupValue(item.productUrl || item.url || ""),
       cardName: cardName || "Unknown card",
       setName: /^#\d+[a-z]?$/i.test(rawSetName) ? "" : rawSetName,
+      expansionId: cleanupValue(item.expansionId || item.expansion || ""),
       collectorNumber: cleanupValue(item.collectorNumber || (/^#\d+[a-z]?$/i.test(rawSetName) ? rawSetName : "")),
       rarity: normalizeRarity(item.rarity),
+      rarityCode: cleanupValue(item.rarityCode || ""),
       condition: normalizeCondition(item.condition),
+      conditionCode: cleanupValue(item.conditionCode || ""),
       language: cleanupValue(item.language || item.lang || ""),
+      languageCode: cleanupValue(item.languageCode || ""),
       quantity,
       price,
+      comment: cleanupValue(item.comment || ""),
       rawLine: item.rawLine || buildRawLine(item),
       sourceLine: null,
       warnings: Array.isArray(item.warnings) ? item.warnings : []
@@ -260,11 +272,13 @@ function sumItems(items) {
 function dedupeItems(items) {
   const byKey = new Map();
   items.forEach((item) => {
-    const key = [
-      item.cardName,
-      item.setName || item.collectorNumber,
-      item.quantity
-    ].map((part) => String(part || "").toLowerCase().replace(/\s+/g, "")).join("|");
+    const key = item.articleId
+      ? `article:${item.articleId}`
+      : [
+        item.cardName,
+        item.setName || item.collectorNumber,
+        item.quantity
+      ].map((part) => String(part || "").toLowerCase().replace(/\s+/g, "")).join("|");
     const existing = byKey.get(key);
     if (!existing || itemScore(item) > itemScore(existing)) {
       byKey.set(key, item);
