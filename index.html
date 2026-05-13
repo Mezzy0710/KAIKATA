@@ -74,7 +74,7 @@
               <span class="stepper-number">1</span>
               <span class="stepper-check" aria-hidden="true">✓</span>
             </div>
-            <p class="stepper-label">Paste</p>
+            <p class="stepper-label">IMPORT</p>
           </li>
           <div class="stepper-line" data-from="1"></div>
           <li class="stepper-item" data-step="2">
@@ -82,7 +82,7 @@
               <span class="stepper-number">2</span>
               <span class="stepper-check" aria-hidden="true">✓</span>
             </div>
-            <p class="stepper-label">Review</p>
+            <p class="stepper-label">REVIEW</p>
           </li>
           <div class="stepper-line" data-from="2"></div>
           <li class="stepper-item" data-step="3">
@@ -90,7 +90,7 @@
               <span class="stepper-number">3</span>
               <span class="stepper-check" aria-hidden="true">✓</span>
             </div>
-            <p class="stepper-label">Optimize</p>
+            <p class="stepper-label">OPTIMIZE</p>
           </li>
         </ul>
       </nav>
@@ -99,14 +99,19 @@
         <section class="panel input-panel forge-intro-panel">
           <div class="panel-heading panel-heading-stack">
             <div>
-              <h2 id="inputHeading">Add your cart</h2>
+              <p id="inputEyebrow" class="eyebrow">STEP 1 — IMPORT</p>
+              <h2 id="inputHeading">Import Your Cart</h2>
             </div>
             <span id="optimizationState" class="status-pill muted" aria-live="polite">Ready</span>
           </div>
           <div id="inputEditor" class="input-editor">
             <p id="inputDescription" class="panel-description">Paste your Cardmarket cart text or import from the extension.</p>
-            <label class="field-label" for="cartInput">Cart content</label>
-            <textarea id="cartInput" spellcheck="false" placeholder="Paste your Cardmarket cart here..."></textarea>
+            <div id="extensionImportCard" class="hidden" aria-live="polite"></div>
+            <div id="cartInputFieldWrap">
+              <label class="field-label" for="cartInput">Cart content</label>
+              <textarea id="cartInput" spellcheck="false" placeholder="Paste your Cardmarket cart here..."></textarea>
+              <p id="extensionManualFallbackToggle" class="workflow-hint hidden" aria-live="polite"></p>
+            </div>
             <p id="parseMessage" class="parse-message">Paste your Cardmarket cart. We'll handle the seller math.</p>
             <p id="workflowHint" class="workflow-hint">Next: Review the detected cards and quantities.</p>
             <div class="button-row button-row-input">
@@ -120,8 +125,8 @@
         <details id="desiredCardsSection" class="secondary-panel shopping-list-accordion hidden">
           <summary>
             <div class="accordion-header">
-              <p class="eyebrow">Step 2</p>
-              <h2>REVIEW YOUR CART</h2>
+              <p class="eyebrow">STEP 2 — REVIEW</p>
+              <h2>Review Your Cart</h2>
               <p class="section-hint">Set copies, lock printings if needed, then forge the buy plan.</p>
             </div>
           </summary>
@@ -131,8 +136,8 @@
         <section id="summarySection" class="panel result-panel summary-panel hidden">
           <div class="panel-heading panel-heading-soft">
             <div>
-              <p class="eyebrow">Your plan</p>
-              <h2>BUY FROM THESE SELLERS</h2>
+              <p class="eyebrow">STEP 3 — OPTIMIZE</p>
+              <h2>Your Buying Plan</h2>
             </div>
           </div>
           <div id="optimizationSummary" class="summary-output" aria-live="polite"></div>

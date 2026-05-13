@@ -11,7 +11,7 @@ assert.match(indexHtml, /Set copies, lock printings if needed, then forge the bu
 assert.match(indexHtml, /What to buy from each seller/);
 assert.match(appSource, /Different cards/);
 assert.match(appSource, /Total copies/);
-assert.match(appSource, /Best buying plan/);
+assert.match(appSource, /STEP 3 — OPTIMIZE/);
 
 for (const forbidden of ["Total saved", "Difference to reviewed offer pool", "Card groups", "Advanced details"]) {
   assert.ok(!indexHtml.includes(forbidden), `Main HTML should not show "${forbidden}".`);
