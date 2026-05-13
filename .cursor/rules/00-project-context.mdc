@@ -1,0 +1,38 @@
+---
+description: CartForge project context and non-negotiable constraints
+alwaysApply: true
+---
+
+# CartForge — Always-On Context
+
+## What this is
+Static client-side Cardmarket cart optimizer. Full spec in AGENTS.md. 
+Current status and tech debt in CLAUDE.md. Read both before acting.
+
+## Repo
+GitHub MCP is connected globally. Read PRs, issues, and diffs directly.
+Always check the actual PR diff before reasoning about what a PR changes.
+Repo: github.com/Mezzy0710/cardmarket-cart-optimizer
+
+## Hard constraints
+- Vanilla JS (ES modules, .mjs). No frameworks. No build step. No bundler.
+- Must run from `open index.html` and deploy to GitHub Pages unchanged.
+- Portability first: no tool-specific magic, clear function boundaries, normal files.
+- Correctness > polish. Parser and optimizer accuracy before visual refinement.
+- Never silently discard uncertain input. Always surface ambiguity to the user.
+
+## Security — always enforced
+- Use `escapeHtml()` before any DOM insertion of user-controlled strings.
+- Use `escapeAttribute()` for all HTML attribute values.
+- No `eval()`. No `innerHTML` with unsanitized data. No exceptions.
+
+## Skill invocation rules
+| Situation | Use |
+|---|---|
+| Starting any creative work (feature, component, refactor) | `superpowers:brainstorming` |
+| Implementing a written plan | `superpowers:executing-plans` |
+| Implementation complete, ready to integrate | `superpowers:finishing-a-development-branch` |
+| Receiving code review feedback | `superpowers:receiving-code-review` |
+| 2+ independent tasks with no shared state | `superpowers:dispatching-parallel-agents` |
+| Major step complete, check against original plan | `superpowers:code-reviewer` (subagent) |
+| Any UI component added or changed | `ui-ux-pro-max` skill |
