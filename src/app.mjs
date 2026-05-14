@@ -139,6 +139,35 @@ async function sendCurrentConfirmedPlanToExtension() {
   return sendConfirmedPlanToExtension(result.plan);
 }
 
+async function handleConfirmPlan() {
+  const btn = document.querySelector("#confirmPlanButton");
+  const status = document.querySelector("#confirmPlanStatus");
+  if (!btn) return;
+
+  btn.disabled = true;
+  btn.textContent = "Confirming…";
+  if (status) status.textContent = "";
+
+  const result = await sendCurrentConfirmedPlanToExtension();
+
+  if (result.ok) {
+    btn.textContent = "Plan confirmed ✓";
+    if (status) status.textContent = "Saved to extension. Open your Cardmarket cart.";
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = "Confirm plan → Cardmarket";
+      if (status) status.textContent = "";
+    }, 4000);
+  } else {
+    btn.disabled = false;
+    btn.textContent = "Confirm plan → Cardmarket";
+    if (status) status.textContent = result.error || "Extension not available.";
+    setTimeout(() => {
+      if (status) status.textContent = "";
+    }, 4000);
+  }
+}
+
 function loadCartFromUrlHash() {
   const sourceParam = new URLSearchParams(window.location.search).get("source");
   state.extensionHintFromUrl = sourceParam === "cardmarket-extension";
@@ -619,6 +648,7 @@ function renderOptimizationViews() {
   });
 
   elements.optimizationSummary.innerHTML = optimizationSummaryTemplate(state.optimizationResult);
+  elements.optimizationSummary.querySelector("#confirmPlanButton")?.addEventListener("click", handleConfirmPlan);
   const warningEntries = buildResultWarnings(state.optimizationResult);
 
   // Build notes panel with warning banner and inline country selector if needed
@@ -1780,6 +1810,11 @@ function optimizationSummaryTemplate(result) {
         `}
       </div>
     </div>
+    <div class="button-row" style="margin-top:16px;">
+      <button id="confirmPlanButton" class="primary-button" type="button">Confirm plan → Cardmarket</button>
+    </div>
+    <p id="confirmPlanStatus" style="margin:6px 0 0;font-size:12px;color:var(--text-muted);min-height:1em;"></p>
+  </div>
   `;
 }
 
