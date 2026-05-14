@@ -1809,12 +1809,11 @@ function optimizationSummaryTemplate(result) {
           </div>
         `}
       </div>
+      <div class="button-row" style="grid-column:1/-1;margin-top:8px;">
+        <button id="confirmPlanButton" class="primary-button" type="button">Confirm plan → Cardmarket</button>
+        <p id="confirmPlanStatus" style="margin:6px 0 0;font-size:12px;color:var(--text-muted);min-height:1em;"></p>
+      </div>
     </div>
-    <div class="button-row" style="margin-top:16px;">
-      <button id="confirmPlanButton" class="primary-button" type="button">Confirm plan → Cardmarket</button>
-    </div>
-    <p id="confirmPlanStatus" style="margin:6px 0 0;font-size:12px;color:var(--text-muted);min-height:1em;"></p>
-  </div>
   `;
 }
 
