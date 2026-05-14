@@ -1,5 +1,4 @@
 (() => {
-  const LOCAL_CARTFORGE_URL = "http://localhost:8000/";
   const LIVE_CARTFORGE_URL = "https://mezzy0710.github.io/cardmarket-cart-optimizer/";
   const PANEL_ID = "cartforge-cardmarket-extractor";
 
@@ -14,23 +13,24 @@
     "right:16px",
     "bottom:16px",
     "z-index:2147483647",
-    "max-width:320px",
-    "font:14px/1.35 system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
-    "color:#122016",
-    "background:#f7f1df",
-    "border:1px solid #bca971",
-    "border-radius:14px",
-    "box-shadow:0 18px 48px rgba(0,0,0,.22)",
-    "padding:14px"
+    "width:288px",
+    "font:14px/1.45 'IBM Plex Sans','Segoe UI',sans-serif",
+    "color:#F2EDE3",
+    "background:#1C1A17",
+    "border:1px solid #3A332B",
+    "border-radius:12px",
+    "box-shadow:0 16px 40px rgba(0,0,0,.55)",
+    "padding:16px"
   ].join(";");
 
   panel.innerHTML = `
-    <strong style="display:block;margin-bottom:6px;">CartForge</strong>
-    <p style="margin:0 0 10px;color:#4f583e;">Import your Cardmarket cart into CartForge. We'll handle the seller math.</p>
-    <button data-cartforge-action="open-local" style="width:100%;border:0;border-radius:10px;background:#1f4f35;color:white;padding:10px 12px;font-weight:700;cursor:pointer;">Open local CartForge</button>
-    <button data-cartforge-action="open-live" style="width:100%;border:1px solid #1f4f35;border-radius:10px;background:#fff9ea;color:#1f4f35;padding:9px 12px;font-weight:700;cursor:pointer;margin-top:8px;">Open live CartForge</button>
-    <button data-cartforge-action="copy" style="width:100%;border:1px solid #bca971;border-radius:10px;background:white;color:#1f4f35;padding:9px 12px;font-weight:700;cursor:pointer;margin-top:8px;">Copy payload</button>
-    <p data-cartforge-status style="margin:10px 0 0;color:#4f583e;font-size:12px;"></p>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <strong style="font:'Space Grotesk','Segoe UI',sans-serif;font-size:15px;font-weight:700;color:#C8A75D;letter-spacing:.01em;">CartForge</strong>
+    </div>
+    <p style="margin:0 0 14px;color:#AFA699;font-size:13px;line-height:1.5;">Import your Cardmarket cart into CartForge for seller cost optimisation.</p>
+    <button data-cartforge-action="open-live" style="width:100%;border:0;border-radius:6px;background:#C8A75D;color:#12110F;padding:10px 14px;font:'Space Grotesk','Segoe UI',sans-serif;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;">Open CartForge</button>
+    <button data-cartforge-action="copy" style="width:100%;border:1px solid #3A332B;border-radius:6px;background:transparent;color:#AFA699;padding:9px 14px;font:'Space Grotesk','Segoe UI',sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;margin-top:8px;">Copy cart data</button>
+    <p data-cartforge-status style="margin:10px 0 0;color:#7D7468;font-size:12px;line-height:1.4;"></p>
   `;
 
   document.body.append(panel);
@@ -48,11 +48,6 @@
     if (!payload.sellers.length || itemCount === 0) {
       setStatus("No cart items detected on this page yet. Open the Cardmarket cart page and try again.");
       return;
-    }
-
-    if (action === "open-local") {
-      window.open(buildTargetUrl(LOCAL_CARTFORGE_URL, encoded), "_blank", "noopener,noreferrer");
-      setStatus(`Cart received from Cardmarket: ${payload.sellers.length} seller(s), ${itemCount} item row(s).`);
     }
 
     if (action === "open-live") {
