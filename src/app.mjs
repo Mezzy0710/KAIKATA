@@ -1,4 +1,4 @@
-import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseCart, parseMoney } from "./parser.mjs?v=20260509m";
+import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, inferSellerCountry, parseCart, parseMoney } from "./parser.mjs?v=20260509m";
 import {
   calculateShippingCost,
   calculateTrusteeFee,
@@ -22,6 +22,7 @@ import { decodeCartForgeHash, decodeCartForgePayload, parseExtractedCartPayload 
 import { buildConfirmedPlan } from "./confirmed-plan.mjs?v=20260511a";
 import { sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260511a";
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
+import { applyShippingOverride } from "./shipping-override.mjs";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const MAX_OPTIMIZATION_ITERATIONS = 50;
@@ -254,6 +255,7 @@ function parseCurrentInput(options = {}) {
   }
 
   state.parsed = imported.ok ? imported.parsed : parseCart(elements.cartInput.value, state.shippingData);
+  inferSellerCountryFromShippingMethod(state.parsed.sellers);
   state.reviewUnlocked = autoReveal;
   state.optimizationResult = null;
   state.optimizationStale = true;
@@ -297,6 +299,41 @@ function parseCurrentInput(options = {}) {
       console.error('Scryfall enrichment failed:', error);
     });
   }
+}
+
+function inferSellerCountryFromShippingMethod(sellers) {
+  if (!state.shippingData) {
+    return;
+  }
+  const shippingIndex = buildShippingIndex(state.shippingData);
+  if (!shippingIndex.length) {
+    return;
+  }
+  sellers.forEach(seller => {
+    if (seller.sellerCountry && seller.sellerCountry !== "Unknown") {
+      return;
+    }
+    if (!seller.shippingMethod) {
+      return;
+    }
+    const shippingVal = (seller.shippingValue !== undefined && seller.shippingValue !== null)
+      ? Number(seller.shippingValue)
+      : null;
+    const inference = inferSellerCountry(
+      seller.shippingMethod,
+      shippingVal,
+      seller.trackingStatus || "unknown",
+      shippingIndex
+    );
+    if (inference.confidence >= 0.9 && !inference.ambiguous && inference.country) {
+      console.info(`[CartForge] Inferred country "${inference.country}" for seller "${seller.sellerName}" from shipping method`);
+      seller.sellerCountry = inference.country;
+      seller.countrySource = "inferred";
+      seller.countryInference = inference;
+    } else {
+      console.info(`[CartForge] Could not confidently infer country for seller "${seller.sellerName}" (confidence: ${inference.confidence}, ambiguous: ${inference.ambiguous})`);
+    }
+  });
 }
 
 /**
@@ -642,22 +679,13 @@ function renderOptimizationViews() {
     return;
   }
 
-  // Detect sellers needing country resolution
-  const sellersNeedingCountry = state.optimizationResult.usedSellers.filter(({ seller }) => {
-    return !seller.sellerCountry || seller.sellerCountry === "Unknown";
-  });
-
   elements.optimizationSummary.innerHTML = optimizationSummaryTemplate(state.optimizationResult);
   elements.optimizationSummary.querySelector("#confirmPlanButton")?.addEventListener("click", handleConfirmPlan);
   const warningEntries = buildResultWarnings(state.optimizationResult);
 
-  // Build notes panel with warning banner and inline country selector if needed
   let notesContent = "";
   if (warningEntries.length) {
     notesContent = warningBannerTemplate(state.optimizationResult, warningEntries);
-    if (sellersNeedingCountry.length) {
-      notesContent += countryResolutionTemplate(sellersNeedingCountry);
-    }
   }
   elements.optimizationNotes.innerHTML = notesContent;
   elements.notesPanel.classList.toggle("hidden", notesContent.length === 0);
@@ -672,10 +700,7 @@ function renderOptimizationViews() {
     advancedSection.classList.toggle("hidden", !advancedContent.trim());
   }
 
-  // Attach country resolver form handlers
-  if (sellersNeedingCountry.length) {
-    attachCountryResolverHandlers();
-  }
+  attachUnresolvedResolverHandlers();
 }
 
 function renderDesiredCards(offerGroups) {
@@ -1391,51 +1416,61 @@ function updateOptimizationPreview() {
   elements.notesPanel.classList.add("hidden");
 }
 
-function attachCountryResolverHandlers() {
-  const form = document.getElementById("countryResolverForm");
-  const submitBtn = document.getElementById("countryResolverSubmit");
+let _unresolvedHandlerRef = null;
 
-  if (!form || !submitBtn) return;
+function attachUnresolvedResolverHandlers() {
+  if (!elements.optimizationOutput) return;
 
-  // Remove existing listener to prevent duplicates
-  const newSubmitBtn = submitBtn.cloneNode(true);
-  submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+  if (_unresolvedHandlerRef) {
+    elements.optimizationOutput.removeEventListener("click", _unresolvedHandlerRef);
+  }
 
-  const finalSubmitBtn = document.getElementById("countryResolverSubmit");
+  _unresolvedHandlerRef = (event) => {
+    const btn = event.target.closest("[data-action='apply-unresolved']");
+    if (!btn) return;
 
-  finalSubmitBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    const selects = form.querySelectorAll(".country-selector-select");
-    const updates = new Map();
+    const sellerIndex = Number(btn.dataset.sellerIndex);
+    const form = btn.closest(".unresolved-fix-form");
+    if (!form) return;
 
-    selects.forEach(select => {
-      const sellerIndex = Number(select.dataset.sellerIndex);
-      const selectedCountry = select.value;
-      if (selectedCountry && selectedCountry !== "Unknown") {
-        updates.set(sellerIndex, selectedCountry);
-      }
-    });
+    const countrySelect = form.querySelector(".unresolved-country-select");
+    const trackingSelect = form.querySelector(".unresolved-tracking-select");
+    const costInput = form.querySelector(".unresolved-cost-input");
 
-    if (updates.size === 0) {
-      updateWorkflowStatus("No countries selected", "warning", "Please select at least one seller country.");
-      return;
+    const seller = state.parsed.sellers[sellerIndex];
+    if (!seller) return;
+
+    if (countrySelect && countrySelect.value) {
+      seller.sellerCountry = countrySelect.value;
+      seller.countrySource = "manual";
+    }
+    if (trackingSelect) {
+      seller.trackingStatus = trackingSelect.value;
     }
 
-    // Update sellers with selected countries
-    updates.forEach((country, sellerIndex) => {
-      if (state.parsed.sellers[sellerIndex]) {
-        state.parsed.sellers[sellerIndex].sellerCountry = country;
-        state.parsed.sellers[sellerIndex].countrySource = "manual";
-      }
-    });
+    const overrideRaw = costInput ? costInput.value.trim() : "";
+    if (overrideRaw !== "") {
+      const parsed = parseFloat(overrideRaw);
+      seller.shippingCostOverride = Number.isFinite(parsed) ? parsed : null;
+    } else {
+      seller.shippingCostOverride = null;
+    }
 
-    // Re-run optimization with updated countries
     const offerGroups = buildOfferGroups(state.parsed.sellers);
     state.optimizationResult = optimizeCart(state.parsed.sellers, offerGroups);
-    updateWorkflowStatus("Plan updated", "good", "Seller countries resolved. Review the updated plan.");
+    updateWorkflowStatus("Plan updated", "good", "Shipping resolved. Review the updated plan.");
     render();
-    elements.optimizationSummary?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+
+    // After render, scroll to the seller's form if it still exists (still unresolved), else to the summary
+    const resolveAnchor = document.getElementById(`resolve-seller-${sellerIndex}`);
+    if (resolveAnchor) {
+      resolveAnchor.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      elements.optimizationSummary?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  elements.optimizationOutput.addEventListener("click", _unresolvedHandlerRef);
 }
 
 function optimizeCart(sellers, offerGroups) {
@@ -1496,6 +1531,8 @@ function optimizeCart(sellers, offerGroups) {
     return !hasManualCountry && (!seller.sellerCountry || seller.sellerCountry === "Unknown" || seller.countryInference?.ambiguous);
   });
   const unresolvedShippingCosts = score.sellerCosts.filter((cost) => !Number.isFinite(cost.totalCost));
+  const costBySellerIndex = new Map(score.sellerCosts.map(c => [c.sellerIndex, c]));
+  const unresolvedSellers = usedSellers.filter(({ sellerIndex }) => costBySellerIndex.get(sellerIndex)?.source === "unresolved");
 
   if (insufficientGroups.length) {
     insufficientGroups.forEach((group) => {
@@ -1547,6 +1584,7 @@ function optimizeCart(sellers, offerGroups) {
     warnings,
     costNotes,
     countryWarnings,
+    unresolvedSellers,
     iterations: optimization.iterations,
     insufficientGroups
   };
@@ -1669,12 +1707,17 @@ function estimateSelectedSellerCosts(selection, sellers, shippingRecords) {
 function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
   const articleValue = roundMoney(offerSubtotal(offers));
   const quantity = offers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
-  const shippingResult = calculateShippingCost({
-    shippingRecords,
-    country: seller.sellerCountry,
-    cardCount: quantity,
-    orderValue: articleValue
-  });
+
+  const hasOverride = seller.shippingCostOverride !== null && seller.shippingCostOverride !== undefined && Number.isFinite(seller.shippingCostOverride);
+  const shippingResult = hasOverride
+    ? applyShippingOverride(seller, offers)
+    : calculateShippingCost({
+        shippingRecords,
+        country: seller.sellerCountry,
+        cardCount: quantity,
+        orderValue: articleValue
+      });
+
   const trusteeMethod = shippingResult.ok ? shippingResult.method : seller.shippingMethod;
   const trusteeTracked = shippingResult.ok ? shippingResult.tracked : seller.trackingStatus === "tracked";
   const trusteeResult = calculateTrusteeFee({
@@ -1717,8 +1760,8 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
 
   return {
     sellerIndex,
-    source: "recalculated",
-    sourceLabel: "Dynamic shipping from table",
+    source: hasOverride ? "manual_override" : "recalculated",
+    sourceLabel: hasOverride ? "Manual shipping cost override" : "Dynamic shipping from table",
     articleValue,
     quantity,
     estimatedWeight: shippingResult.estimatedWeight,
@@ -1847,39 +1890,98 @@ function recommendationsTemplate(result) {
   const highPriceNote = hasHighPricedCards(enrichedSelectedOffers) ? generateHighPriceNote(enrichedSelectedOffers) : "";
   const savingsPercent = result.currentTotal > 0 ? Math.round((result.savings / result.currentTotal) * 100) : 0;
 
+  const unresolvedSellers = result.usedSellers.filter(({ sellerIndex }) => costBySeller.get(sellerIndex)?.source === "unresolved");
+  const resolvedSellers = result.usedSellers.filter(({ sellerIndex }) => costBySeller.get(sellerIndex)?.source !== "unresolved");
+
+  const renderSeller = ({ seller, sellerIndex }, displayIndex) =>
+    sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex));
+
+  const unresolvedGroup = unresolvedSellers.length ? `
+    <div class="seller-group seller-group--unresolved">
+      <h3 class="seller-group-heading">Needs attention before buying</h3>
+      ${unresolvedSellers.map(renderSeller).join("")}
+    </div>
+  ` : "";
+
+  const resolvedGroup = resolvedSellers.length ? `
+    <div class="seller-group seller-group--resolved">
+      ${resolvedSellers.map(renderSeller).join("")}
+    </div>
+  ` : "";
+
   return `
     ${droppedSellersTemplate(result)}
     ${resultSummaryTemplate(result, savingsPercent)}
     ${highPriceNote}
+    ${unresolvedSellersTemplate(result, planBySeller, costBySeller)}
     <div class="recommendation-grid">
-      ${result.usedSellers.map(({ seller, sellerIndex }, displayIndex) => sellerPlanTemplate(seller, sellerIndex, displayIndex + 1, planBySeller.get(sellerIndex) || [], costBySeller.get(sellerIndex))).join("")}
+      ${unresolvedGroup}
+      ${resolvedGroup}
     </div>
   `;
 }
 
-function countryResolutionTemplate(sellersNeedingCountry) {
-  if (!sellersNeedingCountry.length) {
+function unresolvedSellersTemplate(result, planBySeller, costBySeller) {
+  if (!planBySeller) {
+    planBySeller = groupSelectedOffersBySeller(result.selectedOffers);
+  }
+  if (!costBySeller) {
+    costBySeller = new Map(result.sellerCosts.map(c => [c.sellerIndex, c]));
+  }
+  const unresolvedEntries = result.usedSellers.filter(({ sellerIndex }) =>
+    costBySeller.get(sellerIndex)?.source === "unresolved"
+  );
+
+  if (!unresolvedEntries.length) {
     return "";
   }
 
+  const count = unresolvedEntries.length;
+
   return `
-    <section class="country-resolution-section panel result-panel">
+    <section class="panel unresolved-sellers-panel" aria-label="Sellers needing shipping resolution">
       <div class="panel-heading">
-        <h2>User input required</h2>
+        <h2>Action required — shipping costs unresolved</h2>
+        <span class="status-pill warning">${escapeHtml(`${count} seller${count === 1 ? "" : "s"}`)}</span>
       </div>
-      <form class="country-resolution-form" id="countryResolverForm">
-        ${sellersNeedingCountry.map(({ seller, sellerIndex }) => `
-          <div class="country-resolution-item">
-            <h3 class="resolution-seller-name">${escapeHtml(seller.sellerName)}</h3>
-            <p class="resolution-subtitle">country verification required</p>
-            <select class="country-selector-select" id="country-${escapeAttribute(String(sellerIndex))}" data-seller-index="${escapeAttribute(String(sellerIndex))}">
-              <option value="">-- Select country --</option>
-              ${COUNTRY_OPTIONS.map(country => `<option value="${escapeAttribute(country)}">${escapeHtml(country)}</option>`).join("")}
-            </select>
+      <p class="panel-description">Fill in the form for each seller below, then apply to recalculate.</p>
+      ${unresolvedEntries.map(({ seller, sellerIndex }) => {
+        const sellerCost = costBySeller.get(sellerIndex);
+        const offers = planBySeller.get(sellerIndex) || [];
+        const cardCount = offers.reduce((sum, o) => sum + Number(o.requiredQuantity || o.quantity || 1), 0);
+        const articleValue = sellerCost?.articleValue ?? offerSubtotal(offers);
+        const reason = sellerCost?.shippingDebug?.reason || "Shipping cost could not be determined";
+        return `
+          <div class="unresolved-seller-row" id="resolve-seller-${escapeAttribute(String(sellerIndex))}">
+            <div class="unresolved-seller-info">
+              <strong class="unresolved-seller-name">${escapeHtml(seller.sellerName)}</strong>
+              <span class="unresolved-seller-meta">${escapeHtml(`${cardCount} card${cardCount === 1 ? "" : "s"} · ${formatMoney(articleValue)}`)}</span>
+              <span class="unresolved-reason note-text">${escapeHtml(reason)}</span>
+            </div>
+            <form class="unresolved-fix-form" data-seller-index="${escapeAttribute(String(sellerIndex))}">
+              <label class="field">
+                <span>Country</span>
+                <select class="unresolved-country-select" name="sellerCountry">
+                  <option value="">-- Select country --</option>
+                  ${COUNTRY_OPTIONS.map(country => `<option value="${escapeAttribute(country)}" ${seller.sellerCountry === country ? "selected" : ""}>${escapeHtml(country)}</option>`).join("")}
+                </select>
+              </label>
+              <label class="field">
+                <span>Tracking</span>
+                <select class="unresolved-tracking-select" name="trackingStatus">
+                  ${["unknown", "tracked", "untracked"].map(opt => `<option value="${escapeAttribute(opt)}" ${(seller.trackingStatus || "unknown") === opt ? "selected" : ""}>${escapeHtml(opt)}</option>`).join("")}
+                </select>
+              </label>
+              <label class="field">
+                <span>Shipping cost override (EUR)</span>
+                <input type="number" class="unresolved-cost-input" name="shippingCostOverride" step="0.01" min="0" placeholder="e.g. 1.25" value="${seller.shippingCostOverride !== null && seller.shippingCostOverride !== undefined ? escapeAttribute(String(seller.shippingCostOverride)) : ""}">
+              </label>
+              <button type="button" class="primary-button unresolved-apply-btn" data-action="apply-unresolved" data-seller-index="${escapeAttribute(String(sellerIndex))}">Apply &amp; Recalculate</button>
+            </form>
+            <a class="fix-below-link" href="#resolve-seller-${escapeAttribute(String(sellerIndex))}">Fix below ↓</a>
           </div>
-        `).join("")}
-        <button class="primary-button" type="submit" id="countryResolverSubmit">Update Countries</button>
-      </form>
+        `;
+      }).join("")}
     </section>
   `;
 }
@@ -1948,14 +2050,19 @@ function buildResultWarnings(result) {
     });
   }
 
-  if (result.countryWarnings.length) {
+  const unresolvedCosts = (result.sellerCosts || []).filter(c => c.source === "unresolved");
+  if (unresolvedCosts.length) {
+    const affectedNames = unresolvedCosts.map(c => {
+      const entry = result.usedSellers?.find(({ sellerIndex }) => sellerIndex === c.sellerIndex);
+      return entry?.seller?.sellerName || `Seller ${c.sellerIndex + 1}`;
+    }).join(", ");
     entries.push({
       severity: "critical",
-      title: "Country verification required",
-      affected: result.countryWarnings.map(({ seller }) => seller.sellerName).join(", "),
-      whatHappened: "Country not confirmed for these sellers.",
-      whyItMatters: "Shipping costs cannot be calculated accurately.",
-      whatToDo: "Select country for each seller below, then recalculate."
+      title: "Shipping costs unresolved — action required",
+      affected: affectedNames,
+      whatHappened: "Shipping costs could not be calculated for these sellers.",
+      whyItMatters: "The buying plan total is incomplete until shipping is resolved.",
+      whatToDo: "Use the fix form in the sellers section to set country or override shipping cost."
     });
   }
 
@@ -2227,8 +2334,10 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
     </details>
   ` : "";
 
+  const isUnresolved = sellerCost?.source === "unresolved";
+
   return `
-    <article class="recommendation-card premium-seller-card">
+    <article class="recommendation-card premium-seller-card${isUnresolved ? " seller-card--unresolved" : ""}">
       <header class="seller-card-header">
         <div class="seller-number-badge">${escapeHtml(displayNumber)}</div>
         <div class="seller-info-primary">
@@ -2241,6 +2350,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
           <span>Total</span>
           <strong>${escapeHtml(formatEstimatedMoney(displayTotal))}</strong>
         </div>
+        ${isUnresolved ? `<a class="fix-shipping-link ghost-button" href="#resolve-seller-${escapeAttribute(String(sellerIndex))}">Fix shipping →</a>` : ""}
       </header>
 
       <div class="seller-cards-section">

@@ -931,7 +931,7 @@ function cleanupCardName(value) {
     .trim();
 }
 
-function inferSellerCountry(shippingMethod, shippingValue, trackingStatus, shippingIndex) {
+export function inferSellerCountry(shippingMethod, shippingValue, trackingStatus, shippingIndex) {
   const fallback = { country: "", source: "unknown", confidence: 0, ambiguous: false, matches: [] };
   if (!shippingMethod || !shippingIndex.length) {
     return fallback;
