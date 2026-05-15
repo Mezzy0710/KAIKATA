@@ -477,6 +477,36 @@ function splitSellerBlocks(lines) {
     });
   }
 
+  const wizardStarts = lines
+    .map((line, i) => (/^wanted articles$/i.test(line) ? i : -1))
+    .filter(i => i >= 0);
+
+  if (wizardStarts.length >= 2) {
+    const SKIP_RE = /^\d+$|^[a-zA-Z]$/;
+    const sellerBlocks = [];
+    for (const wantedIdx of wizardStarts) {
+      let nameIdx = wantedIdx - 1;
+      while (nameIdx >= 0 && (SKIP_RE.test(lines[nameIdx]) || !lines[nameIdx])) {
+        nameIdx--;
+      }
+      // Require a digit/single-letter line immediately before the seller name —
+    // this distinguishes real seller rows from summary headings like "Results Summary".
+    if (nameIdx > 0 && SKIP_RE.test(lines[nameIdx - 1]) && looksLikeSellerName(lines[nameIdx])) {
+        sellerBlocks.push({ nameIdx });
+      }
+    }
+    if (sellerBlocks.length >= 2) {
+      return sellerBlocks.map(({ nameIdx }, position) => {
+        const nextNameIdx = sellerBlocks[position + 1]?.nameIdx ?? lines.length;
+        return {
+          lines: lines.slice(nameIdx, nextNameIdx),
+          startLine: nameIdx,
+          sellerNameHint: cleanupValue(lines[nameIdx])
+        };
+      });
+    }
+  }
+
   const inferredStarts = inferSellerStarts(lines);
   if (inferredStarts.length > 1) {
     return inferredStarts.map((start, position) => {
@@ -751,7 +781,8 @@ function parseItemRows(lines, usedLineIndexes) {
         isAnyFieldLabel(previous) ||
         isSellerMarker(previous) ||
         (hasMoney(previous) && previousIndex !== index) ||
-        STOP_LINE_RE.test(previous)
+        STOP_LINE_RE.test(previous) ||
+        /^card name\b/i.test(previous)
       ) {
         break;
       }
@@ -902,7 +933,10 @@ function detectCondition(text) {
 
 function detectCardName(group, condition) {
   const inline = group.join(" ").replace(MONEY_WITH_CURRENCY_RE, " ");
-  const inlineCondition = condition ? escapeRegExp(condition) : CONDITION_PATTERNS.map(([, pattern]) => pattern.source).join("|");
+  const conditionEntry = condition ? CONDITION_PATTERNS.find(([name]) => name === condition) : null;
+  const inlineCondition = conditionEntry
+    ? conditionEntry[1].source
+    : (condition ? escapeRegExp(condition) : CONDITION_PATTERNS.map(([, pattern]) => pattern.source).join("|"));
   const inlineMatch = inline.match(new RegExp(`^(?:\\d{1,3}\\s*x?\\s+)?(.+?)\\s+(?:${inlineCondition})\\b`, "i"));
 
   if (inlineMatch && cleanupValue(inlineMatch[1]).length > 2) {

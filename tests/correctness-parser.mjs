@@ -50,8 +50,18 @@ assert.equal(desiredByCard["Arcane Signet"], 2, "Desired quantities should initi
 assert.equal(__testing.getTotalCopies(offerGroups), 17);
 assert.ok(offerGroups.length >= 9, "Complex fixture should include at least 9 different cards.");
 
+const wizard = await parseFixture("sample-cart-wizard.txt");
+assert.equal(wizard.sellerCount, 5);
+const wizardNames = wizard.sellers.map(s => s.sellerName);
+assert.ok(wizardNames.includes("MOe-HH"));
+assert.ok(wizardNames.includes("Kingcrawler"));
+assert.ok(!wizardNames.includes("Mezzy"), "Mezzy must not be parsed as a seller");
+const wizardItems = wizard.sellers.flatMap(s => s.items);
+assert.ok(wizardItems.some(i => i.cardName === "Crystal Shard"));
+assert.ok(wizardItems.some(i => i.cardName === "Majestic Genesis"));
+
 console.log(JSON.stringify({
-  fixtures: ["sample-cart-basic.txt", "sample-cart-complex-quantity-threshold.txt"],
+  fixtures: ["sample-cart-basic.txt", "sample-cart-complex-quantity-threshold.txt", "sample-cart-wizard.txt"],
   parsedSellers: complex.sellerCount,
   parsedItems: complex.itemCount,
   desiredQuantities: {
