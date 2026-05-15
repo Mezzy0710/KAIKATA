@@ -321,18 +321,18 @@
     css(badge, {
       display: "inline-flex",
       alignItems: "center",
-      gap: "5px",
-      padding: "5px 10px",
+      gap: "6px",
+      padding: "6px 14px",
       borderRadius: "999px",
-      fontSize: "12px",
-      fontWeight: "600",
-      letterSpacing: ".04em",
+      fontSize: "13px",
+      fontWeight: "700",
+      letterSpacing: ".02em",
       userSelect: "none",
       ...(isKeep
-        ? { background: "rgba(79,122,90,0.10)", color: "#4F7A5A", border: "1px solid rgba(79,122,90,0.25)", cursor: "pointer" }
+        ? { background: "#4F7A5A", color: "#FFFFFF", border: "none", cursor: "pointer", boxShadow: "0 2px 6px rgba(79,122,90,0.35)" }
         : isReview
-          ? { background: "rgba(200,135,46,0.10)", color: "#C8872E", border: "1px solid rgba(200,135,46,0.25)", cursor: "default" }
-          : { background: "rgba(159,45,36,0.10)", color: "#9F2D24", border: "1px solid rgba(159,45,36,0.25)", cursor: "default" })
+          ? { background: "rgba(200,135,46,0.12)", color: "#C8872E", border: "1.5px solid rgba(200,135,46,0.35)", cursor: "default" }
+          : { background: "rgba(159,45,36,0.10)", color: "#9F2D24", border: "1.5px solid rgba(159,45,36,0.25)", cursor: "default" })
     });
 
     const icon = document.createElement("span");
