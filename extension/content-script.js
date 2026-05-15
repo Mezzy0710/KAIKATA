@@ -701,12 +701,16 @@
   }
 
   function readCountry(section, text) {
-    const imageAlt = [...section.querySelectorAll("img[alt], [title]")]
-      .map((element) => element.getAttribute("alt") || element.getAttribute("title") || "")
-      .find((value) => /\b(location|country|ships from|seller from)\b/i.test(value));
+    // Target the specific flag tooltip rather than scanning all [title] elements,
+    // which risks matching unrelated tooltips (condition, rarity, expansion, etc.).
+    const locationEl = section.querySelector('[title^="Item location:"]');
+    const locationTitle = locationEl
+      ?.getAttribute("title")
+      ?.replace(/^Item location:\s*/i, "")
+      ?.trim();
     return (
+      locationTitle ||
       inferLabel(text, /(?:country|location|ships from|sent from)\s*:?\s*([A-Z][A-Za-z ]+)/i) ||
-      imageAlt ||
       ""
     );
   }
