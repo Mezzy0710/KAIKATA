@@ -2,6 +2,8 @@
   const LIVE_CARTFORGE_URL = "https://mezzy0710.github.io/cardmarket-cart-optimizer/";
   const PANEL_ID = "cartforge-cardmarket-extractor";
   const STORAGE_KEY = "cartforge_confirmed_plan";
+  // Set to true in the browser console to log per-seller extraction diagnostics.
+  const CARTFORGE_DEBUG = false;
 
   if (document.getElementById(PANEL_ID)) {
     return;
@@ -562,6 +564,17 @@
   }
 
   function findSellerSections(root) {
+    // Prefer the known Cardmarket shipment-block pattern (section[id^="seller"]).
+    // This is the most reliable anchor: it is exactly one element per seller and
+    // always contains the flag tooltip with the seller's country.
+    const shipmentBlocks = [
+      ...root.querySelectorAll('section[id^="seller"], section.shipment-block')
+    ].filter((el) => /(?:€|EUR|\d+[,.]\d{2})/.test(visibleText(el)));
+    if (shipmentBlocks.length) {
+      return shipmentBlocks;
+    }
+
+    // Generic fallback: use heuristics for sites with different markup.
     const semanticCandidates = [
       ...root.querySelectorAll(
         "[data-seller-id], [data-seller], .seller, .seller-row, .shopping-cart-seller, .cart-seller, article, section"
@@ -614,9 +627,30 @@
       inferLabel(text, /seller\s*:?\s*([^\n]+)/i) ||
       `Seller ${sellerIndex + 1}`;
 
+    const sellerCountry = readCountry(section, text);
+
+    if (CARTFORGE_DEBUG) {
+      // eslint-disable-next-line no-console
+      console.log("[CartForge] extractSeller", {
+        sellerName,
+        sectionId: section.id || "(no id)",
+        locationElFound: !!(
+          section.querySelector('[title^="Item location:"]') ||
+          section.querySelector('[data-bs-original-title^="Item location:"]')
+        ),
+        allTitleAttrs: [
+          ...section.querySelectorAll("[title], [data-bs-original-title]"),
+        ].map(
+          (el) =>
+            el.getAttribute("title") || el.getAttribute("data-bs-original-title")
+        ).filter(Boolean),
+        sellerCountry,
+      });
+    }
+
     return {
       sellerName,
-      sellerCountry: readCountry(section, text),
+      sellerCountry,
       shippingMethod: readShippingMethod(section, text),
       trackingStatus: /\b(untracked|no tracking)\b/i.test(text)
         ? "untracked"
@@ -701,13 +735,16 @@
   }
 
   function readCountry(section, text) {
-    // Target the specific flag tooltip rather than scanning all [title] elements,
-    // which risks matching unrelated tooltips (condition, rarity, expansion, etc.).
-    const locationEl = section.querySelector('[title^="Item location:"]');
-    const locationTitle = locationEl
-      ?.getAttribute("title")
-      ?.replace(/^Item location:\s*/i, "")
-      ?.trim();
+    // Bootstrap 5 tooltip init consumes the `title` attribute, storing its value
+    // in `data-bs-original-title` and clearing `title` to "". Check both so
+    // extraction works regardless of when Bootstrap runs relative to the extension.
+    const locationEl =
+      section.querySelector('[title^="Item location:"]') ||
+      section.querySelector('[data-bs-original-title^="Item location:"]');
+    const rawTitle =
+      locationEl?.getAttribute("title") ||
+      locationEl?.getAttribute("data-bs-original-title");
+    const locationTitle = rawTitle?.replace(/^Item location:\s*/i, "")?.trim() || null;
     return (
       locationTitle ||
       inferLabel(text, /(?:country|location|ships from|sent from)\s*:?\s*([A-Z][A-Za-z ]+)/i) ||
