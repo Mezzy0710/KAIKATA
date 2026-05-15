@@ -24,6 +24,72 @@
     renderExtractionPanel();
   }
 
+  // ── Shared UI helpers ─────────────────────────────────────────────────────
+
+  function kLogo(size = 20) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 120 120");
+    svg.setAttribute("width", String(size));
+    svg.setAttribute("height", String(size));
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "#D84A2B");
+    svg.setAttribute("stroke-width", "2.5");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.setAttribute("aria-hidden", "true");
+    const lines = [
+      [30, 20, 30, 100],
+      [30, 60, 90, 20],
+      [30, 60, 90, 100]
+    ];
+    for (const [x1, y1, x2, y2] of lines) {
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", String(x1));
+      line.setAttribute("y1", String(y1));
+      line.setAttribute("x2", String(x2));
+      line.setAttribute("y2", String(y2));
+      svg.append(line);
+    }
+    return svg;
+  }
+
+  function css(el, styles) {
+    Object.assign(el.style, styles);
+  }
+
+  const PANEL_BASE = {
+    position: "fixed",
+    right: "16px",
+    bottom: "16px",
+    zIndex: "2147483647",
+    font: "14px/1.5 'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+    color: "#1C1A17",
+    background: "#FFF9EF",
+    border: "1.5px solid #DED3C2",
+    boxShadow: "0 4px 16px rgba(28,26,23,0.12)",
+    overflow: "hidden"
+  };
+
+  const COLLAPSED = {
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  };
+
+  const EXPANDED = {
+    width: "288px",
+    height: "auto",
+    borderRadius: "12px",
+    cursor: "default",
+    display: "block",
+    alignItems: "",
+    justifyContent: ""
+  };
+
   // ── Plan overlay ──────────────────────────────────────────────────────────
 
   function renderPlanOverlay(plan) {
@@ -40,82 +106,67 @@
 
     const panel = document.createElement("div");
     panel.id = PANEL_ID;
-    css(panel, {
-      position: "fixed",
-      right: "16px",
-      bottom: "16px",
-      zIndex: "2147483647",
-      width: "288px",
-      font: "14px/1.45 'IBM Plex Sans','Segoe UI',sans-serif",
-      color: "#F2EDE3",
-      background: "#1C1A17",
-      border: "1px solid #3A332B",
-      borderRadius: "12px",
-      boxShadow: "0 16px 40px rgba(0,0,0,.55)",
-      overflow: "hidden"
-    });
+    css(panel, { ...PANEL_BASE, ...COLLAPSED });
 
-    // Header row
+    // ── Collapsed: logo bubble ──
+    const logoBubble = document.createElement("div");
+    css(logoBubble, { display: "flex", alignItems: "center", justifyContent: "center" });
+    logoBubble.append(kLogo(22));
+
+    // ── Expanded: header ──
     const header = document.createElement("div");
-    css(header, {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      padding: "12px 16px",
-      cursor: "pointer",
-      userSelect: "none"
-    });
+    header.style.display = "none";
+    css(header, { alignItems: "center", gap: "8px", padding: "12px 16px 0", marginBottom: "12px" });
 
-    const headerLeft = document.createElement("div");
-    css(headerLeft, { display: "flex", alignItems: "center", gap: "8px" });
-
-    const logo = document.createElement("strong");
-    logo.textContent = "CartForge";
-    css(logo, {
-      fontFamily: "'Space Grotesk','Segoe UI',sans-serif",
-      fontSize: "15px",
-      fontWeight: "700",
-      color: "#C8A75D",
-      letterSpacing: ".01em"
-    });
-
-    const statusBadge = document.createElement("span");
-    statusBadge.textContent = "PLAN ACTIVE";
-    css(statusBadge, {
+    const planBadge = document.createElement("span");
+    planBadge.textContent = "Plan active";
+    css(planBadge, {
       fontSize: "10px",
-      fontWeight: "700",
-      letterSpacing: ".06em",
-      padding: "2px 6px",
-      borderRadius: "4px",
-      background: "#1A2E1A",
-      color: "#6FCF6F"
+      fontWeight: "600",
+      padding: "2px 7px",
+      borderRadius: "999px",
+      background: "rgba(79,122,90,0.12)",
+      color: "#4F7A5A",
+      border: "1px solid rgba(79,122,90,0.25)",
+      letterSpacing: "0.04em"
     });
 
-    headerLeft.append(logo, statusBadge);
-
-    const minimizeBtn = document.createElement("button");
-    minimizeBtn.textContent = "—";
-    minimizeBtn.setAttribute("aria-label", "Minimize panel");
-    css(minimizeBtn, {
+    const collapseBtn = document.createElement("button");
+    collapseBtn.textContent = "×";
+    collapseBtn.setAttribute("aria-label", "Collapse panel");
+    css(collapseBtn, {
       background: "none",
       border: "none",
-      color: "#7D7468",
-      fontSize: "16px",
-      cursor: "pointer",
-      padding: "0 4px",
+      color: "#A89D8F",
+      fontSize: "20px",
       lineHeight: "1",
-      fontFamily: "inherit"
+      cursor: "pointer",
+      padding: "0",
+      fontFamily: "inherit",
+      marginLeft: "auto"
     });
 
-    header.append(headerLeft, minimizeBtn);
+    header.append(kLogo(20));
+    const wordmark = document.createElement("span");
+    wordmark.textContent = "KAIKATA";
+    css(wordmark, {
+      flex: "1",
+      fontWeight: "700",
+      fontSize: "13px",
+      letterSpacing: "0.08em",
+      color: "#1C1A17",
+      marginLeft: "6px"
+    });
+    header.append(wordmark, planBadge, collapseBtn);
 
-    // Body
+    // ── Expanded: body ──
     const body = document.createElement("div");
+    body.style.display = "none";
     css(body, { padding: "0 16px 16px" });
 
     const buyLine = document.createElement("p");
     buyLine.textContent = `Buy from ${keepSellers.length} seller${keepSellers.length !== 1 ? "s" : ""}`;
-    css(buyLine, { margin: "0 0 10px", color: "#AFA699", fontSize: "13px" });
+    css(buyLine, { margin: "0 0 10px", color: "#6E6257", fontSize: "13px" });
     body.append(buyLine);
 
     if (keepSellers.length > 0) {
@@ -127,11 +178,11 @@
         css(chip, {
           fontSize: "11px",
           fontWeight: "600",
-          padding: "3px 8px",
-          borderRadius: "20px",
-          background: "#1A2E1A",
-          color: "#8FBF6F",
-          border: "1px solid #2A4A2A"
+          padding: "3px 9px",
+          borderRadius: "999px",
+          background: "rgba(79,122,90,0.10)",
+          color: "#4F7A5A",
+          border: "1px solid rgba(79,122,90,0.25)"
         });
         chipsWrap.append(chip);
       }
@@ -139,42 +190,47 @@
     }
 
     const clearBtn = document.createElement("button");
-    clearBtn.textContent = "CLEAR PLAN";
+    clearBtn.textContent = "Clear plan";
     css(clearBtn, {
       width: "100%",
-      border: "1px solid #3A332B",
-      borderRadius: "6px",
+      border: "1.5px solid #DED3C2",
+      borderRadius: "999px",
       background: "transparent",
-      color: "#7D7468",
+      color: "#6E6257",
       padding: "9px 14px",
-      fontFamily: "'Space Grotesk','Segoe UI',sans-serif",
-      fontSize: "12px",
-      fontWeight: "700",
-      letterSpacing: ".04em",
-      textTransform: "uppercase",
+      fontFamily: "inherit",
+      fontSize: "13px",
+      fontWeight: "600",
       cursor: "pointer"
     });
     body.append(clearBtn);
 
-    panel.append(header, body);
+    panel.append(logoBubble, header, body);
     document.body.append(panel);
 
-    // Minimize / restore toggle
-    let minimized = false;
-    const toggleMinimize = () => {
-      minimized = !minimized;
-      body.style.display = minimized ? "none" : "";
-      minimizeBtn.textContent = minimized ? "▲" : "—";
-      minimizeBtn.setAttribute("aria-label", minimized ? "Restore panel" : "Minimize panel");
+    // State toggle
+    let expanded = false;
+
+    const expand = () => {
+      expanded = true;
+      logoBubble.style.display = "none";
+      css(panel, EXPANDED);
+      header.style.display = "flex";
+      body.style.display = "block";
     };
-    minimizeBtn.addEventListener("click", (e) => {
+
+    const collapse = () => {
+      expanded = false;
+      header.style.display = "none";
+      body.style.display = "none";
+      css(panel, COLLAPSED);
+      logoBubble.style.display = "flex";
+    };
+
+    logoBubble.addEventListener("click", expand);
+    collapseBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      toggleMinimize();
-    });
-    header.addEventListener("click", () => {
-      if (minimized) {
-        toggleMinimize();
-      }
+      collapse();
     });
 
     // Clear plan — remove storage, badges, and panel
@@ -258,7 +314,7 @@
     wrapper.setAttribute("data-cartforge-badge", String(planSeller.sellerIndex));
     css(wrapper, {
       margin: "8px 0",
-      fontFamily: "'IBM Plex Sans','Segoe UI',sans-serif"
+      fontFamily: "'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
     });
 
     const badge = document.createElement("div");
@@ -267,23 +323,23 @@
       alignItems: "center",
       gap: "5px",
       padding: "5px 10px",
-      borderRadius: "6px",
+      borderRadius: "999px",
       fontSize: "12px",
-      fontWeight: "700",
-      letterSpacing: ".05em",
+      fontWeight: "600",
+      letterSpacing: ".04em",
       userSelect: "none",
       ...(isKeep
-        ? { background: "#1A2E1A", color: "#6FCF6F", border: "1px solid #2A4A2A", cursor: "pointer" }
+        ? { background: "rgba(79,122,90,0.10)", color: "#4F7A5A", border: "1px solid rgba(79,122,90,0.25)", cursor: "pointer" }
         : isReview
-          ? { background: "#2E2A1A", color: "#CFA75D", border: "1px solid #4A3A1A", cursor: "default" }
-          : { background: "#2E1A1A", color: "#CF6F6F", border: "1px solid #4A2A2A", cursor: "default" })
+          ? { background: "rgba(200,135,46,0.10)", color: "#C8872E", border: "1px solid rgba(200,135,46,0.25)", cursor: "default" }
+          : { background: "rgba(159,45,36,0.10)", color: "#9F2D24", border: "1px solid rgba(159,45,36,0.25)", cursor: "default" })
     });
 
     const icon = document.createElement("span");
     icon.textContent = isKeep ? "✓" : isReview ? "⚠" : "✗";
 
     const label = document.createElement("span");
-    label.textContent = isKeep ? "KEEP" : isReview ? "REVIEW" : "SKIP";
+    label.textContent = isKeep ? "Keep" : isReview ? "Review" : "Skip";
 
     badge.append(icon, label);
 
@@ -315,19 +371,19 @@
     container.style.display = "none";
     css(container, {
       marginTop: "6px",
-      borderRadius: "6px",
-      border: "1px solid #2A3020",
-      background: "#141210",
+      borderRadius: "8px",
+      border: "1px solid #DED3C2",
+      background: "#F7F1E6",
       overflow: "hidden",
-      fontFamily: "'IBM Plex Sans','Segoe UI',sans-serif",
+      fontFamily: "'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
       fontSize: "12px",
-      color: "#AFA699"
+      color: "#6E6257"
     });
 
     if (rows.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = "No cards to show.";
-      css(empty, { padding: "8px 12px", color: "#7D7468" });
+      css(empty, { padding: "8px 12px", color: "#A89D8F" });
       container.append(empty);
       return container;
     }
@@ -340,7 +396,7 @@
         justifyContent: "space-between",
         alignItems: "flex-start",
         gap: "8px",
-        ...(i < rows.length - 1 ? { borderBottom: "1px solid #1E1C18" } : {})
+        ...(i < rows.length - 1 ? { borderBottom: "1px solid #DED3C2" } : {})
       });
 
       // Left: card name + meta
@@ -351,7 +407,7 @@
       nameEl.textContent = row.cardName || "(unknown)";
       css(nameEl, {
         fontWeight: "600",
-        color: "#E8E0D0",
+        color: "#1C1A17",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis"
@@ -364,7 +420,7 @@
       }
       const metaEl = document.createElement("div");
       metaEl.textContent = metaParts.join(" · ");
-      css(metaEl, { color: "#7D7468", marginTop: "2px" });
+      css(metaEl, { color: "#A89D8F", marginTop: "2px" });
 
       left.append(nameEl, metaEl);
 
@@ -374,13 +430,13 @@
 
       const priceEl = document.createElement("div");
       priceEl.textContent = row.unitPrice != null ? `€${Number(row.unitPrice).toFixed(2)}` : "";
-      css(priceEl, { fontWeight: "600", color: "#C8A75D" });
+      css(priceEl, { fontWeight: "600", color: "#D84A2B" });
       right.append(priceEl);
 
       if (row.decision === "manual_review") {
         const reviewLabel = document.createElement("div");
         reviewLabel.textContent = "⚠ Review";
-        css(reviewLabel, { color: "#CFA75D", fontSize: "10px", marginTop: "2px" });
+        css(reviewLabel, { color: "#C8872E", fontSize: "10px", marginTop: "2px" });
         right.append(reviewLabel);
       }
 
@@ -412,90 +468,124 @@
       .replace(/\s+/g, " ");
   }
 
-  function css(el, styles) {
-    Object.assign(el.style, styles);
-  }
-
   // ── Extraction panel (no plan active) ────────────────────────────────────
 
   function renderExtractionPanel() {
     const panel = document.createElement("div");
     panel.id = PANEL_ID;
-    panel.style.cssText = [
-      "position:fixed",
-      "right:16px",
-      "bottom:16px",
-      "z-index:2147483647",
-      "width:288px",
-      "font:14px/1.45 'IBM Plex Sans','Segoe UI',sans-serif",
-      "color:#F2EDE3",
-      "background:#1C1A17",
-      "border:1px solid #3A332B",
-      "border-radius:12px",
-      "box-shadow:0 16px 40px rgba(0,0,0,.55)",
-      "padding:16px"
-    ].join(";");
+    css(panel, { ...PANEL_BASE, ...COLLAPSED });
 
-    const titleEl = document.createElement("div");
-    css(titleEl, { display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" });
-    const logoEl = document.createElement("strong");
-    logoEl.textContent = "CartForge";
-    css(logoEl, {
-      fontFamily: "'Space Grotesk','Segoe UI',sans-serif",
-      fontSize: "15px",
+    // ── Collapsed: logo bubble ──
+    const logoBubble = document.createElement("div");
+    css(logoBubble, { display: "flex", alignItems: "center", justifyContent: "center" });
+    logoBubble.append(kLogo(22));
+
+    // ── Expanded: header ──
+    const header = document.createElement("div");
+    header.style.display = "none";
+    css(header, { alignItems: "center", gap: "8px", padding: "12px 16px 0", marginBottom: "12px" });
+
+    const wordmark = document.createElement("span");
+    wordmark.textContent = "KAIKATA";
+    css(wordmark, {
+      flex: "1",
       fontWeight: "700",
-      color: "#C8A75D",
-      letterSpacing: ".01em"
+      fontSize: "13px",
+      letterSpacing: "0.08em",
+      color: "#1C1A17",
+      marginLeft: "6px"
     });
-    titleEl.append(logoEl);
+
+    const collapseBtn = document.createElement("button");
+    collapseBtn.textContent = "×";
+    collapseBtn.setAttribute("aria-label", "Collapse panel");
+    css(collapseBtn, {
+      background: "none",
+      border: "none",
+      color: "#A89D8F",
+      fontSize: "20px",
+      lineHeight: "1",
+      cursor: "pointer",
+      padding: "0",
+      fontFamily: "inherit"
+    });
+
+    header.append(kLogo(20), wordmark, collapseBtn);
+
+    // ── Expanded: body ──
+    const body = document.createElement("div");
+    body.style.display = "none";
+    css(body, { padding: "0 16px 16px" });
 
     const descEl = document.createElement("p");
-    descEl.textContent = "Import your Cardmarket cart into CartForge for seller cost optimisation.";
-    css(descEl, { margin: "0 0 14px", color: "#AFA699", fontSize: "13px", lineHeight: "1.5" });
+    descEl.textContent = "Import your Cardmarket cart into KAIKATA for smart seller cost optimisation.";
+    css(descEl, { margin: "0 0 14px", color: "#6E6257", fontSize: "13px", lineHeight: "1.5" });
 
-    const openBtn = document.createElement("button");
-    openBtn.setAttribute("data-cartforge-action", "open-live");
-    openBtn.textContent = "Open CartForge";
-    css(openBtn, {
+    const transferBtn = document.createElement("button");
+    transferBtn.setAttribute("data-cartforge-action", "open-live");
+    transferBtn.textContent = "Transfer to KAIKATA";
+    css(transferBtn, {
       width: "100%",
       border: "0",
-      borderRadius: "6px",
-      background: "#C8A75D",
-      color: "#12110F",
+      borderRadius: "999px",
+      background: "#D84A2B",
+      color: "#FFF9EF",
       padding: "10px 14px",
-      fontFamily: "'Space Grotesk','Segoe UI',sans-serif",
+      fontFamily: "inherit",
       fontSize: "13px",
-      fontWeight: "700",
-      letterSpacing: ".04em",
-      textTransform: "uppercase",
-      cursor: "pointer"
+      fontWeight: "600",
+      cursor: "pointer",
+      marginBottom: "8px"
     });
 
     const copyBtn = document.createElement("button");
     copyBtn.setAttribute("data-cartforge-action", "copy");
-    copyBtn.textContent = "Copy cart data";
+    copyBtn.textContent = "Copy to Clipboard";
     css(copyBtn, {
       width: "100%",
-      border: "1px solid #3A332B",
-      borderRadius: "6px",
+      border: "1.5px solid #DED3C2",
+      borderRadius: "999px",
       background: "transparent",
-      color: "#AFA699",
+      color: "#6E6257",
       padding: "9px 14px",
-      fontFamily: "'Space Grotesk','Segoe UI',sans-serif",
+      fontFamily: "inherit",
       fontSize: "13px",
       fontWeight: "600",
-      letterSpacing: ".04em",
-      textTransform: "uppercase",
-      cursor: "pointer",
-      marginTop: "8px"
+      cursor: "pointer"
     });
 
     const statusEl = document.createElement("p");
     statusEl.setAttribute("data-cartforge-status", "");
-    css(statusEl, { margin: "10px 0 0", color: "#7D7468", fontSize: "12px", lineHeight: "1.4" });
+    css(statusEl, { margin: "10px 0 0", color: "#A89D8F", fontSize: "12px", lineHeight: "1.4" });
 
-    panel.append(titleEl, descEl, openBtn, copyBtn, statusEl);
+    body.append(descEl, transferBtn, copyBtn, statusEl);
+    panel.append(logoBubble, header, body);
     document.body.append(panel);
+
+    // State toggle
+    let expanded = false;
+
+    const expand = () => {
+      expanded = true;
+      logoBubble.style.display = "none";
+      css(panel, EXPANDED);
+      header.style.display = "flex";
+      body.style.display = "block";
+    };
+
+    const collapse = () => {
+      expanded = false;
+      header.style.display = "none";
+      body.style.display = "none";
+      css(panel, COLLAPSED);
+      logoBubble.style.display = "flex";
+    };
+
+    logoBubble.addEventListener("click", expand);
+    collapseBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      collapse();
+    });
 
     panel.addEventListener("click", async (event) => {
       const action = event.target?.dataset?.cartforgeAction;
@@ -514,13 +604,13 @@
 
       if (action === "open-live") {
         window.open(buildTargetUrl(LIVE_CARTFORGE_URL, encoded), "_blank", "noopener,noreferrer");
-        setStatus(statusEl, `Cart received from Cardmarket: ${payload.sellers.length} seller(s), ${itemCount} item row(s).`);
+        setStatus(statusEl, `Transferred: ${payload.sellers.length} seller(s), ${itemCount} item row(s).`);
       }
 
       if (action === "copy") {
         try {
           await navigator.clipboard.writeText(`CARTFORGE_CART=${JSON.stringify(payload, null, 2)}`);
-          setStatus(statusEl, `Copied payload: ${payload.sellers.length} seller(s), ${itemCount} item row(s).`);
+          setStatus(statusEl, `Copied: ${payload.sellers.length} seller(s), ${itemCount} item row(s).`);
         } catch {
           setStatus(statusEl, "Could not copy payload. Check clipboard permissions and try again.");
         }
@@ -631,7 +721,7 @@
 
     if (CARTFORGE_DEBUG) {
       // eslint-disable-next-line no-console
-      console.log("[CartForge] extractSeller", {
+      console.log("[Kaikata] extractSeller", {
         sellerName,
         sectionId: section.id || "(no id)",
         locationElFound: !!(
@@ -806,7 +896,7 @@
 
   function visibleText(element) {
     return String(element?.innerText || element?.textContent || "")
-      .replace(/ /g, " ")
+      .replace(/ /g, " ")
       .replace(/[ \t]+/g, " ")
       .replace(/\n\s+/g, "\n")
       .trim();
