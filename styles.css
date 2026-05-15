@@ -3496,9 +3496,10 @@ input[type="number"] {
 
 .unresolved-seller-row {
   padding: 16px;
-  border: 1px solid rgba(217, 144, 61, 0.15);
+  border: 1px solid rgba(217, 144, 61, 0.35);
+  border-left: 3px solid var(--warning, #f59e0b);
   border-radius: 8px;
-  background: rgba(24, 23, 21, 0.5);
+  background: var(--bg-elevation);
   display: flex;
   flex-direction: column;
   gap: 12px;

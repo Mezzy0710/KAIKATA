@@ -1452,7 +1452,6 @@ function attachUnresolvedResolverHandlers() {
     if (!form) return;
 
     const countrySelect = form.querySelector(".unresolved-country-select");
-    const trackingSelect = form.querySelector(".unresolved-tracking-select");
     const costInput = form.querySelector(".unresolved-cost-input");
 
     const seller = state.parsed.sellers[sellerIndex];
@@ -1461,9 +1460,6 @@ function attachUnresolvedResolverHandlers() {
     if (countrySelect && countrySelect.value) {
       seller.sellerCountry = countrySelect.value;
       seller.countrySource = "manual";
-    }
-    if (trackingSelect) {
-      seller.trackingStatus = trackingSelect.value;
     }
 
     const overrideRaw = costInput ? costInput.value.trim() : "";
@@ -1980,14 +1976,8 @@ function unresolvedSellersTemplate(result, planBySeller, costBySeller) {
                 </select>
               </label>
               <label class="field">
-                <span>Tracking</span>
-                <select class="unresolved-tracking-select" name="trackingStatus">
-                  ${["unknown", "tracked", "untracked"].map(opt => `<option value="${escapeAttribute(opt)}" ${(seller.trackingStatus || "unknown") === opt ? "selected" : ""}>${escapeHtml(opt)}</option>`).join("")}
-                </select>
-              </label>
-              <label class="field">
-                <span>Shipping cost override (EUR)</span>
-                <input type="number" class="unresolved-cost-input" name="shippingCostOverride" step="0.01" min="0" placeholder="e.g. 1.25" value="${seller.shippingCostOverride !== null && seller.shippingCostOverride !== undefined ? escapeAttribute(String(seller.shippingCostOverride)) : ""}">
+                <span>Shipping cost override (EUR, optional)</span>
+                <input type="number" class="unresolved-cost-input" name="shippingCostOverride" step="0.01" min="0" placeholder="Leave blank to auto-calculate" value="${seller.shippingCostOverride !== null && seller.shippingCostOverride !== undefined ? escapeAttribute(String(seller.shippingCostOverride)) : ""}">
               </label>
               <button type="button" class="primary-button unresolved-apply-btn" data-action="apply-unresolved" data-seller-index="${escapeAttribute(String(sellerIndex))}">Apply &amp; Recalculate</button>
             </form>
