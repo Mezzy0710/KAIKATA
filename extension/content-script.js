@@ -1,7 +1,7 @@
 (() => {
   const LIVE_CARTFORGE_URL = "https://mezzy0710.github.io/cardmarket-cart-optimizer/";
   const PANEL_ID = "cartforge-cardmarket-extractor";
-  const STORAGE_KEY = "cartforge_confirmed_plan";
+  const STORAGE_KEY = "cartforgeConfirmedPlanV3";
   // Set to true in the browser console to log per-seller extraction diagnostics.
   const CARTFORGE_DEBUG = false;
 
@@ -13,7 +13,7 @@
   // extraction panel if storage is unavailable or empty.
   try {
     chrome.storage.local.get([STORAGE_KEY], (result) => {
-      const plan = result && result[STORAGE_KEY];
+      const plan = result && result[STORAGE_KEY]?.plan;
       if (plan && Array.isArray(plan.sellers) && plan.sellers.length > 0) {
         renderPlanOverlay(plan);
       } else {
