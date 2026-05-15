@@ -1,8 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "Kaikata",
+  "name": "KAIKATA",
   "description": "Extracts structured shopping-cart data from Cardmarket and opens it in KAIKATA.",
-  "version": "0.2.1",
+  "version": "1.0.0",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "permissions": ["activeTab", "clipboardWrite", "storage"],
   "host_permissions": [
     "https://www.cardmarket.com/*",

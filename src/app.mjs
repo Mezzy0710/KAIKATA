@@ -51,7 +51,8 @@ const state = {
   showManualFallback: false,
   extensionHintFromUrl: false,
   lastImportedFingerprint: "",
-  reviewUnlocked: false
+  reviewUnlocked: false,
+  cardmarketCartUrl: null
 };
 
 const hasDom = typeof document !== "undefined";
@@ -153,7 +154,12 @@ async function handleConfirmPlan() {
 
   if (result.ok) {
     btn.textContent = "Plan confirmed ✓";
-    if (status) status.textContent = "Saved to extension. Open your Cardmarket cart.";
+    if (state.cardmarketCartUrl) {
+      window.open(state.cardmarketCartUrl, "_blank", "noopener,noreferrer");
+      if (status) status.textContent = "Opening your Cardmarket cart…";
+    } else {
+      if (status) status.textContent = "Saved to extension. Open your Cardmarket cart.";
+    }
     setTimeout(() => {
       btn.disabled = false;
       btn.textContent = "Send to Cardmarket";
@@ -184,6 +190,9 @@ function loadCartFromUrlHash() {
   }
 
   elements.cartInput.value = JSON.stringify(decoded.payload, null, 2);
+  if (decoded.payload?.url && typeof decoded.payload.url === "string") {
+    state.cardmarketCartUrl = decoded.payload.url;
+  }
   window.history.replaceState(null, "", window.location.pathname + window.location.search);
   parseCurrentInput({ autoReveal: true });
 }
@@ -404,6 +413,8 @@ function clearInput() {
   state.showManualFallback = false;
   state.lastImportedFingerprint = "";
   state.reviewUnlocked = false;
+  state.cardmarketCartUrl = null;
+  if (elements.parseButton) elements.parseButton.classList.remove("hidden");
   elements.desiredCardsSection?.removeAttribute("open");
   setMessage("Paste your Cardmarket cart. We'll handle the seller math.");
   updateWorkflowStatus("Ready to parse", "muted", "Next: review the detected cards and quantities.");
@@ -591,6 +602,13 @@ function renderInputState(sellers, parsedTotal, offerGroups) {
   if (!canCollapse) {
     elements.inputSummary.innerHTML = "";
     renderExtensionImportSection(sellers, offerGroups);
+    // Hide "Review cart" when extension import succeeded — Step 2 is already revealed
+    const isExtensionSuccess = state.inputSource === "extension"
+      && sellers.length > 0
+      && !state.showManualFallback;
+    if (elements.parseButton) {
+      elements.parseButton.classList.toggle("hidden", isExtensionSuccess);
+    }
     return;
   }
 
