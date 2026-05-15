@@ -15,7 +15,7 @@ A client-side web app that optimizes Cardmarket shopping carts for the lowest to
 ✅ **Core functionality**: Parser, optimizer, and shipping logic are solid and well-tested
 ✅ **Mobile support**: Mobile cart parsing with seller names and country aliases working
 ✅ **Security**: Proper input escaping (escapeHtml/escapeAttribute) prevents XSS
-✅ **Test coverage**: 11/12 test files passing (scryfall-lookup times out due to external API)
+✅ **Test coverage**: 17/18 test files passing (scryfall-lookup times out due to external API)
 ✅ **UI/UX**: Mobile-responsive design with intuitive workflow
 ✅ **Card search**: Search functionality in review table (shipped in v1.0)
 ✅ **Result summary strip**: Final Total, Savings, Sellers Used, Item Count (shipped in v1.0)
@@ -40,10 +40,10 @@ None. All PRs closed/merged as of May 15, 2026.
 
 ### Performance Analysis
 **File Sizes** (main branch):
-- app.mjs: ~2,012 LOC (~78 KB)
+- app.mjs: ~2,889 LOC (~78 KB)
 - parser.mjs: ~1,274 LOC (~38 KB)
-- styles.css: ~2,373 LOC (~60 KB)
-- Total: ~6,400 LOC
+- styles.css: ~3,631 LOC (~60 KB)
+- Total: ~7,794 LOC
 
 **Performance Observations**:
 - Parser handles 21 sellers in < 5ms (from performance-large-scale test)
@@ -53,23 +53,19 @@ None. All PRs closed/merged as of May 15, 2026.
 
 ### Technical Debt Identified (Prioritized)
 
-1. **Duplicated escapeHtml definitions** — In both app.mjs and price-verdict.mjs
-   - Should export from one shared utility module and import everywhere
-   - Impact: ~15 LOC cleanup, improves consistency
-
-2. **scryfall-lookup.mjs integration test** — Times out on external API calls
+1. **scryfall-lookup.mjs integration test** — Times out on external API calls
    - Needs mocking for CI reliability
    - Impact: Currently excluded from CI; no dev blocker
 
-3. **Parser.mjs complexity** — ~1,274 LOC single file
+2. **Parser.mjs complexity** — ~1,274 LOC single file
    - Could split: tokenization, inference, item parsing into separate modules
    - Impact: Maintainability, not correctness
 
-4. **app.mjs size** — ~2,000 LOC
+3. **app.mjs size** — ~2,889 LOC
    - New logic must go into dedicated modules, not here
    - Impact: Ongoing discipline required
 
-5. **Internal protocol identifiers** — `CARTFORGE_CART=`, `#cartforge=`, storage keys, message types
+4. **Internal protocol identifiers** — `CARTFORGE_CART=`, `#cartforge=`, storage keys, message types
    - Still use the pre-rebrand name for backwards compatibility with the extension protocol
    - Impact: Cosmetic; no functional issue
 
@@ -137,7 +133,6 @@ None. All PRs closed/merged as of May 15, 2026.
 ## Next Steps
 
 1. **Tech debt** (recommended before new features):
-   - Extract shared `escapeHtml` utility module
    - Mock scryfall integration test for CI
 
 2. **Before v1.1 feature work**:
