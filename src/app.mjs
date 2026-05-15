@@ -1908,6 +1908,7 @@ function recommendationsTemplate(result) {
     ${resultSummaryTemplate(result)}
     ${highPriceNote}
     ${unresolvedSellersTemplate(result, planBySeller, costBySeller)}
+    <h2 class="recommendation-grid-heading">Recommended sellers</h2>
     <div class="recommendation-grid">
       ${unresolvedGroup}
       ${resolvedGroup}
@@ -2288,6 +2289,20 @@ function countryReviewRowTemplate(seller, sellerIndex) {
   `;
 }
 
+// Flag emojis come from a hardcoded internal map and are safe to render without escapeHtml.
+function countryFlag(countryName) {
+  const FLAGS = {
+    "germany": "🇩🇪", "italy": "🇮🇹", "france": "🇫🇷", "spain": "🇪🇸",
+    "poland": "🇵🇱", "netherlands": "🇳🇱", "united kingdom": "🇬🇧",
+    "austria": "🇦🇹", "belgium": "🇧🇪", "portugal": "🇵🇹",
+    "czech republic": "🇨🇿", "slovakia": "🇸🇰", "hungary": "🇭🇺",
+    "romania": "🇷🇴", "bulgaria": "🇧🇬", "greece": "🇬🇷",
+    "croatia": "🇭🇷", "sweden": "🇸🇪", "finland": "🇫🇮",
+    "denmark": "🇩🇰", "norway": "🇳🇴"
+  };
+  return FLAGS[String(countryName || "").toLowerCase().trim()] ?? "";
+}
+
 function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCost) {
   const cardTotal = sellerCost?.articleValue ?? offerSubtotal(offers);
   const shippingTotal = sellerCost?.shippingValue ?? 0;
@@ -2342,12 +2357,12 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
         <div class="seller-info-primary">
           <h3>${escapeHtml(seller.sellerName)}</h3>
           <div class="seller-meta">
-            ${escapeHtml(seller.sellerCountry || "Unknown")}
+            ${escapeHtml(seller.sellerCountry || "Unknown")} ${countryFlag(seller.sellerCountry)}
           </div>
         </div>
         ${isUnresolved
           ? `<a class="fix-shipping-link ghost-button" href="#resolve-seller-${escapeAttribute(String(sellerIndex))}">Fix shipping →</a>`
-          : `<span class="status-pill good">Recommended</span>`}
+          : ""}
       </header>
 
       <div class="seller-total-hero">
@@ -2383,6 +2398,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
               ${offers.map((offer) => recommendationOfferRowTemplate(offer)).join("")}
             </tbody>
           </table>
+          ${excludedCardsSection}
         </div>
       </details>
 
@@ -2412,8 +2428,6 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
           <strong>${escapeHtml(formatEstimatedMoney(displayTotal))}</strong>
         </div>
       </details>
-
-      ${excludedCardsSection}
     </article>
   `;
 }
