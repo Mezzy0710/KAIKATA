@@ -2330,25 +2330,30 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
 
   const isUnresolved = sellerCost?.source === "unresolved";
 
-  const isRecommended = displayNumber === 1 && !isUnresolved;
+  const heroSubtitle = isUnresolved ? "" :
+    displayNumber === 1 ? "Lowest cost option" :
+    itemCount >= 10 ? "Completes your order" :
+    "Fills gaps";
 
   return `
-    <article class="recommendation-card premium-seller-card${isUnresolved ? " seller-card--unresolved" : ""}${isRecommended ? " seller-recommended" : ""}">
+    <article class="recommendation-card premium-seller-card${isUnresolved ? " seller-card--unresolved" : " seller-resolved"}${displayNumber === 1 && !isUnresolved ? " seller-recommended" : ""}">
       <header class="seller-card-header">
         <div class="seller-number-badge">${escapeHtml(displayNumber)}</div>
         <div class="seller-info-primary">
           <h3>${escapeHtml(seller.sellerName)}</h3>
           <div class="seller-meta">
-            ${escapeHtml(seller.sellerCountry || "Unknown")} · ${escapeHtml(trackingLabel)}
+            ${escapeHtml(seller.sellerCountry || "Unknown")}
           </div>
         </div>
-        ${isUnresolved ? `<a class="fix-shipping-link ghost-button" href="#resolve-seller-${escapeAttribute(String(sellerIndex))}">Fix shipping →</a>` : isRecommended ? `<span class="status-pill good">Lowest cost</span>` : ""}
+        ${isUnresolved
+          ? `<a class="fix-shipping-link ghost-button" href="#resolve-seller-${escapeAttribute(String(sellerIndex))}">Fix shipping →</a>`
+          : `<span class="status-pill good">Recommended</span>`}
       </header>
 
       <div class="seller-total-hero">
         <span class="seller-total-hero-label">Total cost</span>
         <span class="seller-total-hero-amount">${escapeHtml(formatEstimatedMoney(displayTotal))}</span>
-        ${isRecommended ? `<span class="seller-total-hero-sub">Lowest cost option</span>` : ""}
+        ${heroSubtitle ? `<span class="seller-total-hero-sub">${escapeHtml(heroSubtitle)}</span>` : ""}
       </div>
 
       <div class="seller-data-grid">
@@ -2370,14 +2375,16 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
         </div>
       </div>
 
-      <div class="seller-cards-section">
-        <div class="seller-section-label">Cards to buy</div>
-        <table class="recommendation-table">
-          <tbody>
-            ${offers.map((offer) => recommendationOfferRowTemplate(offer)).join("")}
-          </tbody>
-        </table>
-      </div>
+      <details class="seller-cards-toggle">
+        <summary>View cards</summary>
+        <div class="seller-cards-section">
+          <table class="recommendation-table">
+            <tbody>
+              ${offers.map((offer) => recommendationOfferRowTemplate(offer)).join("")}
+            </tbody>
+          </table>
+        </div>
+      </details>
 
       <details class="cost-breakdown">
         <summary class="seller-section-label">Cost Breakdown</summary>

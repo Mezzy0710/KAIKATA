@@ -1252,26 +1252,26 @@ select {
 /* Hero total cost box */
 .seller-total-hero {
   margin: 12px 14px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: var(--radius);
   background: var(--accent-vermilion-soft);
-  border-bottom: 1px solid var(--accent-vermilion-light);
+  border: 1.5px solid var(--accent-vermilion-light);
   text-align: center;
 }
 
 .seller-total-hero-label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   color: var(--text-muted);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .seller-total-hero-amount {
   display: block;
-  font-size: 1.8rem;
+  font-size: 1.9rem;
   font-weight: 700;
   color: var(--accent-vermilion);
   font-variant-numeric: tabular-nums;
@@ -1280,10 +1280,11 @@ select {
 
 .seller-total-hero-sub {
   display: block;
-  font-size: 0.78rem;
-  color: var(--status-positive);
-  margin-top: 4px;
-  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  font-weight: 400;
+  font-style: italic;
 }
 
 /* 2x2 data grid inside seller cards */
@@ -1427,6 +1428,45 @@ select {
   color: var(--text-soft);
   font-size: 0.86rem;
   line-height: 1.4;
+}
+
+/* "View cards" toggle at bottom of seller card */
+.seller-cards-toggle {
+  padding: 0 14px 14px;
+}
+
+.seller-cards-toggle summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  padding: 0.6rem 1.5rem;
+  border: 1.5px solid var(--border-sand);
+  border-radius: var(--radius-pill);
+  background: var(--bg-paper);
+  color: var(--text-ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.seller-cards-toggle summary::-webkit-details-marker { display: none; }
+
+.seller-cards-toggle summary:hover {
+  background: var(--bg-elevation);
+  border-color: var(--accent-vermilion);
+  color: var(--accent-vermilion);
+}
+
+.seller-cards-toggle[open] summary {
+  border-color: var(--accent-vermilion);
+  color: var(--accent-vermilion);
+  margin-bottom: 12px;
 }
 
 .seller-card-footer {
@@ -1686,6 +1726,7 @@ select {
   background: var(--seller-stripe, transparent);
 }
 
+.premium-seller-card.seller-resolved::before { --seller-stripe: var(--status-positive); }
 .premium-seller-card.seller-recommended::before { --seller-stripe: var(--status-positive); }
 .premium-seller-card.seller-warning::before { --seller-stripe: var(--status-warning); }
 
