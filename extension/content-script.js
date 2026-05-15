@@ -1,5 +1,5 @@
 (() => {
-  const LIVE_CARTFORGE_URL = "https://mezzy0710.github.io/cardmarket-cart-optimizer/";
+  const LIVE_CARTFORGE_URL = "https://mezzy0710.github.io/KAIKATA/";
   const PANEL_ID = "cartforge-cardmarket-extractor";
   const STORAGE_KEY = "cartforgeConfirmedPlanV3";
   // Set to true in the browser console to log per-seller extraction diagnostics.
