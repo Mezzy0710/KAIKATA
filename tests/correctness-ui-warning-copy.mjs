@@ -5,9 +5,9 @@ import { __testing } from "../src/app.mjs";
 const indexHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const appSource = await readFile(new URL("../src/app.mjs", import.meta.url), "utf8");
 
-assert.match(indexHtml, /CartForge/);
-assert.match(indexHtml, /Find the cheapest way to buy your cards/);
-assert.match(indexHtml, /Set copies, lock printings if needed, then forge the buy plan|Review cards & quantities/);
+assert.match(indexHtml, /Kaikata/);
+assert.match(indexHtml, /smarter way to buy trading cards/);
+assert.match(indexHtml, /Set copies and lock printings if needed, then optimize\.|Review cards & quantities|Set copies, lock printings/);
 assert.match(indexHtml, /What to buy from each seller/);
 assert.match(appSource, /Different cards/);
 assert.match(appSource, /Total copies/);
@@ -24,8 +24,8 @@ for (const forbiddenPhrase of ["route selected", "seller route", "journey"]) {
   assert.ok(!appSource.toLowerCase().includes(forbiddenPhrase), `App copy should not use "${forbiddenPhrase}" language.`);
 }
 
-assert.match(appSource, /Quantities changed\. Reforge the plan\.|Quantities changed\. Generate the plan again\./, "Changing desired quantity should mark the plan stale and require re-run.");
-assert.match(appSource, /Reforge Buying Plan|Forge Buying Plan|Optimize cart again|Optimize cart/);
+assert.match(appSource, /Quantities changed\. Re-optimize to update your plan\.|Quantities changed\. Reforge the plan\.|Quantities changed\. Generate the plan again\./, "Changing desired quantity should mark the plan stale and require re-run.");
+assert.match(appSource, /Re-optimize your cart|Reforge Buying Plan|Forge Buying Plan|Optimize cart again|Optimize your cart|Optimize cart/);
 assert.match(appSource, /class="result-warning/, "Warnings and cost notes should render in a dedicated visible section.");
 assert.match(appSource, /Show all warning details/, "Warning counters/sections should expose accessible details.");
 assert.match(appSource, /Quick note/, "Informational assumptions should be labeled as a note when no critical warning exists.");

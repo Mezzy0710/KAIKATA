@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "CartForge Cardmarket Extractor",
-  "description": "Extracts structured shopping-cart data from Cardmarket and opens it in CartForge.",
+  "name": "Kaikata",
+  "description": "Extracts structured shopping-cart data from Cardmarket and opens it in KAIKATA.",
   "version": "0.2.1",
   "permissions": ["activeTab", "clipboardWrite", "storage"],
   "host_permissions": [
