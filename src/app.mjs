@@ -156,12 +156,12 @@ async function handleConfirmPlan() {
     if (status) status.textContent = "Saved to extension. Open your Cardmarket cart.";
     setTimeout(() => {
       btn.disabled = false;
-      btn.textContent = "Confirm plan → Cardmarket";
+      btn.textContent = "Send to Cardmarket";
       if (status) status.textContent = "";
     }, 4000);
   } else {
     btn.disabled = false;
-    btn.textContent = "Confirm plan → Cardmarket";
+    btn.textContent = "Send to Cardmarket";
     if (status) status.textContent = result.error || "Extension not available.";
     setTimeout(() => {
       if (status) status.textContent = "";
@@ -176,7 +176,7 @@ function loadCartFromUrlHash() {
   if (!decoded.ok) {
     if (state.extensionHintFromUrl) {
       state.inputSource = "extension";
-      setMessage("Extension opened CartForge, but no cart payload was found. Try importing again.");
+      setMessage("Extension opened Kaikata, but no cart payload was found. Try importing again.");
       updateWorkflowStatus("Waiting for cart", "warning", "Use the extension import again, or paste your cart manually.");
       render();
     }
@@ -211,7 +211,7 @@ async function loadShippingData() {
 function updateOptimizeButton() {
   const { shippingDataState } = state;
   elements.parseButton.disabled = false;
-  elements.parseButton.textContent = "Review Cart";
+  elements.parseButton.textContent = "Review cart";
 
   if (shippingDataState === "error" && !state.parsed.sellers?.length && !state.optimizationResult) {
     updateWorkflowStatus("Ready to parse", "warning", "Shipping data is unavailable here. Review still works.");
@@ -285,9 +285,9 @@ function parseCurrentInput(options = {}) {
   const shippingDetected = state.parsed.sellers.some((seller) => seller.shippingMethod || Number.isFinite(Number(seller.shippingValue)));
   setMessage(`${sourceText} We found ${state.parsed.sellerCount} seller(s), ${offerGroups.length} card(s), ${totalCopies} total copies. Shipping data ${shippingDetected ? "was" : "was not"} detected.${warningText}`);
   if (!autoReveal && imported.ok) {
-    updateWorkflowStatus("Ready to review", state.parsed.warnings.length ? "warning" : "good", "Click Review Cart to open Step 2.");
+    updateWorkflowStatus("Ready to review", state.parsed.warnings.length ? "warning" : "good", "Click Review cart to open Step 2.");
   } else {
-    updateWorkflowStatus("Ready", state.parsed.warnings.length ? "warning" : "good", "Review cards and quantities, then forge your buying plan.");
+    updateWorkflowStatus("Ready", state.parsed.warnings.length ? "warning" : "good", "Review cards and quantities, then optimize your buy plan.");
   }
   updateOptimizeButton();
   render();
@@ -326,12 +326,12 @@ function inferSellerCountryFromShippingMethod(sellers) {
       shippingIndex
     );
     if (inference.confidence >= 0.9 && !inference.ambiguous && inference.country) {
-      console.info(`[CartForge] Inferred country "${inference.country}" for seller "${seller.sellerName}" from shipping method`);
+      console.info(`[Kaikata] Inferred country "${inference.country}" for seller "${seller.sellerName}" from shipping method`);
       seller.sellerCountry = inference.country;
       seller.countrySource = "inferred";
       seller.countryInference = inference;
     } else {
-      console.info(`[CartForge] Could not confidently infer country for seller "${seller.sellerName}" (confidence: ${inference.confidence}, ambiguous: ${inference.ambiguous})`);
+      console.info(`[Kaikata] Could not confidently infer country for seller "${seller.sellerName}" (confidence: ${inference.confidence}, ambiguous: ${inference.ambiguous})`);
     }
   });
 }
@@ -566,7 +566,7 @@ function renderExtensionImportSection(sellers, offerGroups) {
       <div class="input-summary-card panel" role="alert">
         <div class="input-summary-copy">
           <span class="status-pill warning">${escapeHtml("Import failed")}</span>
-          <p>${escapeHtml("CartForge couldn't read the cart data. Try importing again or paste manually below.")}</p>
+          <p>${escapeHtml("Kaikata couldn't read the cart data. Try importing again or paste manually below.")}</p>
         </div>
       </div>
     `;
@@ -615,7 +615,7 @@ function renderInputState(sellers, parsedTotal, offerGroups) {
       </div>
       <div class="button-row input-summary-actions">
         <button id="editCartButton" class="ghost-button" type="button">${state.inputSource === "extension" ? "Replace Imported Cart" : "Edit Pasted Cart"}</button>
-        <button id="clearButtonCompact" class="ghost-button" type="button">Clear Cart</button>
+        <button id="clearButtonCompact" class="ghost-button" type="button">Clear</button>
       </div>
     </div>
   `;
@@ -713,7 +713,7 @@ function renderDesiredCards(offerGroups) {
 
   const detectedTotal = Object.values(state.desiredQuantityByCard).reduce((sum, qty) => sum + qty, 0);
   const selectedTotal = Object.values(state.desiredQuantityByCard).filter(qty => qty > 0).length;
-  const actionLabel = state.optimizationStale || !state.optimizationResult ? "Forge Buying Plan" : "Reforge Buying Plan";
+  const actionLabel = state.optimizationStale || !state.optimizationResult ? "Optimize your cart" : "Re-optimize your cart";
 
   elements.desiredCardsReview.insertAdjacentHTML("beforeend", `
     <div class="review-action-bar">
@@ -829,7 +829,7 @@ function variantBodyTemplate(group) {
 
   return `
     <div class="card-accordion-body">
-      <p class="variant-section-title">Detected Variants ${tooltipChip("Unless you set Prefer, Require, or Exclude, CartForge optimizes by lowest total cart cost.")}</p>
+      <p class="variant-section-title">Detected Variants ${tooltipChip("Unless you set Prefer, Require, or Exclude, Kaikata optimizes by lowest total cart cost.")}</p>
       <div class="variant-table-wrap">
         <table class="variant-table">
           ${variantColumnGroupTemplate(hasEnriched, showRef)}
@@ -1396,7 +1396,7 @@ function runOptimizationPlaceholder() {
   state.optimizationResult = optimizeCart(sellers, offerGroups);
   state.inputCollapsed = true;
   updateWorkflowStatus(
-    state.optimizationResult.warnings.length ? "Plan Needs Review" : "Buying Plan Forged",
+    state.optimizationResult.warnings.length ? "Plan needs review" : "Ready to buy",
     state.optimizationResult.warnings.length ? "warning" : "good",
     state.optimizationResult.warnings.length
       ? "Check the notes before buying."
@@ -1408,7 +1408,7 @@ function runOptimizationPlaceholder() {
 
 function updateOptimizationPreview() {
   state.optimizationResult = null;
-  updateWorkflowStatus("Needs Review", "warning", "Quantities changed. Reforge the plan.");
+  updateWorkflowStatus("Needs review", "warning", "Quantities changed. Re-optimize to update your plan.");
   elements.optimizationOutput.innerHTML = "";
   const sellers = state.parsed.sellers;
   const offerGroups = buildOfferGroups(sellers);
@@ -1811,19 +1811,13 @@ function optimizationSummaryTemplate(result) {
   const hasEstimatedTrustee = result.sellerCosts.some((sellerCost) => sellerCost.trusteeSource !== "parsed_exact");
   const trusteeLabel = hasEstimatedTrustee ? "Fees / trustee" : "Fees / trustee";
   const trusteeNote = hasEstimatedTrustee ? "Estimated · verify at Cardmarket checkout" : "Verify at Cardmarket checkout";
-  const savingsNote = result.savings > 0.1
-    ? "Shipping did not eat the savings this time."
-    : "Your cart is already pretty lean. Shipping did not sabotage you this time.";
-  // Savings display removed per UX feedback
-
   return `
     <div class="summary-hero-card summary-hero-forge">
       <div class="summary-hero-main">
         <div class="summary-hero-copy">
           <span class="eyebrow">STEP 3 — OPTIMIZE</span>
           <h3>${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</h3>
-          <p>Buy the cards below from the selected sellers.</p>
-          <p class="note-text">${escapeHtml(savingsNote)}</p>
+          <p>Buy the cards below from the selected sellers. Verify final totals at Cardmarket checkout.</p>
         </div>
         <div class="plan-pill-row" aria-label="Buying plan summary">
           <span class="plan-pill">${escapeHtml(`Sellers to use: ${result.usedSellers.length}`)}</span>
@@ -1853,31 +1847,33 @@ function optimizationSummaryTemplate(result) {
         `}
       </div>
       <div class="button-row" style="grid-column:1/-1;margin-top:8px;">
-        <button id="confirmPlanButton" class="primary-button" type="button">Confirm plan → Cardmarket</button>
+        <button id="confirmPlanButton" class="primary-button" type="button">Send to Cardmarket</button>
         <p id="confirmPlanStatus" style="margin:6px 0 0;font-size:12px;color:var(--text-muted);min-height:1em;"></p>
       </div>
     </div>
   `;
 }
 
-function resultSummaryTemplate(result, savingsPercent) {
+function resultSummaryTemplate(result) {
   const totalItems = result.selectedOffers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
-  const isSavingsMeaningful = result.savings > 0.1;
 
   return `
     <div class="result-summary-strip">
-      <div class="summary-metric">
-        <div class="summary-metric-label">Final Total</div>
+      <div class="summary-metric summary-metric--total">
+        <div class="summary-metric-label">Total cost</div>
         <div class="summary-metric-value">${escapeHtml(formatEstimatedMoney(result.selectedTotal))}</div>
       </div>
-
       <div class="summary-metric">
-        <div class="summary-metric-label">Sellers to Use</div>
+        <div class="summary-metric-label">Cards</div>
+        <div class="summary-metric-value">${escapeHtml(String(totalItems))}</div>
+      </div>
+      <div class="summary-metric">
+        <div class="summary-metric-label">Sellers</div>
         <div class="summary-metric-value">${escapeHtml(String(result.usedSellers.length))}</div>
       </div>
       <div class="summary-metric">
-        <div class="summary-metric-label">Total Items</div>
-        <div class="summary-metric-value">${escapeHtml(String(totalItems))}</div>
+        <div class="summary-metric-label">Shipping</div>
+        <div class="summary-metric-value">${escapeHtml(formatEstimatedMoney(result.shippingTotal))}</div>
       </div>
     </div>
   `;
@@ -1888,8 +1884,6 @@ function recommendationsTemplate(result) {
   const costBySeller = new Map(result.sellerCosts.map((cost) => [cost.sellerIndex, cost]));
   const enrichedSelectedOffers = result.selectedOffers.map((offer) => enrichOfferWithReference(offer));
   const highPriceNote = hasHighPricedCards(enrichedSelectedOffers) ? generateHighPriceNote(enrichedSelectedOffers) : "";
-  const savingsPercent = result.currentTotal > 0 ? Math.round((result.savings / result.currentTotal) * 100) : 0;
-
   const unresolvedSellers = result.usedSellers.filter(({ sellerIndex }) => costBySeller.get(sellerIndex)?.source === "unresolved");
   const resolvedSellers = result.usedSellers.filter(({ sellerIndex }) => costBySeller.get(sellerIndex)?.source !== "unresolved");
 
@@ -1911,7 +1905,7 @@ function recommendationsTemplate(result) {
 
   return `
     ${droppedSellersTemplate(result)}
-    ${resultSummaryTemplate(result, savingsPercent)}
+    ${resultSummaryTemplate(result)}
     ${highPriceNote}
     ${unresolvedSellersTemplate(result, planBySeller, costBySeller)}
     <div class="recommendation-grid">
@@ -2336,22 +2330,45 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
 
   const isUnresolved = sellerCost?.source === "unresolved";
 
+  const isRecommended = displayNumber === 1 && !isUnresolved;
+
   return `
-    <article class="recommendation-card premium-seller-card${isUnresolved ? " seller-card--unresolved" : ""}">
+    <article class="recommendation-card premium-seller-card${isUnresolved ? " seller-card--unresolved" : ""}${isRecommended ? " seller-recommended" : ""}">
       <header class="seller-card-header">
         <div class="seller-number-badge">${escapeHtml(displayNumber)}</div>
         <div class="seller-info-primary">
           <h3>${escapeHtml(seller.sellerName)}</h3>
           <div class="seller-meta">
-            ${escapeHtml(seller.sellerCountry || "Unknown")} · ${escapeHtml(trackingLabel)} · ${escapeHtml(`${itemCount} ${itemCount === 1 ? "copy" : "copies"}`)}
+            ${escapeHtml(seller.sellerCountry || "Unknown")} · ${escapeHtml(trackingLabel)}
           </div>
         </div>
-        <div class="seller-total">
-          <span>Total</span>
-          <strong>${escapeHtml(formatEstimatedMoney(displayTotal))}</strong>
-        </div>
-        ${isUnresolved ? `<a class="fix-shipping-link ghost-button" href="#resolve-seller-${escapeAttribute(String(sellerIndex))}">Fix shipping →</a>` : ""}
+        ${isUnresolved ? `<a class="fix-shipping-link ghost-button" href="#resolve-seller-${escapeAttribute(String(sellerIndex))}">Fix shipping →</a>` : isRecommended ? `<span class="status-pill good">Lowest cost</span>` : ""}
       </header>
+
+      <div class="seller-total-hero">
+        <span class="seller-total-hero-label">Total cost</span>
+        <span class="seller-total-hero-amount">${escapeHtml(formatEstimatedMoney(displayTotal))}</span>
+        ${isRecommended ? `<span class="seller-total-hero-sub">Lowest cost option</span>` : ""}
+      </div>
+
+      <div class="seller-data-grid">
+        <div class="seller-data-item">
+          <span class="seller-data-label">Cards</span>
+          <span class="seller-data-value">${escapeHtml(String(itemCount))}</span>
+        </div>
+        <div class="seller-data-item">
+          <span class="seller-data-label">Articles</span>
+          <span class="seller-data-value">${escapeHtml(formatMoney(cardTotal))}</span>
+        </div>
+        <div class="seller-data-item">
+          <span class="seller-data-label">Shipping</span>
+          <span class="seller-data-value">${escapeHtml(formatMoney(shippingTotal))}</span>
+        </div>
+        <div class="seller-data-item">
+          <span class="seller-data-label">Trustee fee</span>
+          <span class="seller-data-value">${escapeHtml(formatMoney(trusteeTotal))}</span>
+        </div>
+      </div>
 
       <div class="seller-cards-section">
         <div class="seller-section-label">Cards to buy</div>
