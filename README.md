@@ -1,10 +1,10 @@
-# Cardmarket Cart Optimizer
+# KAIKATA – Cardmarket Cart Optimizer
 
-A small web app that helps optimize a Cardmarket shopping cart for lowest total cost.
+A web app that helps optimize a Cardmarket shopping cart for lowest total cost.
 
 ## Purpose
 
-The app takes copied Cardmarket cart text as input, extracts sellers, shipping methods, item rows, and prices, infers seller country where possible, allows manual correction, and calculates the cheapest buying plan including shipping and trustee effects.
+KAIKATA takes your Cardmarket cart data as input, extracts sellers, shipping methods, item rows, and prices, infers seller country where possible, allows manual correction, and calculates the cheapest buying plan including shipping and trustee effects.
 
 ## Primary user journey
 
@@ -15,13 +15,13 @@ The app takes copied Cardmarket cart text as input, extracts sellers, shipping m
 5. Review which sellers to keep, which to drop, and the final total cost.
 6. Manually update the cart on Cardmarket and place the orders.
 
-## Experimental Cardmarket extractor
+## Cardmarket extractor extension
 
-The `extension/` directory contains a browser-extension scaffold that can extract structured cart data directly from a Cardmarket shopping-cart page and open it in CartForge. This avoids copying the entire cart page manually and unlocks additional metadata that pasted text often loses, including set name and rarity.
+The `extension/` directory contains a browser extension that can extract structured cart data directly from a Cardmarket shopping-cart page and open it in KAIKATA. This avoids copying the entire cart page manually and unlocks additional metadata that pasted text often loses, including set name and rarity.
 
 Current status:
-- The extension injects an "Open in CartForge" panel on Cardmarket shopping-cart pages.
-- CartForge can import extracted payloads from `#cartforge=...` URL fragments or `CARTFORGE_CART={...}` pasted into the input area.
+- The extension injects an "Open in KAIKATA" panel on Cardmarket shopping-cart pages.
+- KAIKATA can import extracted payloads from `#cartforge=...` URL fragments or `CARTFORGE_CART={...}` pasted into the input area (internal protocol identifiers, unchanged for compatibility).
 - Review rows now preserve `setName` and `rarity` when provided by the extractor.
 - Extension-import and manual-paste flows both normalize into the same review and optimization model.
 
@@ -114,7 +114,7 @@ The app should optimize correctly before it looks polished. Parsing accuracy and
 
 ## Product voice (microcopy guardrails)
 
-CartForge should read like a smart TCG friend: concise, practical, hobby-native, and trustworthy.
+KAIKATA should read like a smart TCG friend: concise, practical, hobby-native, and trustworthy.
 
 - Use light wit only in low-risk moments (empty states, successful import/parse, optimization success/loading, optional helper text).
 - Keep warnings, malformed import errors, variant constraints, and cost-critical messages neutral and precise.

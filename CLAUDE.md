@@ -1,15 +1,15 @@
-# Cardmarket Cart Optimizer - Development Guide
+# KAIKATA – Cardmarket Cart Optimizer: Development Guide
 
 ## Project Overview
 A client-side web app that optimizes Cardmarket shopping carts for the lowest total cost by analyzing seller offers, shipping methods, and trustee fees.
 
 **Tech Stack**: Vanilla JavaScript (ES modules), HTML, CSS
 **Deployment**: GitHub Pages (static site)
-**Latest Release**: v1.1 (May 2026)
+**Latest Release**: v1.0 (May 2026)
 
 ---
 
-## Current Status Assessment (May 13, 2026)
+## Current Status Assessment (May 15, 2026)
 
 ### What's Working Well
 ✅ **Core functionality**: Parser, optimizer, and shipping logic are solid and well-tested
@@ -17,13 +17,13 @@ A client-side web app that optimizes Cardmarket shopping carts for the lowest to
 ✅ **Security**: Proper input escaping (escapeHtml/escapeAttribute) prevents XSS
 ✅ **Test coverage**: 11/12 test files passing (scryfall-lookup times out due to external API)
 ✅ **UI/UX**: Mobile-responsive design with intuitive workflow
-✅ **Card search**: Search functionality in review table (shipped in v1.1)
-✅ **Result summary strip**: Final Total, Savings, Sellers Used, Item Count (shipped in v1.1)
-✅ **Browser extension scaffold**: Experimental, in `extension/` directory
+✅ **Card search**: Search functionality in review table (shipped in v1.0)
+✅ **Result summary strip**: Final Total, Savings, Sellers Used, Item Count (shipped in v1.0)
+✅ **Browser extension**: Extracts structured cart data from Cardmarket, opens in KAIKATA
 ✅ **Extension + paste flows**: Both normalize into the same review and optimization model
 
 ### Open PRs
-None. PRs #13 and #14 confirmed closed/merged as of May 13, 2026.
+None. All PRs closed/merged as of May 15, 2026.
 
 ---
 
@@ -69,9 +69,9 @@ None. PRs #13 and #14 confirmed closed/merged as of May 13, 2026.
    - New logic must go into dedicated modules, not here
    - Impact: Ongoing discipline required
 
-5. **Manual DOM queries in event handlers** — Lots of dataset/getAttribute chains
-   - Could use event delegation more consistently
-   - Impact: Minor readability improvement
+5. **Internal protocol identifiers** — `CARTFORGE_CART=`, `#cartforge=`, storage keys, message types
+   - Still use the pre-rebrand name for backwards compatibility with the extension protocol
+   - Impact: Cosmetic; no functional issue
 
 #### Missing v1 Features (Documented Out-of-Scope)
 - ✓ Automatic cart editing on Cardmarket
@@ -81,7 +81,7 @@ None. PRs #13 and #14 confirmed closed/merged as of May 13, 2026.
 
 ---
 
-## Feature Wishlist for v1.2
+## Feature Wishlist for v1.1
 (Document but don't implement until scoped and planned)
 - [ ] Quantity adjustment with live optimization (currently requires rerun)
 - [ ] Seller reputation/rating integration (requires Cardmarket API)
@@ -122,7 +122,7 @@ None. PRs #13 and #14 confirmed closed/merged as of May 13, 2026.
 │   ├── scryfall.mjs                # Reference price lookups (external API)
 │   └── price-verdict.mjs           # Price comparison logic
 │
-├── extension/                      # Browser extension scaffold (experimental)
+├── extension/                      # Browser extension (extracts from Cardmarket)
 │
 └── tests/
     ├── fixtures/                   # Sample cart data
@@ -140,7 +140,7 @@ None. PRs #13 and #14 confirmed closed/merged as of May 13, 2026.
    - Extract shared `escapeHtml` utility module
    - Mock scryfall integration test for CI
 
-2. **Before v1.2 feature work**:
+2. **Before v1.1 feature work**:
    - Define and scope chosen feature from wishlist
    - Run full test suite to confirm clean baseline
    - Test on mobile device (iOS/Android)
@@ -179,5 +179,5 @@ open index.html
 
 ---
 
-Last Updated: May 13, 2026
+Last Updated: May 15, 2026
 Branch: `main`
