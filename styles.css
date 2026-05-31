@@ -1964,19 +1964,20 @@ select {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px;
-  border: 1px solid rgba(199, 109, 109, 0.15);
+  padding: 10px 16px;
+  border: 1.5px solid rgba(159, 45, 36, 0.35);
   border-radius: 6px;
-  background: var(--bg-subtle);
+  background: #fff;
   font-size: 0.85rem;
+  color: var(--text);
   transition: all 0.2s ease;
   flex: 1;
-  min-width: 200px;
+  min-width: 160px;
 }
 
 .dropped-seller-item:hover {
-  border-color: rgba(199, 109, 109, 0.3);
-  background: rgba(199, 109, 109, 0.05);
+  border-color: rgba(159, 45, 36, 0.55);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .dropped-seller-name {
