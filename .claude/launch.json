@@ -3,8 +3,9 @@
   "configurations": [
     {
       "name": "dev-server",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "python3 -m http.server $PORT"],
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8000"],
+      "cwd": "/Users/kevinsula/Documents/AI Source Files/Projects/KAIKATA",
       "port": 8000,
       "autoPort": true
     }

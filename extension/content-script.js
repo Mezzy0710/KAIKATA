@@ -95,10 +95,23 @@
   function renderPlanOverlay(plan) {
     renderFloatingPanel(plan);
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", () => findAndBadgeSellerSections(plan));
+      document.addEventListener("DOMContentLoaded", () => {
+        findAndBadgeSellerSections(plan);
+        observeCartMutations(plan);
+      });
     } else {
       findAndBadgeSellerSections(plan);
+      observeCartMutations(plan);
     }
+  }
+
+  function observeCartMutations(plan) {
+    let debounceTimer = null;
+    const observer = new MutationObserver(() => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => findAndBadgeSellerSections(plan), 150);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 
   function renderFloatingPanel(plan) {
