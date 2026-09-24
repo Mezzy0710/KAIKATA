@@ -1,4 +1,5 @@
 import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseMoney } from "./parser.mjs?v=20260924c";
+import { parseObservedShipping } from "./shipping-calibration.mjs?v=20260925a";
 
 const CARTFORGE_PAYLOAD_PREFIX = "CARTFORGE_CART=";
 
@@ -10,7 +11,7 @@ export function parseExtractedCartPayload(rawInput, shippingData = null) {
 
   const warnings = Array.isArray(decoded.payload.warnings) ? decoded.payload.warnings.filter(Boolean) : [];
   const shippingIndex = buildShippingIndex(shippingData);
-  const sellers = normalizeSellers(decoded.payload.sellers || [], warnings, shippingIndex);
+  const sellers = normalizeSellers(decoded.payload.sellers || [], warnings, shippingIndex, decoded.payload.extractedAt || null);
 
   return {
     ok: true,
@@ -74,7 +75,7 @@ export function decodeCartForgePayload(value) {
   return { ok: false, error: "Payload is not valid CartForge cart JSON." };
 }
 
-function normalizeSellers(sellers, warnings, shippingIndex) {
+function normalizeSellers(sellers, warnings, shippingIndex, extractedAt = null) {
   return sellers.map((seller, sellerIndex) => {
     const sellerName = cleanupValue(seller.sellerName) || `Seller ${sellerIndex + 1}`;
     const rawText = seller.rawText || "";
@@ -108,6 +109,8 @@ function normalizeSellers(sellers, warnings, shippingIndex) {
       sellerType: cleanupValue(seller.sellerType || seller.type || ""),
       shippingMethod,
       shippingMethodRaw: cleanupValue(seller.shippingMethodRaw || shippingMethod),
+      // Full dropdown as seen in the cart (selected method + category prices).
+      observedShipping: parseObservedShipping(seller.shippingMethod || seller.shippingOption || rawText, extractedAt),
       trackingStatus,
       articleValue: articleValue ?? sumItems(items),
       shippingValue,
@@ -269,16 +272,39 @@ function sumItems(items) {
   return Number.isFinite(total) ? total : null;
 }
 
+// The extension used to extract each cart row twice: once clean (multi-line rawLine)
+// and once flattened ("1xFecundityFecundity#145EX00150,39 €1"), where a seller comment
+// can glue onto the price and a 2x row can parse as quantity 1.
+function isFlattenedRow(item) {
+  const rawLine = String(item.rawLine || "");
+  return !rawLine.includes("\n") && /^\d+x\S/i.test(rawLine);
+}
+
+function cardIdentityKey(item) {
+  return [item.cardName, item.collectorNumber]
+    .map((part) => String(part || "").toLowerCase().replace(/\s+/g, ""))
+    .join("|");
+}
+
 function dedupeItems(items) {
+  // Safety net for old payloads: drop a flattened copy whenever the seller has a clean
+  // row for the same card and collector number, regardless of quantity or price.
+  const cleanKeys = new Set(items.filter((item) => !isFlattenedRow(item)).map(cardIdentityKey));
+  const withoutFlattenedCopies = items.filter((item) => !(isFlattenedRow(item) && cleanKeys.has(cardIdentityKey(item))));
+
+  // Collapse exact repeats only. Same card and number with a different condition or
+  // price are two real listings and must both stay.
   const byKey = new Map();
-  items.forEach((item) => {
+  withoutFlattenedCopies.forEach((item) => {
     const key = item.articleId
       ? `article:${item.articleId}`
       : [
         item.cardName,
         item.setName || item.collectorNumber,
-        item.quantity
-      ].map((part) => String(part || "").toLowerCase().replace(/\s+/g, "")).join("|");
+        item.quantity,
+        item.condition,
+        item.price
+      ].map((part) => String(part ?? "").toLowerCase().replace(/\s+/g, "")).join("|");
     const existing = byKey.get(key);
     if (!existing || itemScore(item) > itemScore(existing)) {
       byKey.set(key, item);

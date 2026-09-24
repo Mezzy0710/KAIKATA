@@ -1,4 +1,4 @@
-import { estimateShipmentWeight } from "./shipping.mjs?v=20260924c";
+import { estimateShipmentWeight } from "./shipping.mjs?v=20260925a";
 
 /**
  * Returns a shipping cost result shaped like calculateShippingCost's output, but

@@ -4,7 +4,7 @@ import {
   calculateTrusteeFee,
   estimateShipmentWeight,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
-} from "./shipping.mjs?v=20260924c";
+} from "./shipping.mjs?v=20260925a";
 import {
   getReferencePrice,
   enrichCardsWithReferencePrices,
@@ -18,13 +18,14 @@ import {
   hasHighPricedCards,
   generateHighPriceNote
 } from "./price-verdict.mjs?v=20260509m";
-import { decodeCartForgeHash, decodeCartForgePayload, parseExtractedCartPayload } from "./importer.mjs?v=20260924c";
+import { decodeCartForgeHash, decodeCartForgePayload, parseExtractedCartPayload } from "./importer.mjs?v=20260925a";
 import { buildConfirmedPlan } from "./confirmed-plan.mjs?v=20260511a";
 import { sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260511a";
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
-import { applyShippingOverride } from "./shipping-override.mjs?v=20260924c";
+import { applyShippingOverride } from "./shipping-override.mjs?v=20260925a";
 import { improveSelection } from "./optimizer-search.mjs?v=20260924b";
 import { createSellerCostCache } from "./optimizer-score-cache.mjs?v=20260924b";
+import { buildSellerShippingRecords } from "./shipping-calibration.mjs?v=20260925a";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const MAX_OPTIMIZATION_ITERATIONS = 500;
@@ -1555,8 +1556,15 @@ function optimizeCart(sellers, offerGroups) {
   const costNotes = [];
   const insufficientGroups = groups.filter((group) => group.desiredQuantity > 0 && !group.offers.some((offer) => offer.quantity >= group.desiredQuantity));
   const incompleteGroups = groups.filter((group) => !group.offers.some((offer) => offer.quantity >= group.requiredQuantity));
-  const initialOffers = buildInitialAssignment(groups, sellers, shippingRecords);
-  const optimization = optimizeBySellerMoves(initialOffers, groups, sellers, shippingRecords);
+  // Official table calibrated with the shipping options seen in the cart; one row list per seller.
+  const shippingCalibration = buildSellerShippingRecords({
+    shippingRecords,
+    sellers,
+    cartCardCountBySeller: new Map(sellers.map((seller, sellerIndex) => [sellerIndex, seller.items.reduce((sum, item) => sum + Number(item.quantity || 1), 0)]))
+  });
+  const sellerShippingRecords = shippingCalibration.recordsBySellerIndex;
+  const initialOffers = buildInitialAssignment(groups, sellers, sellerShippingRecords);
+  const optimization = optimizeBySellerMoves(initialOffers, groups, sellers, sellerShippingRecords);
   const selectedOffers = optimization.selectedOffers;
   const score = optimization.score;
   const currentTotal = estimateCurrentTotal(sellers);
@@ -1628,7 +1636,9 @@ function optimizeCart(sellers, offerGroups) {
     countryWarnings,
     unresolvedSellers,
     iterations: optimization.iterations,
-    insufficientGroups
+    insufficientGroups,
+    shippingCorrections: shippingCalibration.corrections,
+    ignoredShippingObservations: shippingCalibration.ignored
   };
 }
 
@@ -1732,7 +1742,8 @@ function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {
   const shippingResult = hasOverride
     ? applyShippingOverride(seller, offers)
     : calculateShippingCost({
-        shippingRecords,
+        // A Map holds calibrated per-seller rows (see shipping-calibration.mjs).
+        shippingRecords: shippingRecords instanceof Map ? shippingRecords.get(sellerIndex) || [] : shippingRecords,
         country: seller.sellerCountry,
         cardCount: quantity,
         orderValue: articleValue
@@ -2263,7 +2274,7 @@ function advancedDetailsTemplate(result, offerGroups) {
     <div class="advanced-section">
       <h3>Calculation details</h3>
       <p class="section-description">Shipping, trustee, and cost assumptions:</p>
-      ${shippingRatesDateTemplate()}
+      ${shippingRatesDateTemplate(result)}
       ${assumptionsTemplate(result)}
     </div>
   `);
@@ -2271,9 +2282,27 @@ function advancedDetailsTemplate(result, offerGroups) {
   return sections.join("");
 }
 
-function shippingRatesDateTemplate() {
+function shippingRatesDateTemplate(result) {
   const updatedAt = state.shippingData?._meta?.updatedAt;
-  return updatedAt ? `<p class="section-description">Shipping rates from ${escapeHtml(updatedAt)}</p>` : "";
+  const dateLine = updatedAt ? `<p class="section-description">Shipping rates from ${escapeHtml(updatedAt)}</p>` : "";
+  return dateLine + shippingCorrectionsTemplate(result?.shippingCorrections || [], result?.ignoredShippingObservations || []);
+}
+
+function shippingCorrectionsTemplate(corrections, ignored) {
+  if (!corrections.length && !ignored.length) return "";
+  const applied = corrections.filter((correction) => correction.applied !== false);
+  const weight = (grams) => (Number.isFinite(grams) ? ` (up to ${escapeHtml(Math.round(grams * 10) / 10)} g)` : "");
+  const correctionItems = corrections.map((correction) => `
+    <li>${escapeHtml(correction.country)} · ${escapeHtml(correction.sellerName || "all sellers")} · ${escapeHtml(correction.method)}${weight(correction.maxWeightG)}:
+      ${correction.tablePrice === null ? "not in table" : escapeHtml(formatMoney(correction.tablePrice))} → ${escapeHtml(formatMoney(correction.observedPrice))}${correction.applied === false ? " (not used: another seller shows a higher price)" : ""}</li>`);
+  const ignoredItems = ignored.map((entry) => `
+    <li>${escapeHtml(entry.country)} · ${escapeHtml(entry.sellerName)} · ${escapeHtml(entry.method)} ${escapeHtml(formatMoney(entry.observedPrice))}: ignored, only offered above a minimum order value</li>`);
+  return `
+    <details class="warning-details">
+      <summary>${applied.length} shipping price${applied.length === 1 ? "" : "s"} adjusted from your cart</summary>
+      <ul class="section-description">${[...correctionItems, ...ignoredItems].join("")}</ul>
+    </details>
+  `;
 }
 
 function countryReviewTemplate(countryWarnings) {

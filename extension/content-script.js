@@ -794,7 +794,7 @@
     });
 
     if (rowCandidates.length) {
-      return rowCandidates;
+      return dropNestedDuplicateRows(rowCandidates);
     }
 
     return [...section.querySelectorAll("li, div")].filter((row) => {
@@ -804,6 +804,24 @@
         /(?:€|EUR|\d+[,.]\d{2})/.test(text)
       );
     });
+  }
+
+  // Cardmarket nests one row element inside another. The outer/inner copy can yield a
+  // flattened innerText ("1xFecundityFecundity#145EX00150,39 €1") in which a seller
+  // comment glues onto the price. For each nested pair keep the row with clean
+  // multi-line text; if both are equally clean, keep the inner (more specific) one.
+  function dropNestedDuplicateRows(rows) {
+    const isClean = (row) => visibleText(row).includes("\n");
+    const prefer = (candidate, other) => {
+      const candidateClean = isClean(candidate);
+      if (candidateClean !== isClean(other)) return candidateClean;
+      return other.contains(candidate);
+    };
+    return rows.filter((row) => !rows.some((other) => (
+      other !== row &&
+      (other.contains(row) || row.contains(other)) &&
+      prefer(other, row)
+    )));
   }
 
   function extractItem(row, sellerIndex, rowIndex) {

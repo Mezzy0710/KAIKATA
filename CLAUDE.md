@@ -23,7 +23,9 @@ A client-side web app that optimizes Cardmarket shopping carts for the lowest to
 ✅ **Extension + paste flows**: Both normalize into the same review and optimization model
 ✅ **Optimizer search** (`src/optimizer-search.mjs`): local search with single-card moves, seller removal and seller addition (addition is followed by a removal pass). Matches the brute-force optimum on ~99% of a seeded 300-cart fuzz set; 500-iteration safety limit
 ✅ **Optimizer performance**: per-seller costs are memoized per `optimizeCart` run (`src/optimizer-score-cache.mjs`). Shipping/trustee estimation was >95% of search time. Seeded random carts 15/60/4, 25/100/5, 35/150/6 run in ~0.06 / 0.26 / 0.9 s in Node. The UI yields a frame before optimizing so "Optimizing" and the disabled button paint
-✅ **Shipping data** (refreshed 2026-09-24): 32 origin countries → Germany, with `_meta.updatedAt` shown in advanced details. Keys starting with `_` are ignored by `walkShippingData`. Weight model = Cardmarket's published limits (≤4 cards 20 g, ≤17 50 g, ≤40 100 g, above: `11 + 2.22 × cards` estimate)
+✅ **Shipping data** (refreshed 2026-09-24): 32 origin countries → Germany, with `_meta.updatedAt` shown in advanced details. Keys starting with `_` are ignored by `walkShippingData`. Weight model = Cardmarket's published limits (≤4 cards 20 g, ≤17 50 g, ≤40 100 g, above: `11 + 2.22 × cards` estimate). Known gap: Austria's 75 g tracked letter is only used up to 17 cards
+✅ **Shipping calibration** (`src/shipping-calibration.mjs`, pure): the importer parses each seller's shipping dropdown into `seller.observedShipping` (selected method + Letter/Tracked Letter/Tracked Parcel category prices). Per `optimizeCart` run the table is calibrated: a selected method matching a table row updates that row's price for the whole country (disagreement → higher price); an unmatched selected method or a category cheaper than the table becomes a seller-only row. Table rows stay in every list, and `calculateShippingCost` still picks the cheapest eligible row by weight and value. Safe because the optimizer never gives a seller more cards than its cart holds. Threshold offers ("free over 100€", €0 prices) are ignored, since they would make smaller subsets free. Corrections are listed in advanced details
+✅ **Duplicate extension rows**: the extension keeps the clean row of nested row elements; `dedupeItems` drops flattened copies (`^\d+x\S`, no newline) when a clean row for the same card + collector number exists, and only collapses exact repeats (never two different listings)
 ✅ **Unresolved sellers**: scores rank lexicographically by `unresolvedCount`, then `resolvedTotal`, then seller count, so an Unknown-country seller (total = Infinity) no longer stalls the search. `score.total` and the UI are unchanged
 ✅ **Default desired quantity = 1** per card; the collapsed row shows `· N in cart` when the cart holds more copies. The extension overlay shows `Keep X of N` when the plan keeps fewer copies than the cart row
 
@@ -101,6 +103,8 @@ None. All PRs closed/merged as of May 15, 2026.
 - ✅ Default quantity: default of 1, "in cart" hint (`default-quantity.mjs`)
 - ✅ Shipping: cost calculation, trustee fee logic
 - ✅ Shipping weight tiers + refreshed prices (`shipping-weight.mjs`)
+- ✅ Shipping calibration: dropdown parsing, price updates, seller rows, threshold offers, bracket dynamics (`shipping-calibration.mjs`)
+- ✅ Real cart (anonymized, 23 sellers / 35 cards): dedupe, calibration, optimize snapshot €211.37 (`real-cart.mjs`, fixture `tests/fixtures/real-cart-2026-09.txt`)
 - ✅ Country inference: aliases, mobile parsing
 - ✅ UI: warning copy formatting
 - ⚠️ Scryfall: integration test (requires network, excluded from CI)
@@ -119,6 +123,7 @@ None. All PRs closed/merged as of May 15, 2026.
 ├── styles.css                      # All styling (mobile-responsive)
 ├── shipping_data.json              # Cardmarket shipping rates to Germany (`_meta` = capture date/source)
 ├── scripts/shipping-refresh-snippet.js  # DevTools snippet that regenerates shipping_data.json
+├── scripts/anonymize-cart.mjs      # Turns a real CARTFORGE_CART= payload into a committable fixture
 │
 ├── src/
 │   ├── app.mjs                     # Main app logic, UI rendering, templates
@@ -126,6 +131,7 @@ None. All PRs closed/merged as of May 15, 2026.
 │   ├── optimizer-score-cache.mjs   # Per-run memoization of per-seller cost
 │   ├── parser.mjs                  # Cart text parsing, country inference
 │   ├── shipping.mjs                # Shipping cost & trustee calculations
+│   ├── shipping-calibration.mjs    # Cart-observed shipping → per-seller calibrated rows (pure)
 │   ├── scryfall.mjs                # Reference price lookups (external API)
 │   └── price-verdict.mjs           # Price comparison logic
 │
@@ -171,6 +177,11 @@ node tests/correctness-parser.mjs
 node tests/correctness-optimizer.mjs
 node tests/shipping-costs.mjs
 node tests/shipping-weight.mjs
+node tests/shipping-calibration.mjs
+node tests/real-cart.mjs
+
+# New real-cart fixture (keep the raw capture in _private/, never commit it)
+# node scripts/anonymize-cart.mjs _private/<cart>.txt tests/fixtures/<name>.txt
 node tests/parser-mobile-country-aliases.mjs
 node tests/optimizer-seller-moves.mjs
 node tests/default-quantity.mjs
@@ -188,5 +199,5 @@ open index.html
 
 ---
 
-Last Updated: September 24, 2026 (shipping refresh)
+Last Updated: September 25, 2026 (shipping calibration)
 Branch: `main`
