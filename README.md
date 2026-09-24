@@ -27,16 +27,43 @@ Current status:
 
 Next hardening step: capture a sanitized Cardmarket cart HTML sample and add fixture tests for the extractor selectors.
 
-### Adding offers from sellers' wants-list pages (extension 1.1.0)
+### KAIKATA inside the extension (2.0.0)
 
-KAIKATA can also consider articles that are **not in your cart yet**, from the "Seller's Articles on My Wants List" page of sellers you pick (`/Users/<seller>/Offers/Singles?idWantslist=<id>`):
+From 2.0.0 KAIKATA itself runs as an extension page (`chrome-extension://…/app/index.html`):
 
-1. Open that page for a seller. A small KAIKATA panel appears (only when the URL has `idWantslist`).
-2. Click **Capture this seller**. The extension reads the result pages one at a time with a 2–4 s pause between them, at most 15 pages, and stops at the first error, login redirect, check page or HTTP 429, keeping what it has. **Capture this page only** reads just the page you are on (repeat it per page if you prefer to click through yourself).
-3. Import your cart into KAIKATA as usual. KAIKATA asks the extension for the captured offers and uses those for cards already in your cart (other cards are ignored). They show as "not in cart" in the review table.
-4. The plan lists per seller what to **Add to cart**, with a link to that seller's wants page. After "Send to Cardmarket", that page marks the planned articles **ADD ×N**, and **Select planned articles on this page** ticks them and sets the amounts. You then click Cardmarket's own button; the extension never changes your cart itself.
+- The toolbar icon opens KAIKATA, or focuses the tab if it is already open.
+- **Transfer to KAIKATA** on the cart page hands the cart over through extension storage (`cartforgeIncomingCartV1`, read once and removed) and reuses an open KAIKATA tab; no URL hash. **Open on website instead** keeps the old website route during the transition.
+- Wants stock loaded in another tab appears in KAIKATA straight away (storage change events instead of re-checking on tab focus), and **Send to Cardmarket** writes the confirmed plan directly to extension storage.
+- The website (GitHub Pages) keeps working as before. `src/host.mjs` picks the transport: extension storage on the extension page, URL hash + postMessage bridge on the website.
+- Scryfall reference prices work from the extension page without extra permissions (the API sends `Access-Control-Allow-Origin: *`).
 
-Captures are stored in the extension (`chrome.storage.local`), per seller; they are marked stale after 24 h, and the panel lists them with **Remove** / **Clear all**. Nothing is crawled in the background.
+### Install / update the extension
+
+The web app has no build step; only the extension is packaged. The packaging script copies the app into the extension build:
+
+```bash
+node scripts/package-extension.mjs
+```
+
+This writes `dist/kaikata-extension/` (the unpacked extension, with the app under `app/`) and `dist/kaikata-extension-<version>.zip`. It refuses to run if `CHANGELOG.md` has no entry for the version in `extension/manifest.json`, and needs the system `zip` command (`--no-zip` skips the archive).
+
+- **Yourself:** `chrome://extensions` → Developer mode → **Load unpacked** → select `dist/kaikata-extension/`. After pulling changes, run the script again and click the reload icon on the extension card.
+- **Friends:** send them the ZIP. They unzip it, then **Load unpacked** the unzipped folder (the one with `manifest.json`). To update, replace the folder with the new ZIP's contents and reload the extension.
+
+The extension page bundles Geist (`extension/app-assets/fonts/`, SIL OFL 1.1); the website keeps loading it from Google Fonts.
+
+### Comparing your cart with sellers' wants stock (extension 1.2.0)
+
+KAIKATA can also consider articles that are **not in your cart yet**, from each cart seller's "Seller's Articles on My Wants List" page (`/Users/<seller>/Offers/Singles?idWantslist=<id>`). Cardmarket warns that cart abuse can lead to account suspension, so keep the cart to one Shopping Wizard result and let the wants stock replace adding alternatives by hand:
+
+1. **Fill the cart once.** Run Cardmarket's Shopping Wizard (lowest price) for one wants list and put the result into your cart.
+2. **Cart page → checklist.** Open the KAIKATA panel on the cart page. **Wants stock** lists every cart seller: ✓ loaded (offer count, age) or "not loaded", with **Open wants page**. **Next seller →** opens the first seller that is not loaded yet (same tab, only when you click). Sellers you loaded from elsewhere are listed as "extra sellers".
+3. **Wants page → load.** The panel asks "Load <seller>'s wanted cards for KAIKATA?" with the page count and an estimated time. **Load** reads the pages one at a time with a 2–4 s pause between them, at most 15 pages, and stops at the first error, login redirect, check page or HTTP 429, keeping what it has (**Stop** ends it early; **Capture this page only** reads just the current page). The result card says how many of your cart's cards this seller has and how many of them are cheaper than in your cart, then offers **Next seller →** and **Back to cart**. A seller loaded in the last 24 h shows "Loaded … ago" and **Reload**.
+4. **Cart page → send.** Under **Transfer to KAIKATA** a line states exactly what is sent: your cart plus the wants stock of the sellers loaded in the last 24 h **for this cart's wants list**. Older captures and captures from another wants list are not sent (the line counts them).
+5. **KAIKATA → result.** KAIKATA optimizes twice, cart only and cart + wants stock, and shows a card above the plan: either "saves €D (€A → €B). Add K articles from S sellers (T new sellers), remove R" (R = cart articles the cart-only plan keeps and the new plan drops), or "nothing beats your cart", in which case the plan is exactly the cart-only plan. A detail line breaks the offers down into cards in your cart, other wants-list cards (ignored) and articles already in your cart. Without wants stock it shows a short tip instead.
+6. The plan lists per seller what to **Add to cart**. After "Send to Cardmarket", the seller's wants page marks the planned articles **ADD ×N**, and **Select planned articles on this page** ticks them and sets the amounts. You then click Cardmarket's own button; the extension never changes your cart itself.
+
+Captures are stored in the extension (`chrome.storage.local`), one entry per seller (a reload replaces it); the wants-page panel lists them under **Loaded sellers** with **Remove** / **Clear all**. Nothing is crawled in the background. Carts imported without wants-list info (older extension, pasted cart) fall back to "captures from the last 24 h", and KAIKATA says so.
 
 ## Version 1 scope
 

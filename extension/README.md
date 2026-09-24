@@ -35,13 +35,11 @@ Item-level:
 
 ## Local Testing
 
-1. Open Chrome or another Chromium browser.
-2. Go to `chrome://extensions`.
+1. Run `node scripts/package-extension.mjs` in the repository root. It builds `dist/kaikata-extension/` (this folder plus the KAIKATA app under `app/`) and `dist/kaikata-extension-<version>.zip`.
+2. Open Chrome or another Chromium browser and go to `chrome://extensions`.
 3. Enable Developer mode.
-4. Choose "Load unpacked".
-5. Select this `extension/` directory.
-6. Open a Cardmarket shopping cart page.
-7. Click `Open local CartForge`, `Open live CartForge`, or `Copy payload`.
+4. Choose "Load unpacked" and select `dist/kaikata-extension/` (loading `extension/` directly works for the cart and wants pages, but the toolbar icon and "Transfer to KAIKATA" need the packaged `app/`).
+5. Open a Cardmarket shopping cart page and click "Transfer to KAIKATA" (or "Open on website instead" / "Copy to Clipboard").
 
 ## Live Page
 
@@ -65,4 +63,4 @@ The next hardening step is to save a sanitized cart DOM sample and add extractor
 
 ## Privacy
 
-The extension does not send data to a server. "Open in CartForge" places the payload in the destination URL fragment, which is handled client-side by the static app. Browser history may still retain that fragment, so avoid sharing the resulting URL if it contains private seller/cart data.
+The extension does not send data to a server. "Transfer to KAIKATA" hands the cart to the KAIKATA extension page through `chrome.storage.local`. "Open on website instead" places the payload in the destination URL fragment, which is handled client-side by the static app. Browser history may still retain that fragment, so avoid sharing the resulting URL if it contains private seller/cart data.

@@ -2,11 +2,17 @@
   const LIVE_CARTFORGE_URL = "https://mezzy0710.github.io/KAIKATA/";
   const PANEL_ID = "cartforge-cardmarket-extractor";
   const STORAGE_KEY = "cartforgeConfirmedPlanV3";
+  // Cart handed to the KAIKATA extension page (read once, then removed, by src/host.mjs).
+  const INCOMING_CART_KEY = "cartforgeIncomingCartV1";
   const FILTER_STORAGE_KEY = "cartforgeOverlayFilterV1";
   const MARK_SELECTOR = "[data-cartforge-mark]";
   const Matching = globalThis.CartforgeMatching;
+  // Pure wants-stock helpers (cartforge-wants-flow.js); the panel works without them.
+  const Flow = globalThis.CartforgeWantsFlow;
   // Panel elements updated after every marking pass (set by renderFloatingPanel).
   const overlayUi = { counterEl: null, doneEl: null, addedEl: null, filter: "all", setFilterButtons: null };
+  // "Wants stock" checklist + send summary (set by the panel builders).
+  const wantsUi = { section: null, summaryEl: null, signature: "", snapshotSignature: "", started: false };
   // Set to true in the browser console to log per-seller extraction diagnostics.
   const CARTFORGE_DEBUG = false;
 
@@ -306,10 +312,11 @@
       fontWeight: "600",
       cursor: "pointer"
     });
-    body.append(clearBtn);
+    body.append(buildWantsStockSection(), clearBtn);
 
     panel.append(logoBubble, header, body);
     document.body.append(panel);
+    startWantsStock();
 
     // State toggle
     let expanded = false;
@@ -804,7 +811,7 @@
     css(descEl, { margin: "0 0 14px", color: "#6E6257", fontSize: "13px", lineHeight: "1.5" });
 
     const transferBtn = document.createElement("button");
-    transferBtn.setAttribute("data-cartforge-action", "open-live");
+    transferBtn.setAttribute("data-cartforge-action", "open-app");
     transferBtn.textContent = "Transfer to KAIKATA";
     css(transferBtn, {
       width: "100%",
@@ -840,9 +847,33 @@
     statusEl.setAttribute("data-cartforge-status", "");
     css(statusEl, { margin: "10px 0 0", color: "#A89D8F", fontSize: "12px", lineHeight: "1.4" });
 
-    body.append(descEl, transferBtn, copyBtn, statusEl);
+    // What "Transfer" sends: the cart plus the wants stock that passes the 24 h / wants-list rule.
+    const summaryEl = document.createElement("p");
+    summaryEl.setAttribute("data-cartforge-send-summary", "");
+    css(summaryEl, { margin: "-2px 0 10px", color: "#6E6257", fontSize: "12px", lineHeight: "1.4" });
+    wantsUi.summaryEl = summaryEl;
+
+    // Transition: the website still works, one small link away.
+    const websiteLink = document.createElement("button");
+    websiteLink.setAttribute("data-cartforge-action", "open-live");
+    websiteLink.textContent = "Open on website instead";
+    css(websiteLink, {
+      display: "block",
+      margin: "8px auto 0",
+      border: "0",
+      background: "transparent",
+      color: "#A89D8F",
+      padding: "2px 4px",
+      fontFamily: "inherit",
+      fontSize: "12px",
+      textDecoration: "underline",
+      cursor: "pointer"
+    });
+
+    body.append(descEl, buildWantsStockSection(), transferBtn, summaryEl, copyBtn, websiteLink, statusEl);
     panel.append(logoBubble, header, body);
     document.body.append(panel);
+    startWantsStock();
 
     // State toggle
     let expanded = false;
@@ -853,6 +884,7 @@
       css(panel, EXPANDED);
       header.style.display = "flex";
       body.style.display = "block";
+      refreshWantsStock();
     };
 
     const collapse = () => {
@@ -876,7 +908,6 @@
       }
 
       const payload = extractCartPayload(document);
-      const encoded = encodePayload(payload);
       const itemCount = countItems(payload);
 
       if (!payload.sellers.length || itemCount === 0) {
@@ -884,8 +915,17 @@
         return;
       }
 
+      saveCartSnapshot(payload);
+
+      if (action === "open-app") {
+        const opened = await openInApp(payload);
+        setStatus(statusEl, opened.ok
+          ? `Transferred: ${payload.sellers.length} seller(s), ${itemCount} item row(s).`
+          : `Could not open KAIKATA (${opened.error}). Try "Open on website instead".`);
+      }
+
       if (action === "open-live") {
-        window.open(buildTargetUrl(LIVE_CARTFORGE_URL, encoded), "_blank", "noopener,noreferrer");
+        window.open(buildTargetUrl(LIVE_CARTFORGE_URL, encodePayload(payload)), "_blank", "noopener,noreferrer");
         setStatus(statusEl, `Transferred: ${payload.sellers.length} seller(s), ${itemCount} item row(s).`);
       }
 
@@ -904,12 +944,210 @@
     statusEl.textContent = message;
   }
 
+  // KAIKATA runs as an extension page: the cart goes through storage, not a URL hash.
+  async function openInApp(payload) {
+    try {
+      await chrome.storage.local.set({ [INCOMING_CART_KEY]: { payload, storedAt: new Date().toISOString() } });
+      const response = await chrome.runtime.sendMessage({ type: "CARTFORGE_V3_OPEN_APP" });
+      return response?.ok ? response : { ok: false, error: response?.error || "no answer from the extension" };
+    } catch (error) {
+      return { ok: false, error: error?.message || "extension unavailable" };
+    }
+  }
+
   function buildTargetUrl(baseUrl, encodedPayload) {
     const targetUrl = new URL(baseUrl);
     targetUrl.searchParams.set("source", "cardmarket-extension");
     targetUrl.searchParams.set("t", String(Date.now()));
     targetUrl.hash = `cartforge=${encodedPayload}`;
     return targetUrl.toString();
+  }
+
+  // ── Wants stock checklist (both panels) ──────────────────────────────────
+  // Which cart sellers' "Articles on My Wants List" stock is loaded, with links to load
+  // the rest. Navigation only ever happens on a user click ("Open wants page", "Next seller").
+
+  function storageGet(key) {
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.get([key], (result) => resolve(result?.[key]));
+      } catch {
+        resolve(undefined);
+      }
+    });
+  }
+
+  function offersText(count) {
+    return `${count} offer${count === 1 ? "" : "s"}`;
+  }
+
+  function isCardmarketUrl(url) {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "https:" && /(^|\.)cardmarket\.com$/i.test(parsed.hostname);
+    } catch {
+      return false;
+    }
+  }
+
+  function buildWantsStockSection() {
+    const section = document.createElement("div");
+    section.setAttribute("data-cartforge-wants-stock", "");
+    css(section, { margin: "0 0 12px", padding: "10px 12px", border: "1.5px solid #DED3C2", borderRadius: "10px", background: "#FFFFFF" });
+    section.style.display = Flow ? "block" : "none";
+    wantsUi.section = section;
+    return section;
+  }
+
+  function startWantsStock() {
+    if (!Flow || wantsUi.started) return;
+    wantsUi.started = true;
+    refreshWantsStock();
+    // Cart edits on this page (ignore the panel's own DOM changes).
+    let timer = null;
+    new MutationObserver((records) => {
+      const panel = document.getElementById(PANEL_ID);
+      if (panel && records.every((record) => panel.contains(record.target))) return;
+      clearTimeout(timer);
+      timer = setTimeout(refreshWantsStock, 800);
+    }).observe(document.body, { childList: true, subtree: true });
+    // Captures made on wants pages (other tabs) or removed there.
+    try {
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === "local" && changes[Flow.CANDIDATES_KEY]) refreshWantsStock();
+      });
+    } catch {
+      // Storage events unavailable: the list refreshes on cart changes and on expand.
+    }
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") refreshWantsStock();
+    });
+  }
+
+  async function refreshWantsStock() {
+    if (!Flow || !wantsUi.section) return;
+    const payload = extractCartPayload(document);
+    const hasCart = payload.sellers.length > 0 && countItems(payload) > 0;
+    if (hasCart) saveCartSnapshot(payload);
+    const captures = (await storageGet(Flow.CANDIDATES_KEY)) || {};
+    const now = Date.now();
+    const snapshot = hasCart ? Flow.buildCartSnapshot(payload, now) : null;
+    const checklist = snapshot ? Flow.sellerChecklist(snapshot, captures, now) : null;
+    const next = snapshot ? Flow.nextUnloadedSeller(snapshot, captures, now) : null;
+    const summary = hasCart ? Flow.formatTransferSummary(Flow.summarizeTransfer({ payload, captures, now })) : "";
+
+    // Ages are shown in minutes, so re-render at most when something visible changes.
+    const signature = JSON.stringify([checklist, next?.sellerName, summary].map((part) => part ?? null), (key, value) => (
+      key === "ageMs" && Number.isFinite(value) ? Math.round(value / 60000) : value
+    ));
+    if (signature === wantsUi.signature) return;
+    wantsUi.signature = signature;
+    if (wantsUi.summaryEl) wantsUi.summaryEl.textContent = summary;
+    renderWantsStock(checklist, next);
+  }
+
+  // Light cart copy for the wants pages; written only when the cart content changes.
+  function saveCartSnapshot(payload) {
+    if (!Flow) return;
+    const snapshot = Flow.buildCartSnapshot(payload);
+    const signature = JSON.stringify({ ...snapshot, capturedAt: "" });
+    if (signature === wantsUi.snapshotSignature) return;
+    wantsUi.snapshotSignature = signature;
+    try {
+      chrome.storage.local.set({ [Flow.SNAPSHOT_KEY]: snapshot });
+    } catch {
+      // Storage unavailable: wants pages ask the user to open the cart again.
+    }
+  }
+
+  function renderWantsStock(checklist, next) {
+    const section = wantsUi.section;
+    section.replaceChildren();
+
+    const title = document.createElement("p");
+    title.textContent = "Wants stock";
+    css(title, { margin: "0", fontWeight: "700", fontSize: "12.5px", color: "#1C1A17" });
+    section.append(title);
+
+    if (!checklist || !checklist.total) {
+      const empty = document.createElement("p");
+      empty.textContent = "No cart sellers found on this page yet.";
+      css(empty, { margin: "4px 0 0", color: "#6E6257", fontSize: "12px" });
+      section.append(empty);
+      return;
+    }
+
+    const count = document.createElement("p");
+    count.textContent = `Loaded for ${checklist.loadedCount} of ${checklist.total} seller${checklist.total === 1 ? "" : "s"}`;
+    css(count, { margin: "2px 0 6px", color: "#6E6257", fontSize: "12px" });
+    section.append(count);
+
+    const list = document.createElement("ul");
+    css(list, { margin: "0", padding: "0", listStyle: "none", maxHeight: "180px", overflowY: "auto" });
+    checklist.rows.forEach((row) => {
+      // Line 1: seller + link; line 2: status.
+      const item = document.createElement("li");
+      css(item, { padding: "4px 0", borderTop: "1px solid #F1EADF", fontSize: "12px" });
+      const top = document.createElement("div");
+      css(top, { display: "flex", gap: "6px", alignItems: "baseline" });
+      const name = document.createElement("span");
+      name.textContent = row.sellerName;
+      css(name, { flex: "1", minWidth: "0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: "600" });
+      top.append(name);
+      const loaded = row.status === "loaded";
+      if (row.wantsUrl && isCardmarketUrl(row.wantsUrl)) {
+        const link = document.createElement("a");
+        link.href = row.wantsUrl; // same tab
+        link.textContent = row.status === "not-loaded" ? "Open wants page" : "Reload";
+        css(link, { color: "#D84A2B", whiteSpace: "nowrap", textDecoration: "none", fontWeight: "600" });
+        top.append(link);
+      }
+      const status = document.createElement("div");
+      status.textContent = loaded
+        ? `✓ loaded · ${offersText(row.offerCount)} · ${Flow.formatAge(row.ageMs)}`
+        : row.status === "stale" ? "loaded over 24 h ago · reload to use it"
+          : row.status === "other-list" ? "loaded for another wants list · reload to use it"
+            : row.wantsUrl ? "not loaded" : "not loaded · no wants link in the cart";
+      css(status, { color: loaded ? "#4F7A5A" : "#A89D8F" });
+      item.append(top, status);
+      list.append(item);
+    });
+    section.append(list);
+
+    if (next && isCardmarketUrl(next.wantsUrl)) {
+      const nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.textContent = `Next seller → ${next.sellerName}`;
+      css(nextBtn, {
+        width: "100%", marginTop: "8px", border: "1.5px solid #1C1A17", borderRadius: "999px", background: "#1C1A17",
+        color: "#FFF9EF", padding: "7px 12px", fontFamily: "inherit", fontSize: "12.5px", fontWeight: "600", cursor: "pointer",
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
+      });
+      nextBtn.addEventListener("click", () => {
+        location.assign(next.wantsUrl);
+      });
+      section.append(nextBtn);
+    } else if (checklist.loadedCount === checklist.total) {
+      const done = document.createElement("p");
+      done.textContent = "All cart sellers loaded ✓";
+      css(done, { margin: "6px 0 0", color: "#4F7A5A", fontSize: "12px", fontWeight: "700" });
+      section.append(done);
+    }
+
+    if (checklist.extras.length) {
+      const extrasTitle = document.createElement("p");
+      extrasTitle.textContent = "Extra sellers (not in this cart)";
+      css(extrasTitle, { margin: "8px 0 2px", fontWeight: "600", fontSize: "12px", color: "#1C1A17" });
+      const extras = document.createElement("ul");
+      css(extras, { margin: "0", padding: "0", listStyle: "none", maxHeight: "90px", overflowY: "auto" });
+      checklist.extras.forEach((extra) => {
+        const item = document.createElement("li");
+        item.textContent = `${extra.sellerName} · ${offersText(extra.offerCount)} · ${Flow.formatAge(extra.ageMs)}${extra.sameWantsList ? "" : " · other wants list (not sent)"}`;
+        css(item, { fontSize: "12px", color: "#6E6257", padding: "1px 0" });
+        extras.append(item);
+      });
+      section.append(extrasTitle, extras);
+    }
   }
 
   // ── Cart extraction helpers ───────────────────────────────────────────────
@@ -930,6 +1168,9 @@
       version: 1,
       url: location.href,
       extractedAt: new Date().toISOString(),
+      // Wants list(s) behind the sellers' "Articles on My Wants List" links. KAIKATA
+      // asks the extension only for wants stock captured from these lists.
+      wantsListIds: [...new Set(sellers.map((seller) => seller.wantsListId).filter(Boolean))],
       sellers,
       warnings
     };
@@ -1000,6 +1241,9 @@
       `Seller ${sellerIndex + 1}`;
 
     const sellerCountry = readCountry(section, text);
+    const wantsLink = Flow
+      ? Flow.findWantsLink([...section.querySelectorAll("a[href]")].map((a) => ({ text: visibleText(a), href: a.href })), location.href)
+      : { wantsUrl: "", wantsListId: "" };
 
     if (CARTFORGE_DEBUG) {
       // eslint-disable-next-line no-console
@@ -1023,6 +1267,8 @@
     return {
       sellerName,
       sellerCountry,
+      wantsUrl: wantsLink.wantsUrl,
+      wantsListId: wantsLink.wantsListId,
       shippingMethod: readShippingMethod(section, text),
       trackingStatus: /\b(untracked|no tracking)\b/i.test(text)
         ? "untracked"

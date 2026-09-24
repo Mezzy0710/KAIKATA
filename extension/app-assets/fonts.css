@@ -1,0 +1,17 @@
+/* Geist for the packaged KAIKATA page (extension CSP allows no remote CSS).
+   Variable font from the "geist" npm package 1.7.2, SIL OFL 1.1 (fonts/OFL.txt).
+   Only app/index.html in the extension build links this; the website uses Google Fonts. */
+@font-face {
+  font-family: "Geist";
+  src: url("./fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Chrome gives extension pages "body { font-family: system-ui; font-size: 75% }".
+   The website's body inherits both from :root, so do the same here. */
+body {
+  font-family: inherit;
+  font-size: inherit;
+}

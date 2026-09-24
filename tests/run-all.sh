@@ -23,6 +23,7 @@ TOTAL=0
 
 # Test files to run
 TEST_FILES=(
+  "tests/candidate-impact.mjs"
   "tests/candidates.mjs"
   "tests/correctness-optimizer.mjs"
   "tests/optimizer-dynamic-basket-costs.mjs"
@@ -33,6 +34,7 @@ TEST_FILES=(
   "tests/extension-manifest.mjs"
   "tests/extension-row-matching.mjs"
   "tests/extension-seller-location.mjs"
+  "tests/host.mjs"
   "tests/importer.mjs"
   "tests/integration-input-paths.mjs"
   "tests/optimizer-seller-moves.mjs"
@@ -40,6 +42,7 @@ TEST_FILES=(
   "tests/parser-mobile-inference.mjs"
   "tests/parser-mobile-overview-seller-names.mjs"
   "tests/parser-seller-name-mapping.mjs"
+  "tests/package-extension.mjs"
   "tests/parser-smoke.mjs"
   "tests/price-verdict.mjs"
   "tests/real-cart.mjs"
@@ -48,6 +51,7 @@ TEST_FILES=(
   "tests/shipping-costs.mjs"
   "tests/shipping-weight.mjs"
   "tests/ui-dropped-sellers.mjs"
+  "tests/wants-flow.mjs"
   "tests/wants-parser.mjs"
 )
 

@@ -22,6 +22,8 @@ A client-side web app that optimizes Cardmarket shopping carts for the lowest to
 ✅ **Browser extension**: Extracts structured cart data from Cardmarket, opens in KAIKATA
 ✅ **Cart row marks** (extension 1.0.3): after a plan is confirmed, every article row on the Cardmarket cart gets KEEP / REMOVE / KEEP n OF m / REVIEW / ? (`extension/cartforge-matching.js`, pure, loaded before `content-script.js`). Rows are matched by card name + collector number + condition + price; unmatched rows are never marked REMOVE. The panel shows a live cut counter and an "All / Only removals" filter. `visibleText` strips mark text, so extraction reads the same data with or without marks
 ✅ **Wants-page candidates** (extension 1.1.0): `extension/wants-page.js` + pure `extension/cartforge-wants-parser.js` (tiny HTML tree parser + sequential page walker: 2–4 s pauses, ≤15 pages, stop on non-200/429/login/challenge) capture sellers' "Articles on My Wants List" into `chrome.storage.local` `cartforgeCandidatesV1`. KAIKATA fetches them via the bridge (`CARTFORGE_V3_GET_CANDIDATES`, not the URL hash) after a cart import. `src/candidates.mjs` merges them into the offer groups: only cards already in the cart, existing sellers keep their index/calibration, new sellers are appended, prefilter ≤3 per (card, seller) after variant preferences. Candidate offers have `source: "candidate"` and `itemIndex: "cand:<idArticle>"`. Confirmed plan schema v2 adds `decision: "add"` rows (cart fingerprint unchanged); the extension accepts v1 and v2. Cart-only plans are unchanged
+✅ **Guided wants-stock flow** (extension 1.2.0): pure `extension/cartforge-wants-flow.js` (loaded on the cart page, the wants pages, and via `importScripts` in `background.js`). Cart extraction reads each seller's wants link (href `/Users/<seller>/Offers/Singles?…&idWantslist=<id>`, id taken from the link) into `seller.wantsUrl` / `seller.wantsListId` and `payload.wantsListIds`, and stores `cartforgeCartSnapshotV1` (card names = KAIKATA's `normalizeOfferKey`). Cart panel: **Wants stock** checklist (loaded X of Y, links, "Next seller →", extra sellers) + a send summary. Wants page: prompt → progress bar → result card with K (cart cards in stock) / J (cheaper than the lowest cart price), "Next seller →", "Back to cart"; "Reload" when loaded < 24 h. Transfer rule (`filterCapturesForTransfer`): captures < 24 h old whose `wantsListId` is in the cart's `wantsListIds`; the rest are counted as `excluded: { stale, otherWantsList }`; no ids → 24 h rule only (`fallback`). KAIKATA sends the ids with `CARTFORGE_V3_GET_CANDIDATES`. `src/candidate-impact.mjs` (pure, optimizer injected) runs cart-only and cart + stock, shows the stock plan only when strictly better (optimizer ranking: fewer unresolved sellers, then lower total), else the cart-only plan unchanged; impact card: improved (€D, adds, new sellers, removals vs the cart-only plan) / nothing better / none (tip). `optimizeCart` results now carry `unresolvedCount` / `resolvedTotal`. Second run on the real cart + 8 sellers / 1,480 offers: ~70 ms
+✅ **KAIKATA inside the extension** (extension 2.0.0): `scripts/package-extension.mjs` copies the web app (`index.html`, `styles.css`, `src/*.mjs`, `shipping_data.json`, `sample-cart-mobile.txt`) into `dist/kaikata-extension/app/` next to the extension files and zips `dist/kaikata-extension-<version>.zip` (system `zip`; refuses without a `CHANGELOG.md` entry for the manifest version). Only the packaged `index.html` changes: Google Fonts → `../app-assets/fonts.css` (bundled Geist variable woff2, OFL; also resets Chrome's extension-page `body { system-ui; 75% }` default) and `<script src="../cartforge-wants-flow.js">` before `app.mjs`. `src/host.mjs` is the only transport `app.mjs` uses: on `chrome-extension:` it reads/removes `cartforgeIncomingCartV1`, filters `cartforgeCandidatesV1` with `CartforgeWantsFlow.filterCapturesForTransfer`, writes `cartforgeConfirmedPlanV3` (same envelope/validation as `background.js`), and listens to `storage.onChanged` (captures, new carts); on the website it keeps the URL hash + postMessage bridge + visibilitychange. The toolbar icon and "Transfer to KAIKATA" open or focus the app tab (`CARTFORGE_V3_OPEN_APP`, `runtime.getContexts`, no `tabs` permission); "Open on website instead" keeps the hash route. `?v=` imports work on `chrome-extension://`; Scryfall works via CORS (`*`), no host permission. The website is unchanged
 ✅ **Cut lists in the web app**: "Sellers not in plan" lists each dropped seller's cards; kept sellers show "Remove from this seller:" (`src/plan-cuts.mjs`, matched by itemIndex)
 ✅ **Extension + paste flows**: Both normalize into the same review and optimization model
 ✅ **Optimizer search** (`src/optimizer-search.mjs`): local search with single-card moves, seller removal and seller addition (addition is followed by a removal pass). Matches the brute-force optimum on ~99% of a seeded 300-cart fuzz set; 500-iteration safety limit
@@ -114,6 +116,10 @@ None. All PRs closed/merged as of May 15, 2026.
 - ✅ Extension row matching vs the real-cart plan, twin rows, mark text stripping (`extension-row-matching.mjs`)
 - ✅ Wants-page parser (synthetic fixture `wants-page-sample.html`) + walker limits with fake fetch/sleep (`wants-parser.mjs`)
 - ✅ Candidates: add at existing seller, ignored non-cart cards, new seller replacing small sellers, cart-only unchanged, calibration weight fallback, plan v2 add rows, 3×220 offers < 1 s (`candidates.mjs`)
+- ✅ Wants flow: wants link from a cart seller block (fixture `cart-seller-block.html`), snapshot normalization = `normalizeOfferKey`, transfer filter + fallback, background `GET_CANDIDATES` via a fake `chrome`, checklist / next seller / send summary, K/J comparison (`wants-flow.mjs`)
+- ✅ Host adapter: incoming cart read once, candidates identical to `filterCapturesForTransfer` and `background.js`, confirmed-plan envelope identical to `background.js`, storage-change and visibility listeners (`host.mjs`, fake `chrome.storage`)
+- ✅ Packaging: file list, no tests/_private/.claude, no inline scripts or `on*=` in the packaged `index.html`, zip root, changelog gate (`package-extension.mjs`)
+- ✅ Candidate impact: real cart + one cheaper stock offer → improved (€8.18, add 1, remove 1), dearer stock → cart-only plan unchanged, no stock → €211.37 / 13 sellers, slow-run flag (`candidate-impact.mjs`)
 - ⚠️ Scryfall: integration test (requires network, excluded from CI)
 
 ### CI/CD Gaps
@@ -131,9 +137,12 @@ None. All PRs closed/merged as of May 15, 2026.
 ├── shipping_data.json              # Cardmarket shipping rates to Germany (`_meta` = capture date/source)
 ├── scripts/shipping-refresh-snippet.js  # DevTools snippet that regenerates shipping_data.json
 ├── scripts/anonymize-cart.mjs      # Turns a real CARTFORGE_CART= payload into a committable fixture
+├── scripts/package-extension.mjs   # Builds dist/kaikata-extension/ (+ app/) and the versioned ZIP
+├── CHANGELOG.md                    # One entry per extension version (packaging requires it)
 │
 ├── src/
 │   ├── app.mjs                     # Main app logic, UI rendering, templates
+│   ├── host.mjs                    # Extension page vs website transports (cart in, candidates, confirmed plan)
 │   ├── optimizer-search.mjs        # Pure local search over seller assignments (cost model injected)
 │   ├── optimizer-score-cache.mjs   # Per-run memoization of per-seller cost
 │   ├── parser.mjs                  # Cart text parsing, country inference
@@ -141,13 +150,16 @@ None. All PRs closed/merged as of May 15, 2026.
 │   ├── shipping-calibration.mjs    # Cart-observed shipping → per-seller calibrated rows (pure)
 │   ├── plan-cuts.mjs               # Which cart rows to remove/reduce per seller
 │   ├── candidates.mjs              # Wants-page offers → extra optimizer candidates (pure)
+│   ├── candidate-impact.mjs        # Cart-only vs cart + wants stock: which plan to show, impact card copy (pure)
 │   ├── scryfall.mjs                # Reference price lookups (external API)
 │   └── price-verdict.mjs           # Price comparison logic
 │
 ├── extension/                      # Browser extension (extracts from Cardmarket, marks cart rows)
 │   ├── cartforge-matching.js       # Pure row ↔ plan matching, loaded before content-script.js
 │   ├── cartforge-wants-parser.js   # Pure wants-page parser + sequential page walker
-│   ├── wants-page.js               # Wants-page panel: capture, ADD ×N marks, select planned
+│   ├── cartforge-wants-flow.js     # Pure wants-stock helpers: wants links, cart snapshot, transfer filter, K/J
+│   ├── wants-page.js               # Wants-page panel: load prompt, progress, result card, ADD ×N marks
+│   ├── app-assets/                 # Extension-only assets for the packaged app (Geist + fonts.css)
 │
 └── tests/
     ├── fixtures/                   # Sample cart data
@@ -181,6 +193,16 @@ None. All PRs closed/merged as of May 15, 2026.
 
 ---
 
+## Git routine
+
+1. Work on a new branch from the latest `origin/main` (`git fetch origin && git checkout -b <branch> origin/main`).
+2. When all tests pass (`bash tests/run-all.sh` and the `tests/*.mjs` loop without scryfall), commit. Never commit `.claude/` (local settings, worktrees), `_private/` or `dist/` — `.gitignore` covers them.
+   Extension builds come from `node scripts/package-extension.mjs` (bump `extension/manifest.json` + add a `CHANGELOG.md` entry per release).
+3. Push the branch (`git push -u origin <branch>`) and open a PR against `main` with `gh pr create`; if `gh` is unavailable, print the compare URL `https://github.com/Mezzy0710/KAIKATA/compare/main...<branch>?expand=1`.
+4. Never push to `main`, never merge, never force-push, never delete branches.
+
+---
+
 ## Development Commands
 
 ```bash
@@ -195,6 +217,13 @@ node tests/extension-row-matching.mjs
 node tests/ui-dropped-sellers.mjs
 node tests/wants-parser.mjs
 node tests/candidates.mjs
+node tests/wants-flow.mjs
+node tests/candidate-impact.mjs
+node tests/host.mjs
+node tests/package-extension.mjs
+
+# Extension build → dist/kaikata-extension/ + dist/kaikata-extension-<version>.zip
+node scripts/package-extension.mjs
 
 # New real-cart fixture (keep the raw capture in _private/, never commit it)
 # node scripts/anonymize-cart.mjs _private/<cart>.txt tests/fixtures/<name>.txt
@@ -215,5 +244,5 @@ open index.html
 
 ---
 
-Last Updated: September 26, 2026 (wants-page candidates)
+Last Updated: September 2026 (KAIKATA inside the extension, 2.0.0)
 Branch: `main`

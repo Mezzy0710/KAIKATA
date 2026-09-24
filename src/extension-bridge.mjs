@@ -18,9 +18,15 @@ export function sendConfirmedPlanToExtension(plan, options = {}) {
 // Wants-page offers captured by the extension. Sent through postMessage (not the URL
 // hash) because captures can hold thousands of rows. Without the extension this
 // resolves to { ok: false } after the timeout and KAIKATA works as before.
+// wantsListIds: the imported cart's wants list(s); the extension then sends only captures
+// < 24 h old from those lists (and counts the rest in `excluded`). Empty → 24 h rule only.
 export function requestCandidatesFromExtension(options = {}) {
   return bridgeRequest(
-    { type: GET_CANDIDATES_REQUEST, requestId: options.requestId || createBridgeRequestId() },
+    {
+      type: GET_CANDIDATES_REQUEST,
+      requestId: options.requestId || createBridgeRequestId(),
+      wantsListIds: Array.isArray(options.wantsListIds) ? options.wantsListIds.map(String) : []
+    },
     GET_CANDIDATES_RESPONSE,
     options
   );
