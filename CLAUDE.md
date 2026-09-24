@@ -20,6 +20,9 @@ A client-side web app that optimizes Cardmarket shopping carts for the lowest to
 ✅ **Card search**: Search functionality in review table (shipped in v1.0)
 ✅ **Result summary strip**: Final Total, Savings, Sellers Used, Item Count (shipped in v1.0)
 ✅ **Browser extension**: Extracts structured cart data from Cardmarket, opens in KAIKATA
+✅ **Cart row marks** (extension 1.0.3): after a plan is confirmed, every article row on the Cardmarket cart gets KEEP / REMOVE / KEEP n OF m / REVIEW / ? (`extension/cartforge-matching.js`, pure, loaded before `content-script.js`). Rows are matched by card name + collector number + condition + price; unmatched rows are never marked REMOVE. The panel shows a live cut counter and an "All / Only removals" filter. `visibleText` strips mark text, so extraction reads the same data with or without marks
+✅ **Wants-page candidates** (extension 1.1.0): `extension/wants-page.js` + pure `extension/cartforge-wants-parser.js` (tiny HTML tree parser + sequential page walker: 2–4 s pauses, ≤15 pages, stop on non-200/429/login/challenge) capture sellers' "Articles on My Wants List" into `chrome.storage.local` `cartforgeCandidatesV1`. KAIKATA fetches them via the bridge (`CARTFORGE_V3_GET_CANDIDATES`, not the URL hash) after a cart import. `src/candidates.mjs` merges them into the offer groups: only cards already in the cart, existing sellers keep their index/calibration, new sellers are appended, prefilter ≤3 per (card, seller) after variant preferences. Candidate offers have `source: "candidate"` and `itemIndex: "cand:<idArticle>"`. Confirmed plan schema v2 adds `decision: "add"` rows (cart fingerprint unchanged); the extension accepts v1 and v2. Cart-only plans are unchanged
+✅ **Cut lists in the web app**: "Sellers not in plan" lists each dropped seller's cards; kept sellers show "Remove from this seller:" (`src/plan-cuts.mjs`, matched by itemIndex)
 ✅ **Extension + paste flows**: Both normalize into the same review and optimization model
 ✅ **Optimizer search** (`src/optimizer-search.mjs`): local search with single-card moves, seller removal and seller addition (addition is followed by a removal pass). Matches the brute-force optimum on ~99% of a seeded 300-cart fuzz set; 500-iteration safety limit
 ✅ **Optimizer performance**: per-seller costs are memoized per `optimizeCart` run (`src/optimizer-score-cache.mjs`). Shipping/trustee estimation was >95% of search time. Seeded random carts 15/60/4, 25/100/5, 35/150/6 run in ~0.06 / 0.26 / 0.9 s in Node. The UI yields a frame before optimizing so "Optimizing" and the disabled button paint
@@ -107,6 +110,10 @@ None. All PRs closed/merged as of May 15, 2026.
 - ✅ Real cart (anonymized, 23 sellers / 35 cards): dedupe, calibration, optimize snapshot €211.37 (`real-cart.mjs`, fixture `tests/fixtures/real-cart-2026-09.txt`)
 - ✅ Country inference: aliases, mobile parsing
 - ✅ UI: warning copy formatting
+- ✅ UI: dropped sellers + seller cut lists (`ui-dropped-sellers.mjs`)
+- ✅ Extension row matching vs the real-cart plan, twin rows, mark text stripping (`extension-row-matching.mjs`)
+- ✅ Wants-page parser (synthetic fixture `wants-page-sample.html`) + walker limits with fake fetch/sleep (`wants-parser.mjs`)
+- ✅ Candidates: add at existing seller, ignored non-cart cards, new seller replacing small sellers, cart-only unchanged, calibration weight fallback, plan v2 add rows, 3×220 offers < 1 s (`candidates.mjs`)
 - ⚠️ Scryfall: integration test (requires network, excluded from CI)
 
 ### CI/CD Gaps
@@ -132,10 +139,15 @@ None. All PRs closed/merged as of May 15, 2026.
 │   ├── parser.mjs                  # Cart text parsing, country inference
 │   ├── shipping.mjs                # Shipping cost & trustee calculations
 │   ├── shipping-calibration.mjs    # Cart-observed shipping → per-seller calibrated rows (pure)
+│   ├── plan-cuts.mjs               # Which cart rows to remove/reduce per seller
+│   ├── candidates.mjs              # Wants-page offers → extra optimizer candidates (pure)
 │   ├── scryfall.mjs                # Reference price lookups (external API)
 │   └── price-verdict.mjs           # Price comparison logic
 │
-├── extension/                      # Browser extension (extracts from Cardmarket)
+├── extension/                      # Browser extension (extracts from Cardmarket, marks cart rows)
+│   ├── cartforge-matching.js       # Pure row ↔ plan matching, loaded before content-script.js
+│   ├── cartforge-wants-parser.js   # Pure wants-page parser + sequential page walker
+│   ├── wants-page.js               # Wants-page panel: capture, ADD ×N marks, select planned
 │
 └── tests/
     ├── fixtures/                   # Sample cart data
@@ -179,6 +191,10 @@ node tests/shipping-costs.mjs
 node tests/shipping-weight.mjs
 node tests/shipping-calibration.mjs
 node tests/real-cart.mjs
+node tests/extension-row-matching.mjs
+node tests/ui-dropped-sellers.mjs
+node tests/wants-parser.mjs
+node tests/candidates.mjs
 
 # New real-cart fixture (keep the raw capture in _private/, never commit it)
 # node scripts/anonymize-cart.mjs _private/<cart>.txt tests/fixtures/<name>.txt
@@ -199,5 +215,5 @@ open index.html
 
 ---
 
-Last Updated: September 25, 2026 (shipping calibration)
+Last Updated: September 26, 2026 (wants-page candidates)
 Branch: `main`

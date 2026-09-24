@@ -19,13 +19,15 @@ import {
   generateHighPriceNote
 } from "./price-verdict.mjs?v=20260509m";
 import { decodeCartForgeHash, decodeCartForgePayload, parseExtractedCartPayload } from "./importer.mjs?v=20260925a";
-import { buildConfirmedPlan } from "./confirmed-plan.mjs?v=20260511a";
-import { sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260511a";
+import { buildConfirmedPlan } from "./confirmed-plan.mjs?v=20260926b";
+import { requestCandidatesFromExtension, sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260926b";
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
 import { applyShippingOverride } from "./shipping-override.mjs?v=20260925a";
 import { improveSelection } from "./optimizer-search.mjs?v=20260924b";
 import { createSellerCostCache } from "./optimizer-score-cache.mjs?v=20260924b";
 import { buildSellerShippingRecords } from "./shipping-calibration.mjs?v=20260925a";
+import { cartRow, sellerCartCuts } from "./plan-cuts.mjs?v=20260926a";
+import { addOffersBySeller, mergeCandidateOffers, normalizeSellerName, wantsPageUrl } from "./candidates.mjs?v=20260926b";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const MAX_OPTIMIZATION_ITERATIONS = 500;
@@ -55,7 +57,10 @@ const state = {
   extensionHintFromUrl: false,
   lastImportedFingerprint: "",
   reviewUnlocked: false,
-  cardmarketCartUrl: null
+  cardmarketCartUrl: null,
+  // Offers captured by the extension from sellers' wants-list pages (see src/candidates.mjs).
+  candidateSellers: [],
+  candidateStats: null
 };
 
 const hasDom = typeof document !== "undefined";
@@ -299,7 +304,10 @@ function parseCurrentInput(options = {}) {
     updateWorkflowStatus("Ready", state.parsed.warnings.length ? "warning" : "good", "Review cards and quantities, then optimize your buy plan.");
   }
   updateOptimizeButton();
+  state.candidateSellers = [];
+  state.candidateStats = null;
   render();
+  loadCandidatesFromExtension();
 
   // Trigger async Scryfall enrichment (non-blocking)
   if (state.referenceCheckEnabled && state.parsed.sellers.length > 0) {
@@ -424,7 +432,7 @@ function clearInput() {
 function render() {
   const sellers = state.parsed.sellers || [];
   const itemCount = sellers.reduce((sum, seller) => sum + seller.items.length, 0);
-  const offerGroups = buildOfferGroups(sellers);
+  const { offerGroups } = offerContext();
   const parsedTotal = sellers.reduce((sum, seller) => sum + Number(seller.total || 0), 0);
   const hasParsedData = sellers.length > 0;
   const hasOptimization = Boolean(state.optimizationResult);
@@ -710,7 +718,7 @@ function renderOptimizationViews() {
 
   elements.optimizationOutput.innerHTML = recommendationsTemplate(state.optimizationResult);
 
-  const offerGroups = buildOfferGroups(state.parsed.sellers);
+  const { offerGroups } = offerContext();
   const advancedContent = advancedDetailsTemplate(state.optimizationResult, offerGroups);
   if (elements.advancedDetails) {
     elements.advancedDetails.innerHTML = advancedContent;
@@ -845,9 +853,9 @@ function variantBodyTemplate(group) {
   group.offers.forEach((offer) => {
     const vk = makeVariantKey(offer);
     if (!variantMap.has(vk)) {
-      variantMap.set(vk, { ...offer, allSellers: [] });
+      variantMap.set(vk, { ...offer, allSellers: [], candidateSellers: [] });
     }
-    variantMap.get(vk).allSellers.push(offer.sellerName);
+    variantMap.get(vk)[offer.source === "candidate" ? "candidateSellers" : "allSellers"].push(offer.sellerName);
   });
 
   const variants = [...variantMap.entries()];
@@ -898,6 +906,10 @@ function variantRowTemplate(cardName, variantKey, offer, hasEnriched, showRef) {
   const pref = (state.variantPreferences[cardName] || {})[variantKey] || "any";
   const prefClass = pref === "require" ? "pref-require" : pref === "prefer" ? "pref-prefer" : pref === "exclude" ? "pref-exclude" : "";
   const sellers = offer.allSellers ? [...new Set(offer.allSellers)].join(", ") : offer.sellerName || "";
+  const candidateSellers = [...new Set(offer.candidateSellers || [])];
+  const candidateCell = candidateSellers.length
+    ? `${sellers ? " · " : ""}${escapeHtml(candidateSellers.join(", "))} <span class="candidate-badge">not in cart</span>`
+    : "";
 
   let refCells = "";
   if (showRef) {
@@ -931,7 +943,7 @@ function variantRowTemplate(cardName, variantKey, offer, hasEnriched, showRef) {
       <td>${escapeHtml(String(offer.quantity))}</td>
       <td class="price-cell">${escapeHtml(formatMoney(offer.unitPrice))}</td>
       ${refCells}
-      <td class="variant-seller-cell">${escapeHtml(sellers)}</td>
+      <td class="variant-seller-cell">${escapeHtml(sellers)}${candidateCell}</td>
       <td>
         <select class="variant-pref-select" data-variant-pref data-variant-key="${escapeAttribute(variantKey)}" aria-label="Preference for this version">
           <option value="any" ${pref === "any" ? "selected" : ""}>Any version</option>
@@ -1375,7 +1387,7 @@ function handleDesiredQuantityClick(event) {
       state.expandedCards.add(cardName);
       accordion.classList.add("is-expanded");
       accordion.querySelector(".card-accordion-header")?.setAttribute("aria-expanded", "true");
-      const offerGroups = buildOfferGroups(state.parsed.sellers);
+      const { offerGroups } = offerContext();
       const group = offerGroups.find((g) => g.cardName === cardName);
       if (group) {
         accordion.querySelector(".card-accordion-header").insertAdjacentHTML("afterend", variantBodyTemplate(group));
@@ -1409,8 +1421,7 @@ function handleDesiredQuantityClick(event) {
 let optimizationInProgress = false;
 
 function runOptimizationPlaceholder() {
-  const sellers = state.parsed.sellers || [];
-  const offerGroups = buildOfferGroups(sellers);
+  const { sellers, offerGroups } = offerContext();
 
   if (!sellers.length || !offerGroups.length) {
     state.optimizationResult = null;
@@ -1483,7 +1494,8 @@ function attachUnresolvedResolverHandlers() {
     const countrySelect = form.querySelector(".unresolved-country-select");
     const costInput = form.querySelector(".unresolved-cost-input");
 
-    const seller = state.parsed.sellers[sellerIndex];
+    // Candidate-only sellers are rebuilt from their capture on every run, so fixes go there.
+    const seller = state.parsed.sellers[sellerIndex] || candidateCaptureForSeller(sellerIndex);
     if (!seller) return;
 
     if (countrySelect && countrySelect.value) {
@@ -1499,8 +1511,8 @@ function attachUnresolvedResolverHandlers() {
       seller.shippingCostOverride = null;
     }
 
-    const offerGroups = buildOfferGroups(state.parsed.sellers);
-    state.optimizationResult = optimizeCart(state.parsed.sellers, offerGroups);
+    const context = offerContext();
+    state.optimizationResult = optimizeCart(context.sellers, context.offerGroups);
     updateWorkflowStatus("Plan updated", "good", "Shipping resolved. Review the updated plan.");
     render();
 
@@ -1514,6 +1526,42 @@ function attachUnresolvedResolverHandlers() {
   };
 
   elements.optimizationOutput.addEventListener("click", _unresolvedHandlerRef);
+}
+
+// Cart offers plus wants-page candidates captured by the extension (if any).
+function offerContext() {
+  const sellers = state.parsed.sellers || [];
+  const offerGroups = buildOfferGroups(sellers);
+  if (!state.candidateSellers.length) {
+    return { sellers, offerGroups, stats: null };
+  }
+  const context = mergeCandidateOffers({
+    cartSellers: sellers,
+    offerGroups,
+    candidateSellers: state.candidateSellers,
+    cardKey: (name) => normalizeOfferKey(name),
+    variantKey: makeVariantKey,
+    variantPreferences: state.variantPreferences
+  });
+  state.candidateStats = context.stats;
+  return context;
+}
+
+async function loadCandidatesFromExtension() {
+  if (!state.parsed.sellers?.length) return;
+  const parsedAtRequest = state.parsed;
+  const response = await requestCandidatesFromExtension();
+  if (!response.ok || !response.sellers?.length || state.parsed !== parsedAtRequest) return;
+  state.candidateSellers = response.sellers;
+  const { stats } = offerContext();
+  console.info("[KAIKATA] wants-page candidates", stats);
+  state.optimizationStale = true;
+  render();
+}
+
+function candidateCaptureForSeller(sellerIndex) {
+  const seller = state.optimizationResult?.usedSellers.find((entry) => entry.sellerIndex === sellerIndex)?.seller;
+  return seller ? state.candidateSellers.find((capture) => normalizeSellerName(capture.sellerName) === normalizeSellerName(seller.sellerName)) : null;
 }
 
 function optimizeCart(sellers, offerGroups) {
@@ -1887,6 +1935,11 @@ function optimizationSummaryTemplate(result) {
 
 function resultSummaryTemplate(result) {
   const totalItems = result.selectedOffers.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1), 0);
+  const addsBySeller = addOffersBySeller(result.selectedOffers);
+  const addCount = [...addsBySeller.values()].flat().reduce((sum, offer) => sum + Number(offer.requiredQuantity || 1), 0);
+  const addLine = addCount
+    ? `<p class="result-add-summary">${escapeHtml(`${addCount} article${addCount === 1 ? "" : "s"} to add from ${addsBySeller.size} seller${addsBySeller.size === 1 ? "" : "s"}`)}</p>`
+    : "";
 
   return `
     <div class="result-summary-strip">
@@ -1907,6 +1960,7 @@ function resultSummaryTemplate(result) {
         <div class="summary-metric-value">${escapeHtml(formatEstimatedMoney(result.shippingTotal))}</div>
       </div>
     </div>
+    ${addLine}
   `;
 }
 
@@ -2240,9 +2294,15 @@ function droppedSellersTemplate(result) {
         </div>
       </div>
       <div class="dropped-sellers-list">
-        ${result.droppedSellers.map(({ seller, sellerIndex }) => `
+        ${result.droppedSellers.map(({ seller }) => `
           <div class="dropped-seller-item">
             <strong>${escapeHtml(seller.sellerName)}</strong>
+            <span class="dropped-seller-country">${escapeHtml(seller.sellerCountry || "Unknown")} ${countryFlag(seller.sellerCountry)}</span>
+            <ul class="dropped-seller-cards">
+              ${(seller.items || []).map(cartRow).map((row) => `
+                <li>${escapeHtml(row.quantity)}× ${escapeHtml(row.cardName)}${row.condition ? ` · ${escapeHtml(row.condition)}` : ""} · ${escapeHtml(formatMoney(row.price))}</li>
+              `).join("")}
+            </ul>
           </div>
         `).join("")}
       </div>
@@ -2352,6 +2412,35 @@ function countryFlag(countryName) {
   return FLAGS[String(countryName || "").toLowerCase().trim()] ?? "";
 }
 
+// Chosen wants-page offers for this seller: what to add to the Cardmarket cart.
+function sellerAddTemplate(seller, offers) {
+  const adds = offers.filter((offer) => offer.source === "candidate");
+  if (!adds.length) return "";
+  const wantsListId = adds.find((offer) => offer.wantsListId)?.wantsListId || seller.candidate?.wantsListId || "";
+  return `
+    <div class="seller-add-block">
+      <p class="seller-add-heading">Add to cart</p>
+      <ul class="seller-add-list">
+        ${adds.map((offer) => `
+          <li>${escapeHtml(offer.requiredQuantity || 1)}× ${escapeHtml(offer.cardName)}${offer.expansion ? ` · ${escapeHtml(offer.expansion)}` : ""} · ${escapeHtml(offer.condition || "")}${offer.foil ? " · Foil" : ""} · ${escapeHtml(formatMoney(offer.unitPrice))}${offer.stale ? ` <span class="candidate-badge">captured over 24 h ago</span>` : ""}</li>
+        `).join("")}
+      </ul>
+      <a class="seller-add-link" href="${escapeAttribute(wantsPageUrl(seller.sellerName, wantsListId))}" target="_blank" rel="noopener noreferrer">Open ${escapeHtml(seller.sellerName)}'s wants page →</a>
+    </div>
+  `;
+}
+
+// Muted cut list under a kept seller: rows the plan does not use, plus quantity reductions.
+function sellerCutsTemplate(seller, offers) {
+  const { removeRows, reduceRows } = sellerCartCuts(seller, offers);
+  if (!removeRows.length && !reduceRows.length) return "";
+  const parts = [
+    ...removeRows.map((row) => `${escapeHtml(row.quantity)}× ${escapeHtml(row.cardName)}`),
+    ...reduceRows.map((row) => `${escapeHtml(row.cardName)}: keep ${escapeHtml(row.keepQty)} of ${escapeHtml(row.cartQty)}`)
+  ];
+  return `<p class="seller-cut-list"><span>Remove from this seller:</span> ${parts.join(", ")}</p>`;
+}
+
 function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCost) {
   const cardTotal = sellerCost?.articleValue ?? offerSubtotal(offers);
   const shippingTotal = sellerCost?.shippingValue ?? 0;
@@ -2450,6 +2539,8 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
           ${excludedCardsSection}
         </div>
       </details>
+      ${sellerAddTemplate(seller, offers)}
+      ${sellerCutsTemplate(seller, offers)}
 
       <details class="cost-breakdown">
         <summary class="seller-section-label">Cost Breakdown</summary>
@@ -2794,7 +2885,8 @@ function buildOfferGroups(sellers) {
         unitPrice,
         sellerCountry: seller.sellerCountry,
         shippingMethod: seller.shippingMethod,
-        tracked: seller.trackingStatus
+        tracked: seller.trackingStatus,
+        source: "cart"
       });
     });
   });
@@ -2878,9 +2970,13 @@ export const __testing = {
   buildBuyingPlanText,
   buildResultWarnings,
   desiredCardsTableTemplate,
+  droppedSellersTemplate,
   getTotalCopies,
+  resultSummaryTemplate,
   groupSelectedOffersBySeller,
   isBetterScore,
+  makeVariantKey,
+  normalizeOfferKey,
   normalizeReferenceKey,
   optimizeCart,
   optimizationSummaryTemplate,

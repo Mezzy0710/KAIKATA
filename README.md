@@ -27,6 +27,17 @@ Current status:
 
 Next hardening step: capture a sanitized Cardmarket cart HTML sample and add fixture tests for the extractor selectors.
 
+### Adding offers from sellers' wants-list pages (extension 1.1.0)
+
+KAIKATA can also consider articles that are **not in your cart yet**, from the "Seller's Articles on My Wants List" page of sellers you pick (`/Users/<seller>/Offers/Singles?idWantslist=<id>`):
+
+1. Open that page for a seller. A small KAIKATA panel appears (only when the URL has `idWantslist`).
+2. Click **Capture this seller**. The extension reads the result pages one at a time with a 2–4 s pause between them, at most 15 pages, and stops at the first error, login redirect, check page or HTTP 429, keeping what it has. **Capture this page only** reads just the page you are on (repeat it per page if you prefer to click through yourself).
+3. Import your cart into KAIKATA as usual. KAIKATA asks the extension for the captured offers and uses those for cards already in your cart (other cards are ignored). They show as "not in cart" in the review table.
+4. The plan lists per seller what to **Add to cart**, with a link to that seller's wants page. After "Send to Cardmarket", that page marks the planned articles **ADD ×N**, and **Select planned articles on this page** ticks them and sets the amounts. You then click Cardmarket's own button; the extension never changes your cart itself.
+
+Captures are stored in the extension (`chrome.storage.local`), per seller; they are marked stale after 24 h, and the panel lists them with **Remove** / **Clear all**. Nothing is crawled in the background.
+
 ## Version 1 scope
 
 ### Input

@@ -1,4 +1,8 @@
-const CONFIRMED_PLAN_SCHEMA_VERSION = 1;
+// v2 adds rows with decision "add" (wants-page offers to add to the cart) and seller
+// entries for candidate-only sellers. All v1 fields are unchanged.
+const CONFIRMED_PLAN_SCHEMA_VERSION = 2;
+// The cart snapshot (and therefore cartFingerprint) did not change in v2.
+const CANONICAL_CART_SCHEMA_VERSION = 1;
 
 export async function buildConfirmedPlan(parsed, optimizationResult, options = {}) {
   const sellers = parsed?.sellers || [];
@@ -59,7 +63,7 @@ export async function buildConfirmedPlan(parsed, optimizationResult, options = {
         },
         matchConfidence: sellerMatchConfidence(seller)
       };
-    }),
+    }).concat(candidateOnlySellers(sellers, optimizationResult)),
     rows: sellers.flatMap((seller, sellerIndex) => {
       return (seller.items || []).map((item, itemIndex) => {
         const selectedOffer = selectedByRow.get(rowKey(sellerIndex, itemIndex));
@@ -98,8 +102,86 @@ export async function buildConfirmedPlan(parsed, optimizationResult, options = {
           comment: item.comment || ""
         };
       });
-    })
+    }).concat(addRows(sellers, optimizationResult))
   };
+}
+
+// Sellers that are not in the cart but supply wants-page offers in the plan.
+function candidateOnlySellers(cartSellers, optimizationResult) {
+  const sellerCostsByIndex = new Map((optimizationResult?.sellerCosts || []).map((cost) => [cost.sellerIndex, cost]));
+  return (optimizationResult?.usedSellers || [])
+    .filter(({ sellerIndex }) => sellerIndex >= cartSellers.length)
+    .map(({ seller, sellerIndex }) => {
+      const sellerCost = sellerCostsByIndex.get(sellerIndex);
+      const decision = sellerCost?.source === "unresolved" ? "manual_review" : "keep";
+      return {
+        sellerId: "",
+        sellerIndex,
+        sellerDisplayName: seller.sellerName || `Seller ${sellerIndex + 1}`,
+        sellerProfileUrl: "",
+        shipmentId: "",
+        decision,
+        reason: decision === "keep" ? "Not in your cart yet: add the listed articles from this seller." : sellerDecisionReason(decision),
+        selectedShippingMethod: sellerCost?.shippingMethod || "",
+        shippingAssumption: {
+          country: seller.sellerCountry || "Unknown",
+          method: sellerCost?.shippingMethod || "",
+          trackingStatus: sellerCost?.trackingStatus || "unknown",
+          value: finiteNumberOrNull(sellerCost?.shippingValue)
+        },
+        trusteeAssumption: {
+          value: finiteNumberOrNull(sellerCost?.trusteeFeeValue),
+          source: sellerCost?.trusteeSource || "",
+          label: sellerCost?.trusteeSourceLabel || ""
+        },
+        matchConfidence: "medium",
+        source: "candidate",
+        wantsListId: seller.candidate?.wantsListId || ""
+      };
+    });
+}
+
+// Chosen wants-page offers: articles to add to the Cardmarket cart.
+function addRows(cartSellers, optimizationResult) {
+  const usedSellers = new Map((optimizationResult?.usedSellers || []).map(({ seller, sellerIndex }) => [sellerIndex, seller]));
+  return (optimizationResult?.selectedOffers || [])
+    .filter((offer) => offer.source === "candidate")
+    .map((offer) => {
+      const seller = cartSellers[offer.sellerIndex] || usedSellers.get(offer.sellerIndex) || {};
+      const addQuantity = Number(offer.requiredQuantity || 1);
+      return {
+        rowId: `add-${offer.articleId}`,
+        sellerId: seller.sellerId || "",
+        sellerIndex: offer.sellerIndex,
+        sellerDisplayName: seller.sellerName || offer.sellerName || "",
+        itemIndex: null,
+        articleId: offer.articleId || "",
+        productId: "",
+        productUrl: offer.productUrl || "",
+        cardName: offer.cardName || "",
+        normalizedCardName: normalizePlanKey(offer.cardName),
+        setName: offer.expansion || "",
+        expansion: offer.expansion || "",
+        expansionId: "",
+        collectorNumber: "",
+        rarity: offer.rarity || "",
+        rarityCode: "",
+        language: offer.language || "",
+        languageCode: "",
+        condition: offer.condition || "",
+        conditionCode: offer.conditionCode || "",
+        foil: Boolean(offer.foil),
+        quantity: 0,
+        selectedQuantity: addQuantity,
+        addQuantity,
+        unitPrice: Number(offer.unitPrice || 0),
+        decision: "add",
+        reason: "Add from this seller's wants-list page.",
+        matchConfidence: offer.articleId ? "high" : "low",
+        comment: "",
+        wantsListId: offer.wantsListId || ""
+      };
+    });
 }
 
 export function buildCanonicalCartSnapshot(parsed) {
@@ -133,7 +215,7 @@ export function buildCanonicalCartSnapshot(parsed) {
     }))
   }));
 
-  return { schemaVersion: CONFIRMED_PLAN_SCHEMA_VERSION, sellers };
+  return { schemaVersion: CANONICAL_CART_SCHEMA_VERSION, sellers };
 }
 
 export async function createCartFingerprint(canonicalCart) {
@@ -182,6 +264,7 @@ function sellerDecisionReason(decision) {
 function rowDecisionReason(decision) {
   if (decision === "selected") return "Buy here.";
   if (decision === "manual_review") return "Review this row before following the overlay.";
+  if (decision === "add") return "Add from this seller's wants-list page.";
   return "Not selected in the optimized plan.";
 }
 

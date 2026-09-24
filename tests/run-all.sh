@@ -23,6 +23,7 @@ TOTAL=0
 
 # Test files to run
 TEST_FILES=(
+  "tests/candidates.mjs"
   "tests/correctness-optimizer.mjs"
   "tests/optimizer-dynamic-basket-costs.mjs"
   "tests/correctness-parser.mjs"
@@ -30,6 +31,7 @@ TEST_FILES=(
   "tests/correctness-ui-warning-copy.mjs"
   "tests/default-quantity.mjs"
   "tests/extension-manifest.mjs"
+  "tests/extension-row-matching.mjs"
   "tests/extension-seller-location.mjs"
   "tests/importer.mjs"
   "tests/integration-input-paths.mjs"
@@ -45,6 +47,8 @@ TEST_FILES=(
   "tests/shipping-calibration.mjs"
   "tests/shipping-costs.mjs"
   "tests/shipping-weight.mjs"
+  "tests/ui-dropped-sellers.mjs"
+  "tests/wants-parser.mjs"
 )
 
 # Performance test (optional, can be slow)

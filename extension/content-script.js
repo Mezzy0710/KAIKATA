@@ -2,6 +2,11 @@
   const LIVE_CARTFORGE_URL = "https://mezzy0710.github.io/KAIKATA/";
   const PANEL_ID = "cartforge-cardmarket-extractor";
   const STORAGE_KEY = "cartforgeConfirmedPlanV3";
+  const FILTER_STORAGE_KEY = "cartforgeOverlayFilterV1";
+  const MARK_SELECTOR = "[data-cartforge-mark]";
+  const Matching = globalThis.CartforgeMatching;
+  // Panel elements updated after every marking pass (set by renderFloatingPanel).
+  const overlayUi = { counterEl: null, doneEl: null, addedEl: null, filter: "all", setFilterButtons: null };
   // Set to true in the browser console to log per-seller extraction diagnostics.
   const CARTFORGE_DEBUG = false;
 
@@ -94,14 +99,22 @@
 
   function renderPlanOverlay(plan) {
     renderFloatingPanel(plan);
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", () => {
-        findAndBadgeSellerSections(plan);
-        observeCartMutations(plan);
-      });
-    } else {
-      findAndBadgeSellerSections(plan);
+    const start = () => {
+      try {
+        chrome.storage.local.get([FILTER_STORAGE_KEY], (result) => {
+          overlayUi.filter = result?.[FILTER_STORAGE_KEY] === "removals" ? "removals" : "all";
+          overlayUi.setFilterButtons?.();
+          refreshOverlay(plan);
+        });
+      } catch {
+        refreshOverlay(plan);
+      }
       observeCartMutations(plan);
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", start);
+    } else {
+      start();
     }
   }
 
@@ -109,9 +122,38 @@
     let debounceTimer = null;
     const observer = new MutationObserver(() => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => findAndBadgeSellerSections(plan), 150);
+      debounceTimer = setTimeout(() => refreshOverlay(plan), 150);
     });
     observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // One marking pass. Idempotent: it only touches the DOM when a mark changes, so the
+  // MutationObserver settles after Cardmarket re-renders. Rows hidden by the
+  // "Only removals" filter are shown first (all synchronous, no repaint in between),
+  // because innerText of a hidden element falls back to flattened textContent.
+  function refreshOverlay(plan) {
+    if (!document.getElementById(PANEL_ID)) {
+      return;
+    }
+    showFilteredElements();
+    findAndBadgeSellerSections(plan);
+    if (!Matching) {
+      return; // cartforge-matching.js failed to load: keep the seller badges only.
+    }
+    const planSellers = new Map(plan.sellers.map((seller) => [seller.sellerIndex, seller]));
+    const addedRows = new Set();
+    document.querySelectorAll("[data-cartforge-section]").forEach((section) => {
+      const planSeller = planSellers.get(Number(section.getAttribute("data-cartforge-section")));
+      if (planSeller) {
+        const matches = markSectionRows(section, planSeller, (plan.rows || []).filter((row) => row.sellerIndex === planSeller.sellerIndex));
+        matches.forEach((match) => {
+          if (match.planRow?.decision === "add") addedRows.add(match.planRow);
+        });
+      }
+    });
+    applyFilter();
+    updateCounter();
+    updateAddedCounter(addedRows.size, (plan.rows || []).filter((row) => row.decision === "add").length);
   }
 
   function renderFloatingPanel(plan) {
@@ -202,6 +244,54 @@
       body.append(chipsWrap);
     }
 
+    // Live cut list counter, computed from the marks present in the page.
+    const counter = document.createElement("p");
+    counter.setAttribute("data-cartforge-counter", "");
+    css(counter, { margin: "0 0 6px", color: "#1C1A17", fontSize: "12.5px", fontWeight: "600" });
+    const done = document.createElement("p");
+    done.textContent = "Cart matches your plan ✓";
+    css(done, { margin: "0 0 10px", color: "#4F7A5A", fontSize: "12.5px", fontWeight: "700", display: "none" });
+    const added = document.createElement("p");
+    css(added, { margin: "0 0 6px", color: "#1C1A17", fontSize: "12.5px", fontWeight: "600", display: "none" });
+    body.append(counter, added, done);
+    overlayUi.counterEl = counter;
+    overlayUi.addedEl = added;
+    overlayUi.doneEl = done;
+
+    const filterWrap = document.createElement("div");
+    filterWrap.setAttribute("role", "group");
+    filterWrap.setAttribute("aria-label", "Rows to show");
+    css(filterWrap, { display: "flex", gap: "0", marginBottom: "12px", border: "1.5px solid #DED3C2", borderRadius: "999px", overflow: "hidden" });
+    const filterButtons = [["all", "All"], ["removals", "Only removals"]].map(([value, label]) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+      button.setAttribute("data-cartforge-filter", value);
+      css(button, { flex: "1", border: "none", padding: "6px 8px", fontFamily: "inherit", fontSize: "12px", fontWeight: "600", cursor: "pointer" });
+      button.addEventListener("click", () => {
+        overlayUi.filter = value;
+        overlayUi.setFilterButtons();
+        try {
+          chrome.storage.local.set({ [FILTER_STORAGE_KEY]: value });
+        } catch {
+          // Storage unavailable: the choice lasts for this page only.
+        }
+        showFilteredElements();
+        applyFilter();
+      });
+      filterWrap.append(button);
+      return button;
+    });
+    overlayUi.setFilterButtons = () => {
+      filterButtons.forEach((button) => {
+        const active = button.getAttribute("data-cartforge-filter") === overlayUi.filter;
+        button.setAttribute("aria-pressed", String(active));
+        css(button, active ? { background: "#1C1A17", color: "#FFFFFF" } : { background: "transparent", color: "#6E6257" });
+      });
+    };
+    overlayUi.setFilterButtons();
+    body.append(filterWrap);
+
     const clearBtn = document.createElement("button");
     clearBtn.textContent = "Clear plan";
     css(clearBtn, {
@@ -250,6 +340,8 @@
     clearBtn.addEventListener("click", () => {
       try {
         chrome.storage.local.remove([STORAGE_KEY], () => {
+          showFilteredElements();
+          removeAllRowMarks();
           document.querySelectorAll("[data-cartforge-badge]").forEach((el) => el.remove());
           document.querySelectorAll("[data-cartforge-accordion]").forEach((el) => el.remove());
           document.querySelectorAll("[data-cartforge-section]").forEach((el) => {
@@ -278,7 +370,8 @@
 
     const sections = findSellerSections(document);
     for (const section of sections) {
-      if (section.hasAttribute("data-cartforge-section")) {
+      // Cardmarket may re-render a section's contents in place: re-badge when the badge is gone.
+      if (section.hasAttribute("data-cartforge-section") && section.querySelector("[data-cartforge-badge]")) {
         continue;
       }
 
@@ -293,12 +386,178 @@
 
       const rows = rowsBySeller.get(planSeller.sellerIndex) || [];
       const visibleRows = rows.filter(
-        (r) => r.decision === "selected" || r.decision === "manual_review"
+        (r) => r.decision === "selected" || r.decision === "add" || r.decision === "manual_review"
       );
 
       const badgeEl = createSellerBadge(planSeller, visibleRows);
       section.insertBefore(badgeEl, section.firstChild);
     }
+  }
+
+  // ── Row marks ─────────────────────────────────────────────────────────────
+
+  const MARK_STYLES = {
+    keep: { background: "#4F7A5A", color: "#FFFFFF", border: "1px solid #4F7A5A" },
+    remove: { background: "#9F2D24", color: "#FFFFFF", border: "1px solid #9F2D24" },
+    reduce: { background: "#C8872E", color: "#1C1A17", border: "1px solid #C8872E" },
+    review: { background: "#FFFFFF", color: "#8A5A14", border: "1.5px solid #C8872E" },
+    unmatched: { background: "#E4DDD2", color: "#4A4038", border: "1px solid #CFC5B6" }
+  };
+  const CARD_NAME_SELECTOR = "a[href*='/Products/Singles/'], a[href*='/Magic/Products/'], [data-card-name], .card-name, .product-name";
+
+  function markSectionRows(section, planSeller, planRows) {
+    const rowEls = findItemRows(section);
+    const items = rowEls.map((row, rowIndex) => extractItem(row, planSeller.sellerIndex, rowIndex));
+    const matches = Matching.matchRowsToPlan(items, planRows, { sellerDecision: planSeller.decision });
+    const current = new Set();
+    rowEls.forEach((row, index) => {
+      current.add(applyRowMark(row, matches[index]));
+    });
+    // A mark whose row is no longer a chosen item row (re-render, nested row switch)
+    // is removed, so a row never carries two marks.
+    section.querySelectorAll('[data-cartforge-mark="row"]').forEach((mark) => {
+      if (!current.has(mark)) {
+        restoreRowStyle(mark.closest("[data-cartforge-row]"));
+        mark.remove();
+      }
+    });
+    return matches;
+  }
+
+  function markHost(row) {
+    return row.matches("tr") ? row.querySelector("td, th") || row : row;
+  }
+
+  function applyRowMark(row, match) {
+    const host = markHost(row);
+    let mark = [...host.children].find((child) => child.getAttribute("data-cartforge-mark") === "row");
+    const label = Matching.markLabel(match);
+    const qty = String(match.cartQty || 1);
+    if (!mark) {
+      mark = document.createElement("span");
+      mark.setAttribute("data-cartforge-mark", "row");
+      mark.className = "cartforge-row-mark";
+      css(mark, {
+        display: "inline-block",
+        marginRight: "6px",
+        padding: "1px 7px",
+        borderRadius: "999px",
+        fontFamily: "'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+        fontSize: "10.5px",
+        fontWeight: "700",
+        letterSpacing: ".04em",
+        lineHeight: "1.6",
+        verticalAlign: "middle",
+        whiteSpace: "nowrap"
+      });
+      host.prepend(mark);
+    }
+    if (mark.getAttribute("data-cartforge-status") !== match.status || mark.textContent !== label || mark.getAttribute("data-cartforge-qty") !== qty) {
+      mark.textContent = label;
+      mark.setAttribute("data-cartforge-status", match.status);
+      mark.setAttribute("data-cartforge-qty", qty);
+      mark.title = match.status === "unmatched" ? "Not found in your KAIKATA plan. Leave it as is and check manually." : "";
+      css(mark, MARK_STYLES[match.status] || MARK_STYLES.unmatched);
+    }
+    row.setAttribute("data-cartforge-row", match.status);
+    if (match.status === "remove") {
+      dimRow(row, mark);
+    } else {
+      restoreRowStyle(row);
+      row.setAttribute("data-cartforge-row", match.status);
+    }
+    return mark;
+  }
+
+  // Dims the row's content but not the REMOVE pill itself (opacity on the row would
+  // fade the pill too): every element beside the pill's ancestor chain is dimmed.
+  function dimRow(row, mark) {
+    const dim = (element) => {
+      if (!element.hasAttribute("data-cartforge-orig-opacity")) {
+        element.setAttribute("data-cartforge-orig-opacity", element.style.opacity || "");
+        element.style.opacity = "0.55";
+      }
+    };
+    const walk = (container) => {
+      [...container.children].forEach((child) => {
+        if (child === mark) return;
+        if (child.contains(mark)) walk(child);
+        else dim(child);
+      });
+    };
+    walk(row);
+    const nameEl = row.querySelector(CARD_NAME_SELECTOR);
+    if (nameEl && !nameEl.hasAttribute("data-cartforge-orig-decoration")) {
+      nameEl.setAttribute("data-cartforge-orig-decoration", nameEl.style.textDecoration || "");
+      nameEl.style.textDecoration = "line-through";
+    }
+  }
+
+  function restoreRowStyle(row) {
+    if (!row) return;
+    row.querySelectorAll("[data-cartforge-orig-opacity]").forEach((el) => {
+      el.style.opacity = el.getAttribute("data-cartforge-orig-opacity");
+      el.removeAttribute("data-cartforge-orig-opacity");
+    });
+    row.querySelectorAll("[data-cartforge-orig-decoration]").forEach((el) => {
+      el.style.textDecoration = el.getAttribute("data-cartforge-orig-decoration");
+      el.removeAttribute("data-cartforge-orig-decoration");
+    });
+    row.removeAttribute("data-cartforge-row");
+  }
+
+  function removeAllRowMarks() {
+    document.querySelectorAll("[data-cartforge-row]").forEach(restoreRowStyle);
+    document.querySelectorAll('[data-cartforge-mark="row"]').forEach((mark) => mark.remove());
+  }
+
+  // "Only removals": hide KEEP rows, and whole Keep-seller sections with nothing to cut.
+  function applyFilter() {
+    if (overlayUi.filter !== "removals") return;
+    document.querySelectorAll('[data-cartforge-row="keep"]').forEach(hideElement);
+    document.querySelectorAll("[data-cartforge-section]").forEach((section) => {
+      const statuses = [...section.querySelectorAll('[data-cartforge-mark="row"]')].map((mark) => mark.getAttribute("data-cartforge-status"));
+      if (statuses.length && statuses.every((status) => status === "keep")) {
+        hideElement(section);
+      }
+    });
+  }
+
+  function hideElement(element) {
+    if (element.hasAttribute("data-cartforge-hidden")) return;
+    element.setAttribute("data-cartforge-hidden", element.style.display || "");
+    element.style.display = "none";
+  }
+
+  function showFilteredElements() {
+    document.querySelectorAll("[data-cartforge-hidden]").forEach((element) => {
+      element.style.display = element.getAttribute("data-cartforge-hidden");
+      element.removeAttribute("data-cartforge-hidden");
+    });
+  }
+
+  // Wants-page articles the plan adds: how many are in the cart now.
+  function updateAddedCounter(added, total) {
+    if (!overlayUi.addedEl) return;
+    overlayUi.addedEl.textContent = total ? `Added: ${added} / ${total}` : "";
+    overlayUi.addedEl.style.display = total ? "block" : "none";
+  }
+
+  function updateCounter() {
+    if (!overlayUi.counterEl) return;
+    const marks = [...document.querySelectorAll('[data-cartforge-mark="row"]')].map((mark) => ({
+      status: mark.getAttribute("data-cartforge-status"),
+      cartQty: Number(mark.getAttribute("data-cartforge-qty")) || 1
+    }));
+    const summary = Matching.summarizeMarks(marks);
+    const parts = [
+      `To remove: ${summary.removeArticles} article${summary.removeArticles === 1 ? "" : "s"}`,
+      `Reduce: ${summary.reduceRows}`,
+      `Unmatched: ${summary.unmatchedRows}`
+    ];
+    if (summary.reviewRows) parts.push(`Review: ${summary.reviewRows}`);
+    overlayUi.counterEl.textContent = parts.join(" · ");
+    overlayUi.doneEl.style.display = marks.length && summary.removeArticles === 0 && summary.reduceRows === 0 ? "block" : "none";
   }
 
   function matchPlanSeller(sectionName, planByName) {
@@ -331,6 +590,7 @@
     });
 
     const badge = document.createElement("div");
+    badge.setAttribute("data-cartforge-mark", "badge");
     css(badge, {
       display: "inline-flex",
       alignItems: "center",
@@ -782,6 +1042,7 @@
     const rowCandidates = [
       ...section.querySelectorAll("tr, [role='row'], .article-row, .cart-item, .item-row, .product-row")
     ].filter((row) => {
+      if (row.closest("[data-cartforge-badge]")) return false;
       const text = visibleText(row);
       // A leading "1x" quantity marker means this is a real item row, even if a
       // seller's own comment happens to contain a word (e.g. "Fast Shipping!")
@@ -798,6 +1059,7 @@
     }
 
     return [...section.querySelectorAll("li, div")].filter((row) => {
+      if (row.closest("[data-cartforge-badge]") || row.matches(MARK_SELECTOR)) return false;
       const text = visibleText(row);
       return (
         /\b(?:near mint|mint|excellent|good|light played|played|poor|nm|ex|gd|lp|pl)\b/i.test(text) &&
@@ -938,8 +1200,15 @@
     return matches.length ? matches[matches.length - 1][0] : null;
   }
 
+  // KAIKATA marks inside the element are removed from its text, so extraction reads
+  // the same text with or without the overlay.
   function visibleText(element) {
-    return String(element?.innerText || element?.textContent || "")
+    const raw = String(element?.innerText || element?.textContent || "");
+    const marks = element?.querySelectorAll ? [...element.querySelectorAll(MARK_SELECTOR)] : [];
+    const text = marks.length && Matching
+      ? Matching.stripMarkText(raw, marks.map((mark) => mark.innerText || mark.textContent || ""))
+      : raw;
+    return text
       .replace(/ /g, " ")
       .replace(/[ \t]+/g, " ")
       .replace(/\n\s+/g, "\n")
