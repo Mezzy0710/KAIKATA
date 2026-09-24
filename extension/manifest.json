@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "KAIKATA",
   "description": "Extracts structured shopping-cart data from Cardmarket and opens it in KAIKATA.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

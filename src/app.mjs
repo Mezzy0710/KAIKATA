@@ -23,9 +23,10 @@ import { buildConfirmedPlan } from "./confirmed-plan.mjs?v=20260511a";
 import { sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260511a";
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
 import { applyShippingOverride } from "./shipping-override.mjs";
+import { improveSelection } from "./optimizer-search.mjs?v=20260924a";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
-const MAX_OPTIMIZATION_ITERATIONS = 50;
+const MAX_OPTIMIZATION_ITERATIONS = 500;
 
 const ICON_CHART = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-4"></path></svg>`;
 const ICON_CART = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path></svg>`;
@@ -271,10 +272,7 @@ function parseCurrentInput(options = {}) {
   const warningText = state.parsed.warnings.length ? ` ${state.parsed.warnings.join(" ")}` : "";
   const offerGroups = buildOfferGroups(state.parsed.sellers);
 
-  state.desiredQuantityByCard = {};
-  offerGroups.forEach((group) => {
-    state.desiredQuantityByCard[group.cardName] = group.requiredQuantity;
-  });
+  state.desiredQuantityByCard = buildDefaultDesiredQuantities(offerGroups);
 
   const totalCopies = getTotalCopies(offerGroups);
   if (!state.parsed.sellerCount || !offerGroups.length) {
@@ -790,18 +788,12 @@ function desiredCardsTableTemplate(offerGroups) {
 
 function desiredCardTemplate(group) {
   const cardName = group.cardName;
-  const desiredQty = state.desiredQuantityByCard[cardName] ?? group.requiredQuantity;
+  const desiredQty = state.desiredQuantityByCard[cardName] ?? 1;
   const isAvailable = group.requiredQuantity >= desiredQty;
   const statusLabel = desiredQty === 0 ? "Excluded" : isAvailable ? "Ready" : "Needs review";
   const statusClass = desiredQty === 0 ? "muted" : isAvailable ? "good" : "warning";
   const isExpanded = state.expandedCards.has(cardName);
-  const prefLabel = hasAnyPreference(cardName) ? "Preferences set" : "Any version";
-
-  const copiesWord = desiredQty === 1 ? "copy" : "copies";
-  const variantWord = group.variantCount === 1 ? "variant" : "variants";
-  const variantHint = group.variantCount > 1
-    ? `${desiredQty} ${copiesWord} · ${group.variantCount} ${variantWord} detected · ${prefLabel}`
-    : `${desiredQty} ${copiesWord} · ${prefLabel}`;
+  const variantHint = cardVariantHint(group, desiredQty);
 
   const hasRange = group.highestUnitPrice > group.lowestUnitPrice + 0.005;
   const priceHint = hasRange
@@ -829,6 +821,21 @@ function desiredCardTemplate(group) {
       ${isExpanded ? variantBodyTemplate(group) : ""}
     </div>
   `;
+}
+
+function cardVariantHint(group, desiredQty) {
+  const copiesWord = desiredQty === 1 ? "copy" : "copies";
+  const variantCount = group.variantCount || 1;
+  const prefLabel = hasAnyPreference(group.cardName) ? "Preferences set" : "Any version";
+  const parts = [`${desiredQty} ${copiesWord}`];
+  if (variantCount > 1) {
+    parts.push(`${variantCount} variants detected`);
+  }
+  parts.push(prefLabel);
+  if (group.requiredQuantity > desiredQty) {
+    parts.push(`${group.requiredQuantity} in cart`);
+  }
+  return parts.join(" · ");
 }
 
 function variantBodyTemplate(group) {
@@ -1321,19 +1328,7 @@ function handleDesiredQuantityChange(event) {
       variantRow.className = value === "require" ? "pref-require" : value === "prefer" ? "pref-prefer" : value === "exclude" ? "pref-exclude" : "";
     }
     // Update the collapsed-row variant hint
-    const hintEl = accordion.querySelector(".card-variant-hint");
-    if (hintEl) {
-      const offerGroups = buildOfferGroups(state.parsed.sellers);
-      const group = offerGroups.find((g) => g.cardName === cardName);
-      const variantCount = group?.variantCount || 1;
-      const desiredQty = state.desiredQuantityByCard[cardName] ?? group?.requiredQuantity ?? 1;
-      const copiesWord = desiredQty === 1 ? "copy" : "copies";
-      const variantWord = variantCount === 1 ? "variant" : "variants";
-      const prefLabel = hasAnyPreference(cardName) ? "Preferences set" : "Any version";
-      hintEl.textContent = variantCount > 1
-        ? `${desiredQty} ${copiesWord} · ${variantCount} ${variantWord} detected · ${prefLabel}`
-        : `${desiredQty} ${copiesWord} · ${prefLabel}`;
-    }
+    refreshCardVariantHint(accordion, cardName);
     state.optimizationStale = true;
     updateOptimizationPreview();
     return;
@@ -1345,8 +1340,17 @@ function handleDesiredQuantityChange(event) {
     const cardName = row.dataset.cardName;
     const value = Math.max(0, Number.parseInt(event.target.value, 10) || 0);
     state.desiredQuantityByCard[cardName] = value;
+    refreshCardVariantHint(row, cardName);
     state.optimizationStale = true;
     updateOptimizationPreview();
+  }
+}
+
+function refreshCardVariantHint(row, cardName) {
+  const hintEl = row.querySelector(".card-variant-hint");
+  const group = hintEl && buildOfferGroups(state.parsed.sellers).find((g) => g.cardName === cardName);
+  if (group) {
+    hintEl.textContent = cardVariantHint(group, state.desiredQuantityByCard[cardName] ?? 1);
   }
 }
 
@@ -1388,12 +1392,14 @@ function handleDesiredQuantityClick(event) {
     state.desiredQuantityByCard[cardName] = current + 1;
     state.optimizationStale = true;
     input.value = state.desiredQuantityByCard[cardName];
+    refreshCardVariantHint(row, cardName);
     updateOptimizationPreview();
   } else if (action === "decrement-qty") {
     const current = state.desiredQuantityByCard[cardName] || 0;
     state.desiredQuantityByCard[cardName] = Math.max(0, current - 1);
     state.optimizationStale = true;
     input.value = state.desiredQuantityByCard[cardName];
+    refreshCardVariantHint(row, cardName);
     updateOptimizationPreview();
   }
 }
@@ -1490,7 +1496,7 @@ function attachUnresolvedResolverHandlers() {
 function optimizeCart(sellers, offerGroups) {
   const shippingRecords = buildShippingIndex(state.shippingData);
   const groups = offerGroups.map((group) => {
-    const desiredQty = state.desiredQuantityByCard[group.cardName] ?? group.requiredQuantity;
+    const desiredQty = state.desiredQuantityByCard[group.cardName] ?? 1;
     if (desiredQty === 0) {
       return {
         ...group,
@@ -1572,7 +1578,7 @@ function optimizeCart(sellers, offerGroups) {
   }
 
   if (optimization.iterations >= MAX_OPTIMIZATION_ITERATIONS) {
-    costNotes.push("Optimization stopped at the 50-iteration safety limit.");
+    costNotes.push(`Optimization stopped at the ${MAX_OPTIMIZATION_ITERATIONS}-iteration safety limit.`);
   }
 
   costNotes.push("Trustee fees and final checkout total are estimated. Verify at Cardmarket before purchasing.");
@@ -1624,54 +1630,15 @@ function buildInitialAssignment(groups, sellers, shippingRecords) {
 }
 
 function optimizeBySellerMoves(initialSelection, groups, sellers, shippingRecords) {
-  let selection = [...initialSelection];
-  let score = scoreSelection(selection, sellers, shippingRecords);
-  let iterations = 0;
-  const sellerIndexes = sellers.map((_, sellerIndex) => sellerIndex);
-
-  while (iterations < MAX_OPTIMIZATION_ITERATIONS) {
-    let improved = false;
-    iterations += 1;
-
-    outerLoop:
-    for (const fromSellerIndex of sellerIndexes) {
-      for (const toSellerIndex of sellerIndexes) {
-        if (fromSellerIndex === toSellerIndex) {
-          continue;
-        }
-
-        for (let groupIndex = 0; groupIndex < selection.length; groupIndex += 1) {
-          const currentOffer = selection[groupIndex];
-          if (!currentOffer || currentOffer.sellerIndex !== fromSellerIndex) {
-            continue;
-          }
-
-          const nextOffer = groups[groupIndex]?.candidates.find((candidate) => candidate.sellerIndex === toSellerIndex);
-          if (!nextOffer) {
-            continue;
-          }
-
-          const trialSelection = [...selection];
-          trialSelection[groupIndex] = nextOffer;
-          const trialScore = scoreSelection(trialSelection, sellers, shippingRecords);
-          const delta = trialScore.total - score.total;
-
-          if (delta < -0.005) {
-            selection = trialSelection;
-            score = trialScore;
-            improved = true;
-            break outerLoop;
-          }
-        }
-      }
-    }
-
-    if (!improved) {
-      break;
-    }
-  }
-
-  return { selectedOffers: selection.filter(Boolean), score, iterations };
+  const result = improveSelection({
+    selection: initialSelection,
+    groups,
+    sellerCount: sellers.length,
+    scoreSelection: (selection) => scoreSelection(selection, sellers, shippingRecords),
+    isBetterScore,
+    maxIterations: MAX_OPTIMIZATION_ITERATIONS
+  });
+  return { selectedOffers: result.selection.filter(Boolean), score: result.score, iterations: result.iterations };
 }
 
 function scoreSelection(selection, sellers, shippingRecords) {
@@ -2788,6 +2755,11 @@ function hasAnyPreference(cardName) {
   return Object.values(prefs).some((p) => p !== "any");
 }
 
+// Default to one copy per card; users raise it manually when they want duplicates.
+function buildDefaultDesiredQuantities(offerGroups) {
+  return Object.fromEntries(offerGroups.map((group) => [group.cardName, 1]));
+}
+
 function getTotalCopies(offerGroups) {
   return offerGroups.reduce((sum, group) => sum + group.requiredQuantity, 0);
 }
@@ -2831,16 +2803,20 @@ function exactParsedTrusteeValue(seller, articleValue, quantity, shippingMethod,
 export const __testing = {
   state,
   advancedDetailsTemplate,
+  buildDefaultDesiredQuantities,
+  buildInitialAssignment,
   buildOfferGroups,
   buildBuyingPlanText,
   buildResultWarnings,
   desiredCardsTableTemplate,
   getTotalCopies,
   groupSelectedOffersBySeller,
+  isBetterScore,
   normalizeReferenceKey,
   optimizeCart,
   optimizationSummaryTemplate,
   recommendationOfferRowTemplate,
+  scoreSelection,
   sellerPlanTemplate,
   warningBannerTemplate
 };

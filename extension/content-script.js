@@ -426,14 +426,23 @@
         textOverflow: "ellipsis"
       });
 
-      const metaParts = [`${row.quantity || 1}x`];
+      const cartQty = Number(row.quantity || 1);
+      const keptQty = row.decision === "selected" ? Number(row.selectedQuantity || cartQty) : cartQty;
+      const keepFewer = row.decision === "selected" && keptQty < cartQty;
       const condLang = [row.condition, row.language].filter(Boolean).join(" · ");
-      if (condLang) {
-        metaParts.push(condLang);
-      }
       const metaEl = document.createElement("div");
-      metaEl.textContent = metaParts.join(" · ");
       css(metaEl, { color: "#A89D8F", marginTop: "2px" });
+      if (keepFewer) {
+        const keepEl = document.createElement("span");
+        keepEl.textContent = `Keep ${keptQty} of ${cartQty}`;
+        css(keepEl, { fontWeight: "700", color: "#C8872E" });
+        metaEl.append(keepEl);
+        if (condLang) {
+          metaEl.append(document.createTextNode(` · ${condLang}`));
+        }
+      } else {
+        metaEl.textContent = [`${keptQty}x`, condLang].filter(Boolean).join(" · ");
+      }
 
       left.append(nameEl, metaEl);
 
