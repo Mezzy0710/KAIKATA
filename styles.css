@@ -3676,3 +3676,23 @@ input[type="number"] {
   color: #3F6149;
   font-weight: 600;
 }
+
+.candidate-status {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.candidate-status--active {
+  border-left: 4px solid #4F7A5A;
+  color: var(--text);
+}
+
+.candidate-status--active strong {
+  color: #3F6149;
+}

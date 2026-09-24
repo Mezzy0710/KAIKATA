@@ -60,7 +60,9 @@ const state = {
   cardmarketCartUrl: null,
   // Offers captured by the extension from sellers' wants-list pages (see src/candidates.mjs).
   candidateSellers: [],
-  candidateStats: null
+  candidateStats: null,
+  // "idle" | "checking" | "unavailable" (no extension answer) | "none" | "loaded"
+  candidateStatus: "idle"
 };
 
 const hasDom = typeof document !== "undefined";
@@ -306,6 +308,7 @@ function parseCurrentInput(options = {}) {
   updateOptimizeButton();
   state.candidateSellers = [];
   state.candidateStats = null;
+  state.candidateStatus = "checking";
   render();
   loadCandidatesFromExtension();
 
@@ -752,6 +755,7 @@ function renderDesiredCards(offerGroups) {
         <button id="runOptimizationButton" class="primary-button run-button" type="button">${escapeHtml(actionLabel)}</button>
       </div>
     </div>
+    ${candidateStatusTemplate()}
     ${referenceStatusTemplate()}
     ${desiredCardsTableTemplate(offerGroups)}
   `);
@@ -954,6 +958,33 @@ function variantRowTemplate(cardName, variantKey, offer, hasEnriched, showRef) {
       </td>
     </tr>
   `;
+}
+
+// Tells the user whether wants-page captures from the extension are in use.
+function candidateStatusTemplate() {
+  const status = state.candidateStatus;
+  if (status === "checking") {
+    return `<p class="candidate-status">Checking the extension for captured wants-page offers…</p>`;
+  }
+  if (status === "unavailable") {
+    return `<p class="candidate-status">Captured wants-page offers: extension not connected on this page, so only your cart is used.</p>`;
+  }
+  if (status === "none") {
+    return `<p class="candidate-status">No captured wants-page offers. Capture sellers on their "Articles on My Wants List" page to compare offers outside your cart.</p>`;
+  }
+  if (status === "loaded" && state.candidateStats) {
+    const stats = state.candidateStats;
+    const sellerNames = state.candidateSellers.map((capture) => capture.sellerName).join(", ");
+    const staleNote = stats.staleSellers ? ` ${stats.staleSellers} capture(s) are older than 24 h.` : "";
+    return `
+      <p class="candidate-status candidate-status--active">
+        <strong>${escapeHtml(`Using ${stats.afterFilter} captured offer${stats.afterFilter === 1 ? "" : "s"} from ${state.candidateSellers.length} seller${state.candidateSellers.length === 1 ? "" : "s"}`)}</strong>
+        ${escapeHtml(`(${sellerNames}). ${stats.received} captured; ${stats.notInCart} skipped because the card isn't in your cart, ${stats.alreadyInCart} already in your cart.${staleNote}`)}
+        Offers not in your cart are marked <span class="candidate-badge">not in cart</span> when you open a card.
+      </p>
+    `;
+  }
+  return "";
 }
 
 function referenceStatusTemplate() {
@@ -1551,7 +1582,13 @@ async function loadCandidatesFromExtension() {
   if (!state.parsed.sellers?.length) return;
   const parsedAtRequest = state.parsed;
   const response = await requestCandidatesFromExtension();
-  if (!response.ok || !response.sellers?.length || state.parsed !== parsedAtRequest) return;
+  if (state.parsed !== parsedAtRequest) return;
+  if (!response.ok || !response.sellers?.length) {
+    state.candidateStatus = response.ok ? "none" : "unavailable";
+    render();
+    return;
+  }
+  state.candidateStatus = "loaded";
   state.candidateSellers = response.sellers;
   const { stats } = offerContext();
   console.info("[KAIKATA] wants-page candidates", stats);
