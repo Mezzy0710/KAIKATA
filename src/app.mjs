@@ -23,7 +23,8 @@ import { buildConfirmedPlan } from "./confirmed-plan.mjs?v=20260511a";
 import { sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260511a";
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
 import { applyShippingOverride } from "./shipping-override.mjs";
-import { improveSelection } from "./optimizer-search.mjs?v=20260924a";
+import { improveSelection } from "./optimizer-search.mjs?v=20260924b";
+import { createSellerCostCache } from "./optimizer-score-cache.mjs?v=20260924b";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const MAX_OPTIMIZATION_ITERATIONS = 500;
@@ -1404,6 +1405,8 @@ function handleDesiredQuantityClick(event) {
   }
 }
 
+let optimizationInProgress = false;
+
 function runOptimizationPlaceholder() {
   const sellers = state.parsed.sellers || [];
   const offerGroups = buildOfferGroups(sellers);
@@ -1415,19 +1418,38 @@ function runOptimizationPlaceholder() {
     return;
   }
 
+  if (optimizationInProgress) return;
+  optimizationInProgress = true;
   updateWorkflowStatus("Optimizing", "muted", "Checking sellers, shipping, and the usual Cardmarket chaos…");
-  state.optimizationStale = false;
-  state.optimizationResult = optimizeCart(sellers, offerGroups);
-  state.inputCollapsed = true;
-  updateWorkflowStatus(
-    state.optimizationResult.warnings.length ? "Plan needs review" : "Ready to buy",
-    state.optimizationResult.warnings.length ? "warning" : "good",
-    state.optimizationResult.warnings.length
-      ? "Check the notes before buying."
-      : "Your buy list is ready."
-  );
-  render();
-  elements.optimizationSummary.scrollIntoView({ behavior: "smooth", block: "start" });
+  const button = elements.runOptimizationButton;
+  if (button) {
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+  }
+
+  // optimizeCart is synchronous; yield a frame first so the status and disabled button paint.
+  requestAnimationFrame(() => setTimeout(() => {
+    try {
+      state.optimizationStale = false;
+      state.optimizationResult = optimizeCart(sellers, offerGroups);
+      state.inputCollapsed = true;
+      updateWorkflowStatus(
+        state.optimizationResult.warnings.length ? "Plan needs review" : "Ready to buy",
+        state.optimizationResult.warnings.length ? "warning" : "good",
+        state.optimizationResult.warnings.length
+          ? "Check the notes before buying."
+          : "Your buy list is ready."
+      );
+      render();
+      elements.optimizationSummary.scrollIntoView({ behavior: "smooth", block: "start" });
+    } finally {
+      optimizationInProgress = false;
+      if (button?.isConnected) {
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
+      }
+    }
+  }, 0));
 }
 
 function updateOptimizationPreview() {
@@ -1630,27 +1652,34 @@ function buildInitialAssignment(groups, sellers, shippingRecords) {
 }
 
 function optimizeBySellerMoves(initialSelection, groups, sellers, shippingRecords) {
+  const estimateCost = createSellerCostCache((sellerIndex, offers) => estimateSellerCost(sellers[sellerIndex], sellerIndex, offers, shippingRecords));
   const result = improveSelection({
     selection: initialSelection,
     groups,
     sellerCount: sellers.length,
-    scoreSelection: (selection) => scoreSelection(selection, sellers, shippingRecords),
+    scoreSelection: (selection) => scoreSelection(selection, sellers, shippingRecords, estimateCost),
     isBetterScore,
     maxIterations: MAX_OPTIMIZATION_ITERATIONS
   });
   return { selectedOffers: result.selection.filter(Boolean), score: result.score, iterations: result.iterations };
 }
 
-function scoreSelection(selection, sellers, shippingRecords) {
+function scoreSelection(selection, sellers, shippingRecords, estimateCost) {
   const validSelection = selection.filter(Boolean);
-  const sellerCosts = estimateSelectedSellerCosts(validSelection, sellers, shippingRecords);
+  const sellerCosts = estimateSelectedSellerCosts(validSelection, sellers, shippingRecords, estimateCost);
   const cardTotal = validSelection.reduce((sum, offer) => sum + Number(offer.requiredQuantity || offer.quantity || 1) * Number(offer.unitPrice || 0), 0);
   const fixedTotal = sellerCosts.reduce((sum, cost) => sum + cost.totalCost, 0);
   const shippingTotal = sellerCosts.reduce((sum, cost) => sum + (Number.isFinite(cost.shippingValue) ? cost.shippingValue : 0), 0);
   const trusteeTotal = sellerCosts.reduce((sum, cost) => sum + (Number.isFinite(cost.trusteeFeeValue) ? cost.trusteeFeeValue : 0), 0);
+  const unresolvedCount = sellerCosts.filter((cost) => !Number.isFinite(cost.totalCost)).length;
+  const resolvedFixedTotal = sellerCosts.reduce((sum, cost) => sum + (Number.isFinite(cost.totalCost) ? cost.totalCost : 0), 0);
 
   return {
     total: cardTotal + fixedTotal,
+    // Lexicographic ranking keys: an unresolved seller makes `total` Infinity, which
+    // would otherwise make every comparison NaN and stall the search.
+    unresolvedCount,
+    resolvedTotal: cardTotal + resolvedFixedTotal,
     cardTotal,
     fixedTotal,
     shippingTotal,
@@ -1661,10 +1690,13 @@ function scoreSelection(selection, sellers, shippingRecords) {
 }
 
 function isBetterScore(candidate, current) {
-  if (candidate.total < current.total - 0.005) {
+  if (candidate.unresolvedCount !== current.unresolvedCount) {
+    return candidate.unresolvedCount < current.unresolvedCount;
+  }
+  if (candidate.resolvedTotal < current.resolvedTotal - 0.005) {
     return true;
   }
-  if (Math.abs(candidate.total - current.total) < 0.005 && candidate.sellerCount < current.sellerCount) {
+  if (Math.abs(candidate.resolvedTotal - current.resolvedTotal) < 0.005 && candidate.sellerCount < current.sellerCount) {
     return true;
   }
   return false;
@@ -1685,9 +1717,11 @@ function sellerFixedCost(seller) {
   return 0;
 }
 
-function estimateSelectedSellerCosts(selection, sellers, shippingRecords) {
+function estimateSelectedSellerCosts(selection, sellers, shippingRecords, estimateCost) {
   const grouped = groupSelectedOffersBySeller(selection);
-  return [...grouped.entries()].map(([sellerIndex, offers]) => estimateSellerCost(sellers[sellerIndex], sellerIndex, offers, shippingRecords));
+  return [...grouped.entries()].map(([sellerIndex, offers]) => (estimateCost
+    ? estimateCost(sellerIndex, offers)
+    : estimateSellerCost(sellers[sellerIndex], sellerIndex, offers, shippingRecords)));
 }
 
 function estimateSellerCost(seller, sellerIndex, offers, shippingRecords) {

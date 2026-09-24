@@ -29,8 +29,15 @@ export function improveSelection({ selection, groups, sellerCount, scoreSelectio
   return { selection: current, score, iterations };
 }
 
+// Fewer unresolved sellers wins outright; otherwise compare the resolved total.
+// Scores without these fields fall back to `total`.
 function isImprovement(trialScore, score) {
-  return trialScore.total - score.total < -IMPROVEMENT_EPSILON;
+  const trialUnresolved = trialScore.unresolvedCount ?? 0;
+  const currentUnresolved = score.unresolvedCount ?? 0;
+  if (trialUnresolved !== currentUnresolved) {
+    return trialUnresolved < currentUnresolved;
+  }
+  return (trialScore.resolvedTotal ?? trialScore.total) - (score.resolvedTotal ?? score.total) < -IMPROVEMENT_EPSILON;
 }
 
 function candidateFor(group, sellerIndex) {
