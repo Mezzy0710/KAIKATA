@@ -26,6 +26,7 @@ import { applyShippingOverride } from "./shipping-override.mjs?v=20260925a";
 import { improveSelection } from "./optimizer-search.mjs?v=20260924b";
 import { createSellerCostCache } from "./optimizer-score-cache.mjs?v=20260924b";
 import { buildSellerShippingRecords } from "./shipping-calibration.mjs?v=20260925a";
+import { cartRow, sellerCartCuts } from "./plan-cuts.mjs?v=20260926a";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const MAX_OPTIMIZATION_ITERATIONS = 500;
@@ -2240,9 +2241,15 @@ function droppedSellersTemplate(result) {
         </div>
       </div>
       <div class="dropped-sellers-list">
-        ${result.droppedSellers.map(({ seller, sellerIndex }) => `
+        ${result.droppedSellers.map(({ seller }) => `
           <div class="dropped-seller-item">
             <strong>${escapeHtml(seller.sellerName)}</strong>
+            <span class="dropped-seller-country">${escapeHtml(seller.sellerCountry || "Unknown")} ${countryFlag(seller.sellerCountry)}</span>
+            <ul class="dropped-seller-cards">
+              ${(seller.items || []).map(cartRow).map((row) => `
+                <li>${escapeHtml(row.quantity)}× ${escapeHtml(row.cardName)}${row.condition ? ` · ${escapeHtml(row.condition)}` : ""} · ${escapeHtml(formatMoney(row.price))}</li>
+              `).join("")}
+            </ul>
           </div>
         `).join("")}
       </div>
@@ -2352,6 +2359,17 @@ function countryFlag(countryName) {
   return FLAGS[String(countryName || "").toLowerCase().trim()] ?? "";
 }
 
+// Muted cut list under a kept seller: rows the plan does not use, plus quantity reductions.
+function sellerCutsTemplate(seller, offers) {
+  const { removeRows, reduceRows } = sellerCartCuts(seller, offers);
+  if (!removeRows.length && !reduceRows.length) return "";
+  const parts = [
+    ...removeRows.map((row) => `${escapeHtml(row.quantity)}× ${escapeHtml(row.cardName)}`),
+    ...reduceRows.map((row) => `${escapeHtml(row.cardName)}: keep ${escapeHtml(row.keepQty)} of ${escapeHtml(row.cartQty)}`)
+  ];
+  return `<p class="seller-cut-list"><span>Remove from this seller:</span> ${parts.join(", ")}</p>`;
+}
+
 function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCost) {
   const cardTotal = sellerCost?.articleValue ?? offerSubtotal(offers);
   const shippingTotal = sellerCost?.shippingValue ?? 0;
@@ -2450,6 +2468,7 @@ function sellerPlanTemplate(seller, sellerIndex, displayNumber, offers, sellerCo
           ${excludedCardsSection}
         </div>
       </details>
+      ${sellerCutsTemplate(seller, offers)}
 
       <details class="cost-breakdown">
         <summary class="seller-section-label">Cost Breakdown</summary>
@@ -2878,6 +2897,7 @@ export const __testing = {
   buildBuyingPlanText,
   buildResultWarnings,
   desiredCardsTableTemplate,
+  droppedSellersTemplate,
   getTotalCopies,
   groupSelectedOffersBySeller,
   isBetterScore,
