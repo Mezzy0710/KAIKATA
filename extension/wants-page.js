@@ -67,6 +67,7 @@
       && Date.now() - Date.parse(previous.capturedAt) <= STALE_MS;
     const byId = new Map((keepPrevious ? previous.offers : []).map((offer) => [offer.idArticle, offer]));
     offers.forEach((offer) => byId.set(offer.idArticle, offer));
+    const mergedOffers = [...byId.values()];
     all[sellerKey] = {
       sellerName: meta.sellerName,
       sellerCountry: meta.sellerCountry || previous?.sellerCountry || "",
@@ -76,7 +77,9 @@
       totalPages: details.totalPages ?? meta.pages,
       pagesFetched: details.pagesFetched,
       stoppedReason: details.stoppedReason || null,
-      offers: [...byId.values()]
+      unique: mergedOffers.length,
+      passes: details.passes ?? previous?.passes ?? 1,
+      offers: mergedOffers
     };
     await storageSet(CANDIDATES_KEY, all);
     return all[sellerKey];
@@ -101,8 +104,8 @@
       fetchPage: (url) => fetch(url, { credentials: "include", redirect: "follow" }),
       sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
       isCancelled: () => cancelRequested,
-      onProgress: ({ page, totalPages, offers, waitingMs }) => {
-        setProgress(page, totalPages, offers, waitingMs);
+      onProgress: ({ page, totalPages, offers, waitingMs, pass }) => {
+        setProgress(page, totalPages, offers, waitingMs, pass);
       }
     });
     capturing = false;
@@ -158,10 +161,11 @@
     setProgress(0, pagesToLoad, 0, 0);
   }
 
-  function setProgress(page, totalPages, offers, waitingMs) {
+  function setProgress(page, totalPages, offers, waitingMs, pass = 1) {
     const total = Math.max(1, totalPages || pagesToLoad);
     ui.progressFill.style.width = `${Math.round((Math.min(page, total) / total) * 100)}%`;
-    ui.progressText.textContent = `Page ${Math.max(page, 1)} of ${total} · ${offers} offers${waitingMs ? ` · pausing ${Math.round(waitingMs / 100) / 10} s` : ""}`;
+    const label = pass === 2 ? `Second pass (Z→A): page ${Math.max(page, 1)} of ${total}` : `Page ${Math.max(page, 1)} of ${total}`;
+    ui.progressText.textContent = `${label} · ${offers} offers${waitingMs ? ` · pausing ${Math.round(waitingMs / 100) / 10} s` : ""}`;
   }
 
   async function showResult(saved, { stoppedReason = null, pageOnly = 0, alreadyLoaded = false } = {}) {
@@ -170,21 +174,22 @@
     ui.result.style.display = "block";
     ui.result.replaceChildren();
 
-    if (!alreadyLoaded) {
-      const done = paragraph(pageOnly
-        ? `✓ Loaded ${offersText(pageOnly)} from this page (${saved.offers.length} for this seller).`
-        : `✓ Loaded ${offersText(saved.offers.length)}.`, { fontWeight: "700", color: "#4F7A5A" });
-      ui.result.append(done);
+    if (!alreadyLoaded && pageOnly) {
+      ui.result.append(paragraph(`✓ Loaded ${offersText(pageOnly)} from this page (${saved.offers.length} for this seller).`, { fontWeight: "700", color: "#4F7A5A" }));
+    } else if (!pageOnly) {
+      // Cardmarket's paging repeats some rows and skips others; the walker tries a
+      // second, reverse-sorted pass to recover them (see walkWantsPages). What's left
+      // after that is a gap, not an unrecognized row.
+      const hits = Number.isFinite(saved.hits) ? saved.hits : meta.hits;
+      const outcome = Parser.captureResultText(saved.offers.length, hits);
+      if (!alreadyLoaded || !outcome.complete) {
+        ui.result.append(paragraph(outcome.text, !alreadyLoaded && outcome.complete
+          ? { fontWeight: "700", color: "#4F7A5A" }
+          : { color: "#6E6257" }));
+      }
     }
     if (stoppedReason) {
       ui.result.append(paragraph(`Stopped: ${stoppedReason}`, { color: "#9F2D24" }));
-    }
-    // Fewer offers than hits only means unrecognized rows when every page was read.
-    const hits = Number.isFinite(saved.hits) ? saved.hits : meta.hits;
-    const partial = Boolean(stoppedReason || saved.stoppedReason || pageOnly)
-      || (Number(saved.pagesFetched) || 0) < Math.min(Number(saved.totalPages) || 1, Parser.MAX_PAGES);
-    if (!partial && Number.isFinite(hits) && saved.offers.length < hits) {
-      ui.result.append(paragraph(`The page reports ${hits} offers; ${hits - saved.offers.length} row(s) were not recognized.`, { color: "#9F2D24" }));
     }
 
     const snapshot = await storageGet(SNAPSHOT_KEY);
