@@ -62,7 +62,8 @@ const state = {
   candidateSellers: [],
   candidateStats: null,
   // "idle" | "checking" | "unavailable" (no extension answer) | "none" | "loaded"
-  candidateStatus: "idle"
+  candidateStatus: "idle",
+  candidateSignature: ""
 };
 
 const hasDom = typeof document !== "undefined";
@@ -115,6 +116,11 @@ async function boot() {
   }
 
   elements.parseButton.addEventListener("click", () => parseCurrentInput({ autoReveal: true }));
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      loadCandidatesFromExtension({ onReturn: true });
+    }
+  });
   if (elements.loadSampleButton) {
     elements.loadSampleButton.addEventListener("click", loadSampleCart);
   }
@@ -309,6 +315,7 @@ function parseCurrentInput(options = {}) {
   state.candidateSellers = [];
   state.candidateStats = null;
   state.candidateStatus = "checking";
+  state.candidateSignature = "";
   render();
   loadCandidatesFromExtension();
 
@@ -1578,18 +1585,30 @@ function offerContext() {
   return context;
 }
 
-async function loadCandidatesFromExtension() {
+// Asks the extension for wants-page captures: after every cart import, and again when
+// the user comes back to this tab (they usually capture sellers in another tab).
+async function loadCandidatesFromExtension({ onReturn = false } = {}) {
   if (!state.parsed.sellers?.length) return;
   const parsedAtRequest = state.parsed;
   const response = await requestCandidatesFromExtension();
   if (state.parsed !== parsedAtRequest) return;
-  if (!response.ok || !response.sellers?.length) {
+  const sellers = response.ok ? response.sellers || [] : [];
+  const signature = sellers.map((capture) => `${capture.sellerName}|${capture.capturedAt}|${capture.offers?.length}`).join(";");
+  if (onReturn && (!response.ok || signature === state.candidateSignature)) return;
+  state.candidateSignature = signature;
+  if (onReturn && state.optimizationResult) {
+    state.optimizationStale = true;
+    updateWorkflowStatus("Needs review", "warning", "Captured offers changed. Re-optimize to use them.");
+  }
+  if (!sellers.length) {
+    state.candidateSellers = [];
+    state.candidateStats = null;
     state.candidateStatus = response.ok ? "none" : "unavailable";
     render();
     return;
   }
   state.candidateStatus = "loaded";
-  state.candidateSellers = response.sellers;
+  state.candidateSellers = sellers;
   const { stats } = offerContext();
   console.info("[KAIKATA] wants-page candidates", stats);
   state.optimizationStale = true;
