@@ -1,4 +1,4 @@
-import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseMoney } from "./parser.mjs?v=20260509m";
+import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, parseMoney } from "./parser.mjs?v=20260924c";
 
 const CARTFORGE_PAYLOAD_PREFIX = "CARTFORGE_CART=";
 

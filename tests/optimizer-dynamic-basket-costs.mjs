@@ -103,9 +103,11 @@ assert.equal(selected.get("Counterspell"), "Seller A");
 assertMoney(result.selectedTotal, 21.3, "Scenario 2 should prefer Seller A bundle.");
 
 // Scenario 3: Card count pushes Seller A into a higher shipping tier.
+// Tiers follow Cardmarket's weight limits (17 cards = 50 g, 18 cards = 100 g); they were
+// 31 g / 72 g under the old 1.8 g/card model.
 setShippingData([
-  shippingRow("Germany", "Small Letter", 1.5, { tracked: false, maxWeightG: 31 }),
-  shippingRow("Germany", "Large Letter", 5.0, { tracked: false, maxWeightG: 72 }),
+  shippingRow("Germany", "Small Letter", 1.5, { tracked: false, maxWeightG: 50 }),
+  shippingRow("Germany", "Large Letter", 5.0, { tracked: false, maxWeightG: 100 }),
   shippingRow("Italy", "Untracked Letter", 1.5, { tracked: false })
 ]);
 sellers = [

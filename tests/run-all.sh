@@ -42,6 +42,7 @@ TEST_FILES=(
   "tests/price-verdict.mjs"
   "tests/scryfall-lookup.mjs"
   "tests/shipping-costs.mjs"
+  "tests/shipping-weight.mjs"
 )
 
 # Performance test (optional, can be slow)

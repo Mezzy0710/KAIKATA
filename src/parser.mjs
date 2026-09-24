@@ -294,6 +294,10 @@ function walkShippingData(value, context, records) {
   }
 
   Object.entries(value).forEach(([key, child]) => {
+    // Keys like `_meta` carry file metadata, not countries or shipping rows.
+    if (key.startsWith("_")) {
+      return;
+    }
     if ((ownCountry || ownMethod) && (!child || typeof child !== "object")) {
       return;
     }

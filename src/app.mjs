@@ -1,10 +1,10 @@
-import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, inferSellerCountry, parseCart, parseMoney } from "./parser.mjs?v=20260509m";
+import { COUNTRY_OPTIONS, buildShippingIndex, formatMoney, inferSellerCountry, parseCart, parseMoney } from "./parser.mjs?v=20260924c";
 import {
   calculateShippingCost,
   calculateTrusteeFee,
   estimateShipmentWeight,
   SHIPPING_DATA_INCLUDES_CARDMARKET_FEE
-} from "./shipping.mjs?v=20260509m";
+} from "./shipping.mjs?v=20260924c";
 import {
   getReferencePrice,
   enrichCardsWithReferencePrices,
@@ -18,11 +18,11 @@ import {
   hasHighPricedCards,
   generateHighPriceNote
 } from "./price-verdict.mjs?v=20260509m";
-import { decodeCartForgeHash, decodeCartForgePayload, parseExtractedCartPayload } from "./importer.mjs?v=20260509m";
+import { decodeCartForgeHash, decodeCartForgePayload, parseExtractedCartPayload } from "./importer.mjs?v=20260924c";
 import { buildConfirmedPlan } from "./confirmed-plan.mjs?v=20260511a";
 import { sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260511a";
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
-import { applyShippingOverride } from "./shipping-override.mjs";
+import { applyShippingOverride } from "./shipping-override.mjs?v=20260924c";
 import { improveSelection } from "./optimizer-search.mjs?v=20260924b";
 import { createSellerCostCache } from "./optimizer-score-cache.mjs?v=20260924b";
 
@@ -2263,11 +2263,17 @@ function advancedDetailsTemplate(result, offerGroups) {
     <div class="advanced-section">
       <h3>Calculation details</h3>
       <p class="section-description">Shipping, trustee, and cost assumptions:</p>
+      ${shippingRatesDateTemplate()}
       ${assumptionsTemplate(result)}
     </div>
   `);
 
   return sections.join("");
+}
+
+function shippingRatesDateTemplate() {
+  const updatedAt = state.shippingData?._meta?.updatedAt;
+  return updatedAt ? `<p class="section-description">Shipping rates from ${escapeHtml(updatedAt)}</p>` : "";
 }
 
 function countryReviewTemplate(countryWarnings) {

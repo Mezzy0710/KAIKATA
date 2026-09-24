@@ -21,8 +21,9 @@ const italyAtThreshold = calculateShippingCost({
 
 assert.equal(italyAtThreshold.trackedRequired, true);
 assert.equal(italyAtThreshold.tracked, true);
-assert.equal(italyAtThreshold.method, "Posta Raccomandata Internazionale (International Registered Mail)");
-assert.equal(italyAtThreshold.cost, 10.7);
+// Cardmarket 2026-09-24: Posta Raccomandata was removed; cheapest tracked Italy → Germany is Posteminibox Exprès at €12.35.
+assert.equal(italyAtThreshold.method, "Posteminibox Exprès");
+assert.equal(italyAtThreshold.cost, 12.35);
 assert.equal(italyAtThreshold.cardmarketFeeIncluded, true);
 assert.equal(SHIPPING_DATA_INCLUDES_CARDMARKET_FEE, true);
 
@@ -36,7 +37,8 @@ const italyBelowThreshold = calculateShippingCost({
 assert.equal(italyBelowThreshold.trackedRequired, false);
 assert.equal(italyBelowThreshold.tracked, false);
 assert.equal(italyBelowThreshold.method, "Postapriority Internazionale - Ufficio Postale");
-assert.equal(italyBelowThreshold.cost, 4.05);
+// Cardmarket 2026-09-24: Postapriority 50 g letter repriced to €4.88.
+assert.equal(italyBelowThreshold.cost, 4.88);
 
 const emptySellerShipping = 0;
 assert.equal(emptySellerShipping, 0);
@@ -71,7 +73,8 @@ const twoCards = calculateShippingCost({
   orderValue: 16
 });
 
-assert.equal(estimateShipmentWeight(2), 3.6);
+// Weight model now follows Cardmarket's published limits: up to 4 cards = 20 g letter.
+assert.equal(estimateShipmentWeight(2), 20);
 assert.equal(twoCards.trackedRequired, false);
 assert.equal(twoCards.tracked, false);
 assert.equal(twoCards.method, "Standardbrief");

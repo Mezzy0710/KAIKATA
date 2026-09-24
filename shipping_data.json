@@ -1,19 +1,24 @@
 {
+  "_meta": {
+    "updatedAt": "2026-09-24",
+    "source": "help.cardmarket.com/en/ShippingCosts",
+    "destination": "Germany"
+  },
   "Austria": [
     {
-      "method": "Priority Letter (M)",
+      "method": "Brief S Priority",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 20,
-      "price": 2.7,
+      "price": 1.75,
       "is_letter": true,
       "delivery_days": 7
     },
     {
-      "method": "Registered Letter (M Einschreiben)",
+      "method": "Brief M Priority Tracked (Einschreiben M)",
       "tracked": true,
       "max_value": 100,
-      "max_weight_g": 50,
+      "max_weight_g": 75,
       "price": 6.85,
       "is_letter": true,
       "delivery_days": 7
@@ -23,7 +28,7 @@
       "tracked": true,
       "max_value": 510,
       "max_weight_g": 1000,
-      "price": 18.77,
+      "price": 19.39,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -32,7 +37,7 @@
       "tracked": true,
       "max_value": 510,
       "max_weight_g": 2000,
-      "price": 21.19,
+      "price": 21.9,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -41,7 +46,7 @@
       "tracked": true,
       "max_value": 510,
       "max_weight_g": 4000,
-      "price": 24.83,
+      "price": 25.66,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -50,115 +55,88 @@
       "tracked": true,
       "max_value": 510,
       "max_weight_g": 10000,
-      "price": 29.24,
+      "price": 30.23,
       "is_letter": false,
       "delivery_days": 7
     },
     {
-      "method": "Insured parcel (Wertpaket 1000€)",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
-      "max_value": 1000,
-      "max_weight_g": 2000,
-      "price": 30.87,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
       "is_letter": false,
       "delivery_days": 7
     },
     {
-      "method": "Insured parcel (Wertpaket 1000€)",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
-      "max_value": 1000,
-      "max_weight_g": 2000,
-      "price": 33.29,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
       "is_letter": false,
       "delivery_days": 7
     },
     {
-      "method": "Insured parcel (Wertpaket 1000€)",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
-      "max_value": 1000,
-      "max_weight_g": 4000,
-      "price": 36.93,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
       "is_letter": false,
       "delivery_days": 7
     },
     {
-      "method": "Insured parcel (Wertpaket 1000€)",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
-      "max_value": 1000,
-      "max_weight_g": 10000,
-      "price": 41.34,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
       "is_letter": false,
       "delivery_days": 7
     },
     {
-      "method": "Insured parcel (Wertpaket 2000€)",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
-      "max_value": 2000,
-      "max_weight_g": 1000,
-      "price": 40.87,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
       "is_letter": false,
       "delivery_days": 7
     },
     {
-      "method": "Insured parcel (Wertpaket 2000€)",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
-      "max_value": 2000,
-      "max_weight_g": 2000,
-      "price": 43.29,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
       "is_letter": false,
       "delivery_days": 7
     },
     {
-      "method": "Insured parcel (Wertpaket 2000€)",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
-      "max_value": 2000,
-      "max_weight_g": 4000,
-      "price": 46.93,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
       "is_letter": false,
       "delivery_days": 7
     },
     {
-      "method": "Insured parcel (Wertpaket 2000€)",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
-      "max_value": 2000,
-      "max_weight_g": 10000,
-      "price": 51.34,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
       "is_letter": false,
       "delivery_days": 7
     },
     {
-      "method": "Insured parcel (Wertpaket 3000€)",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
-      "max_value": 3000,
-      "max_weight_g": 1000,
-      "price": 50.87,
-      "is_letter": false,
-      "delivery_days": 7
-    },
-    {
-      "method": "Insured parcel (Wertpaket 3000€)",
-      "tracked": true,
-      "max_value": 3000,
-      "max_weight_g": 2000,
-      "price": 53.29,
-      "is_letter": false,
-      "delivery_days": 7
-    },
-    {
-      "method": "Insured parcel (Wertpaket 3000€)",
-      "tracked": true,
-      "max_value": 3000,
-      "max_weight_g": 4000,
-      "price": 56.93,
-      "is_letter": false,
-      "delivery_days": 7
-    },
-    {
-      "method": "Insured parcel (Wertpaket 3000€)",
-      "tracked": true,
-      "max_value": 3000,
-      "max_weight_g": 10000,
-      "price": 61.34,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 7
     }
@@ -174,11 +152,11 @@
       "delivery_days": 7
     },
     {
-      "method": "Registered Letter",
-      "tracked": true,
-      "max_value": 100,
-      "max_weight_g": 50,
-      "price": 10.9,
+      "method": "Priority Letter",
+      "tracked": false,
+      "max_value": 25,
+      "max_weight_g": 100,
+      "price": 9.71,
       "is_letter": true,
       "delivery_days": 7
     },
@@ -226,6 +204,87 @@
       "price": 48.2,
       "is_letter": false,
       "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
+      "is_letter": false,
+      "delivery_days": 7
     }
   ],
   "Bulgaria": [
@@ -234,7 +293,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 20,
-      "price": 2.47,
+      "price": 1.94,
       "is_letter": true,
       "delivery_days": 15
     },
@@ -243,7 +302,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 100,
-      "price": 3.47,
+      "price": 2.85,
       "is_letter": true,
       "delivery_days": 15
     },
@@ -252,7 +311,7 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 1000,
-      "price": 20,
+      "price": 19.41,
       "is_letter": false,
       "delivery_days": 15
     },
@@ -261,7 +320,7 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 2000,
-      "price": 25.26,
+      "price": 24.52,
       "is_letter": false,
       "delivery_days": 15
     },
@@ -270,7 +329,7 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 5000,
-      "price": 41.06,
+      "price": 39.86,
       "is_letter": false,
       "delivery_days": 15
     },
@@ -279,7 +338,7 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 10000,
-      "price": 64.76,
+      "price": 62.87,
       "is_letter": false,
       "delivery_days": 15
     },
@@ -288,7 +347,133 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 20000,
-      "price": 112.16,
+      "price": 108.88,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "Insured Parcel (500€)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 1000,
+      "price": 29.27,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "Insured Parcel (500€)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 2000,
+      "price": 34.38,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "Insured Parcel (500€)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 5000,
+      "price": 49.72,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "Insured Parcel (500€)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 10000,
+      "price": 72.73,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "Insured Parcel (500€)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 20000,
+      "price": 118.74,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.01,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.01,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 15
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 15
     }
@@ -347,6 +532,87 @@
       "price": 22.5,
       "is_letter": false,
       "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 98.95,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 148.41,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 247.34,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 445.2,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1038.77,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2028.06,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4006.65,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 9942.4,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 19835.32,
+      "is_letter": false,
+      "delivery_days": 8
     }
   ],
   "Cyprus": [
@@ -355,7 +621,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 20,
-      "price": 0.94,
+      "price": 0.96,
       "is_letter": true,
       "delivery_days": 12
     },
@@ -364,7 +630,7 @@
       "tracked": true,
       "max_value": 1050,
       "max_weight_g": 1000,
-      "price": 18.5,
+      "price": 18.52,
       "is_letter": false,
       "delivery_days": 12
     },
@@ -373,7 +639,7 @@
       "tracked": true,
       "max_value": 1050,
       "max_weight_g": 2000,
-      "price": 22,
+      "price": 22.02,
       "is_letter": false,
       "delivery_days": 12
     },
@@ -382,7 +648,7 @@
       "tracked": true,
       "max_value": 1050,
       "max_weight_g": 5000,
-      "price": 31,
+      "price": 31.02,
       "is_letter": false,
       "delivery_days": 12
     },
@@ -391,7 +657,7 @@
       "tracked": true,
       "max_value": 1050,
       "max_weight_g": 10000,
-      "price": 51,
+      "price": 51.02,
       "is_letter": false,
       "delivery_days": 12
     },
@@ -400,7 +666,7 @@
       "tracked": true,
       "max_value": 1050,
       "max_weight_g": 15000,
-      "price": 71,
+      "price": 71.02,
       "is_letter": false,
       "delivery_days": 12
     },
@@ -409,7 +675,7 @@
       "tracked": true,
       "max_value": 1050,
       "max_weight_g": 20000,
-      "price": 91,
+      "price": 91.02,
       "is_letter": false,
       "delivery_days": 12
     },
@@ -418,7 +684,88 @@
       "tracked": true,
       "max_value": 1050,
       "max_weight_g": 30000,
-      "price": 151,
+      "price": 151.02,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 12
     }
@@ -429,7 +776,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 2.35,
+      "price": 2.34,
       "is_letter": true,
       "delivery_days": 9
     },
@@ -438,7 +785,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 100,
-      "price": 3.36,
+      "price": 3.35,
       "is_letter": true,
       "delivery_days": 9
     },
@@ -447,7 +794,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 2000,
-      "price": 25.78,
+      "price": 25.67,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -456,7 +803,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 5000,
-      "price": 30.1,
+      "price": 29.97,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -465,7 +812,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 10000,
-      "price": 37.31,
+      "price": 37.14,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -474,7 +821,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 20000,
-      "price": 64.68,
+      "price": 64.4,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -483,7 +830,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 2000,
-      "price": 27.82,
+      "price": 27.7,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -492,7 +839,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 5000,
-      "price": 32.14,
+      "price": 32.0,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -501,7 +848,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 10000,
-      "price": 39.34,
+      "price": 39.17,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -510,7 +857,88 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 20000,
-      "price": 66.71,
+      "price": 66.42,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 102.36,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 153.53,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 255.88,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 460.57,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1074.65,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2098.11,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4145.03,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10285.8,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20520.42,
       "is_letter": false,
       "delivery_days": 9
     }
@@ -521,7 +949,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 20,
-      "price": 6.66,
+      "price": 6.65,
       "is_letter": true,
       "delivery_days": 9
     },
@@ -539,7 +967,7 @@
       "tracked": true,
       "max_value": 300,
       "max_weight_g": 100,
-      "price": 30.12,
+      "price": 30.52,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -548,7 +976,7 @@
       "tracked": true,
       "max_value": 300,
       "max_weight_g": 250,
-      "price": 30.12,
+      "price": 30.52,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -557,7 +985,7 @@
       "tracked": true,
       "max_value": 600,
       "max_weight_g": 1000,
-      "price": 18.27,
+      "price": 18.26,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -566,16 +994,7 @@
       "tracked": true,
       "max_value": 600,
       "max_weight_g": 1000,
-      "price": 30.12,
-      "is_letter": false,
-      "delivery_days": 9
-    },
-    {
-      "method": "Registered Parcel",
-      "tracked": true,
-      "max_value": 600,
-      "max_weight_g": 2000,
-      "price": 43.21,
+      "price": 30.52,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -584,7 +1003,7 @@
       "tracked": true,
       "max_value": 600,
       "max_weight_g": 5000,
-      "price": 25.16,
+      "price": 25.15,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -593,7 +1012,7 @@
       "tracked": true,
       "max_value": 600,
       "max_weight_g": 5000,
-      "price": 43.21,
+      "price": 43.88,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -602,7 +1021,7 @@
       "tracked": true,
       "max_value": 600,
       "max_weight_g": 10000,
-      "price": 34.81,
+      "price": 34.79,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -611,7 +1030,7 @@
       "tracked": true,
       "max_value": 600,
       "max_weight_g": 10000,
-      "price": 69.27,
+      "price": 70.34,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -620,7 +1039,7 @@
       "tracked": true,
       "max_value": 600,
       "max_weight_g": 15000,
-      "price": 49.97,
+      "price": 49.95,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -629,7 +1048,7 @@
       "tracked": true,
       "max_value": 600,
       "max_weight_g": 20000,
-      "price": 66.51,
+      "price": 66.48,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -638,7 +1057,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 1000,
-      "price": 68.71,
+      "price": 69.37,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -647,7 +1066,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 5000,
-      "price": 94.77,
+      "price": 95.83,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -656,7 +1075,88 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 10000,
-      "price": 94.21,
+      "price": 94.86,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 102.48,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 153.71,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 256.18,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 461.11,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1075.9,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2100.57,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4149.89,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10297.85,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20544.46,
       "is_letter": false,
       "delivery_days": 9
     }
@@ -724,6 +1224,87 @@
       "price": 40.45,
       "is_letter": false,
       "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
+      "is_letter": false,
+      "delivery_days": 10
     }
   ],
   "Finland": [
@@ -732,7 +1313,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 20,
-      "price": 3.35,
+      "price": 3.65,
       "is_letter": true,
       "delivery_days": 12
     },
@@ -741,7 +1322,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 4.25,
+      "price": 4.55,
       "is_letter": true,
       "delivery_days": 12
     },
@@ -750,7 +1331,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 100,
-      "price": 6.6,
+      "price": 7.2,
       "is_letter": true,
       "delivery_days": 12
     },
@@ -759,7 +1340,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 250,
-      "price": 14.2,
+      "price": 15.5,
       "is_letter": true,
       "delivery_days": 12
     },
@@ -768,79 +1349,160 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 500,
-      "price": 21.8,
+      "price": 24.0,
       "is_letter": true,
       "delivery_days": 12
     },
     {
-      "method": "International Parcel",
+      "method": "International Parcel S (Online)",
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 2000,
-      "price": 23.9,
+      "price": 22.9,
       "is_letter": false,
       "delivery_days": 12
     },
     {
-      "method": "International Parcel",
+      "method": "International Parcel S",
       "tracked": true,
       "max_value": 500,
-      "max_weight_g": 5000,
+      "max_weight_g": 2000,
       "price": 25.9,
       "is_letter": false,
       "delivery_days": 12
     },
     {
-      "method": "Parcel S (online)",
+      "method": "International Parcel M (Online)",
       "tracked": true,
       "max_value": 500,
-      "max_weight_g": 10000,
-      "price": 20.9,
+      "max_weight_g": 5000,
+      "price": 23.9,
       "is_letter": false,
       "delivery_days": 12
     },
     {
-      "method": "Parcel M (online)",
+      "method": "International Parcel M",
       "tracked": true,
       "max_value": 500,
-      "max_weight_g": 10000,
-      "price": 21.9,
+      "max_weight_g": 5000,
+      "price": 27.9,
       "is_letter": false,
       "delivery_days": 12
     },
     {
-      "method": "Parcel L (online)",
+      "method": "International Parcel L (Online)",
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 10000,
-      "price": 29.9,
+      "price": 32.9,
       "is_letter": false,
       "delivery_days": 12
     },
     {
-      "method": "International Parcel",
+      "method": "International Parcel L",
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 10000,
-      "price": 30.9,
+      "price": 33.9,
       "is_letter": false,
       "delivery_days": 12
     },
     {
-      "method": "International Parcel",
+      "method": "International Parcel XL (Online)",
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 15000,
-      "price": 40.9,
+      "price": 39.9,
       "is_letter": false,
       "delivery_days": 12
     },
     {
-      "method": "International Parcel",
+      "method": "International Parcel XL",
       "tracked": true,
       "max_value": 500,
-      "max_weight_g": 30000,
-      "price": 50.9,
+      "max_weight_g": 15000,
+      "price": 44.9,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 12
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 12
     }
@@ -1144,11 +1806,83 @@
       "delivery_days": 7
     },
     {
-      "method": "Virtual Delivery",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
       "max_value": 10000,
-      "max_weight_g": 0,
-      "price": 1,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 7
     }
@@ -1281,6 +2015,15 @@
       "delivery_days": 5
     },
     {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 5
+    },
+    {
       "method": "DHL Paket Versicherung bis 2.500€",
       "tracked": true,
       "max_value": 2500,
@@ -1290,11 +2033,74 @@
       "delivery_days": 5
     },
     {
-      "method": "Virtual Delivery",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 5
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
       "max_value": 10000,
-      "max_weight_g": 0,
-      "price": 0,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 5
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 5
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 5
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 5
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 5
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 5
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 5
     }
@@ -1332,7 +2138,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 1000,
-      "price": 23,
+      "price": 23.0,
       "is_letter": false,
       "delivery_days": 14
     },
@@ -1341,7 +2147,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 2000,
-      "price": 31,
+      "price": 31.0,
       "is_letter": false,
       "delivery_days": 14
     },
@@ -1350,7 +2156,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 5000,
-      "price": 53,
+      "price": 53.0,
       "is_letter": false,
       "delivery_days": 14
     },
@@ -1359,7 +2165,25 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 10000,
-      "price": 69,
+      "price": 69.0,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
       "is_letter": false,
       "delivery_days": 14
     },
@@ -1368,7 +2192,70 @@
       "tracked": true,
       "max_value": 10000,
       "max_weight_g": 5000,
-      "price": 100,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 14
     }
@@ -1379,7 +2266,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 4.47,
+      "price": 4.37,
       "is_letter": true,
       "delivery_days": 7
     },
@@ -1388,7 +2275,7 @@
       "tracked": true,
       "max_value": 250,
       "max_weight_g": 50,
-      "price": 13.16,
+      "price": 12.86,
       "is_letter": true,
       "delivery_days": 7
     },
@@ -1397,7 +2284,7 @@
       "tracked": true,
       "max_value": 300,
       "max_weight_g": 1000,
-      "price": 28.44,
+      "price": 27.81,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -1406,7 +2293,7 @@
       "tracked": true,
       "max_value": 300,
       "max_weight_g": 2000,
-      "price": 31.62,
+      "price": 30.91,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -1415,7 +2302,7 @@
       "tracked": true,
       "max_value": 300,
       "max_weight_g": 5000,
-      "price": 37.1,
+      "price": 36.27,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -1424,7 +2311,88 @@
       "tracked": true,
       "max_value": 300,
       "max_weight_g": 10000,
-      "price": 44.02,
+      "price": 43.03,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 114.46,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 171.75,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 286.32,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 515.47,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1202.92,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2348.66,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4640.14,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 11514.59,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 22972.0,
       "is_letter": false,
       "delivery_days": 7
     }
@@ -1435,8 +2403,89 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 2.68,
+      "price": 2.78,
       "is_letter": true,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 112.38,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 168.62,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 281.09,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 506.04,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1180.87,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2305.59,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4555.04,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 11303.39,
+      "is_letter": false,
+      "delivery_days": 14
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 22550.63,
+      "is_letter": false,
       "delivery_days": 14
     }
   ],
@@ -1446,7 +2495,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 100,
-      "price": 4,
+      "price": 4.0,
       "is_letter": true,
       "delivery_days": 10
     },
@@ -1455,16 +2504,16 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 250,
-      "price": 10,
+      "price": 10.0,
       "is_letter": false,
       "delivery_days": 10
     },
     {
-      "method": "Standard Post Packet Roll",
+      "method": "Standard Post Packet",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 500,
-      "price": 11,
+      "price": 11.0,
       "is_letter": false,
       "delivery_days": 10
     },
@@ -1473,7 +2522,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 1000,
-      "price": 14,
+      "price": 14.0,
       "is_letter": false,
       "delivery_days": 10
     },
@@ -1482,7 +2531,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 2000,
-      "price": 17,
+      "price": 17.0,
       "is_letter": false,
       "delivery_days": 10
     },
@@ -1491,7 +2540,7 @@
       "tracked": true,
       "max_value": 300,
       "max_weight_g": 500,
-      "price": 15.9,
+      "price": 18.0,
       "is_letter": false,
       "delivery_days": 10
     },
@@ -1500,7 +2549,7 @@
       "tracked": true,
       "max_value": 300,
       "max_weight_g": 1000,
-      "price": 19,
+      "price": 21.0,
       "is_letter": false,
       "delivery_days": 10
     },
@@ -1509,34 +2558,88 @@
       "tracked": true,
       "max_value": 300,
       "max_weight_g": 2000,
-      "price": 21.6,
+      "price": 24.0,
       "is_letter": false,
       "delivery_days": 10
     },
     {
-      "method": "Registered Post Packet (Declared Value 150€)",
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
       "tracked": true,
-      "max_value": 300,
-      "max_weight_g": 2000,
-      "price": 27,
-      "is_letter": false,
-      "delivery_days": 10
-    },
-    {
-      "method": "Registered Post Packet (Declared Value 150€)",
-      "tracked": true,
-      "max_value": 300,
-      "max_weight_g": 5000,
-      "price": 29,
-      "is_letter": false,
-      "delivery_days": 10
-    },
-    {
-      "method": "Registered Post Packet (Declared Value 150€)",
-      "tracked": true,
-      "max_value": 300,
+      "max_value": 2500,
       "max_weight_g": 20000,
-      "price": 36,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 10
     }
@@ -1547,8 +2650,8 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 4.05,
-      "is_letter": false,
+      "price": 4.88,
+      "is_letter": true,
       "delivery_days": 11
     },
     {
@@ -1556,17 +2659,8 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 100,
-      "price": 5.15,
-      "is_letter": false,
-      "delivery_days": 11
-    },
-    {
-      "method": "Posta Raccomandata Internazionale (International Registered Mail)",
-      "tracked": true,
-      "max_value": 120,
-      "max_weight_g": 50,
-      "price": 10.7,
-      "is_letter": false,
+      "price": 6.17,
+      "is_letter": true,
       "delivery_days": 11
     },
     {
@@ -1592,7 +2686,16 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 1000,
-      "price": 24,
+      "price": 24.0,
+      "is_letter": false,
+      "delivery_days": 11
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
       "is_letter": false,
       "delivery_days": 11
     },
@@ -1620,6 +2723,78 @@
       "max_value": 3500,
       "max_weight_g": 10000,
       "price": 63.73,
+      "is_letter": false,
+      "delivery_days": 11
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 11
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 11
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 11
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 11
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 11
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 11
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 11
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 11
     }
@@ -1993,6 +3168,87 @@
       "price": 56.42,
       "is_letter": false,
       "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
+      "is_letter": false,
+      "delivery_days": 10
     }
   ],
   "Liechtenstein": [
@@ -2001,7 +3257,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 20,
-      "price": 2.01,
+      "price": 1.97,
       "is_letter": true,
       "delivery_days": 8
     },
@@ -2010,7 +3266,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 3.24,
+      "price": 3.18,
       "is_letter": true,
       "delivery_days": 8
     },
@@ -2019,7 +3275,7 @@
       "tracked": true,
       "max_value": 250,
       "max_weight_g": 500,
-      "price": 22.41,
+      "price": 21.88,
       "is_letter": false,
       "delivery_days": 8
     },
@@ -2028,7 +3284,7 @@
       "tracked": true,
       "max_value": 250,
       "max_weight_g": 1000,
-      "price": 28.04,
+      "price": 27.36,
       "is_letter": false,
       "delivery_days": 8
     },
@@ -2037,126 +3293,135 @@
       "tracked": true,
       "max_value": 250,
       "max_weight_g": 2000,
-      "price": 41.54,
+      "price": 40.53,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 108.19,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 162.31,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 270.55,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 487.03,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1136.45,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2218.84,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4383.6,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10877.88,
+      "is_letter": false,
+      "delivery_days": 8
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 21701.68,
       "is_letter": false,
       "delivery_days": 8
     }
   ],
   "Lithuania": [
     {
-      "method": "Neregistruota pirmenybinė (Priority Letter S)",
+      "method": "Neregistruota pirmenybinė (Priority Letter)",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 20,
-      "price": 2.35,
-      "is_letter": true,
-      "delivery_days": 10
-    },
-    {
-      "method": "Neregistruota pirmenybinė (Priority Letter S)",
-      "tracked": false,
-      "max_value": 25,
-      "max_weight_g": 50,
       "price": 2.6,
       "is_letter": true,
       "delivery_days": 10
     },
     {
-      "method": "Neregistruota pirmenybinė (Priority Letter S)",
+      "method": "Neregistruota pirmenybinė (Priority Letter)",
+      "tracked": false,
+      "max_value": 25,
+      "max_weight_g": 50,
+      "price": 2.65,
+      "is_letter": true,
+      "delivery_days": 10
+    },
+    {
+      "method": "Neregistruota pirmenybinė (Priority Letter)",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 100,
-      "price": 3.2,
+      "price": 3.9,
       "is_letter": true,
       "delivery_days": 10
     },
     {
-      "method": "Neregistruota pirmenybinė (Priority Letter S)",
-      "tracked": false,
-      "max_value": 25,
-      "max_weight_g": 500,
-      "price": 3.8,
-      "is_letter": true,
-      "delivery_days": 10
-    },
-    {
-      "method": "Neregistruota pirmenybinė (Priority Letter M)",
-      "tracked": false,
-      "max_value": 25,
-      "max_weight_g": 500,
-      "price": 4.9,
-      "is_letter": true,
-      "delivery_days": 10
-    },
-    {
-      "method": "Neregistruota pirmenybinė (Priority Letter M)",
-      "tracked": false,
-      "max_value": 25,
-      "max_weight_g": 1000,
-      "price": 5.95,
-      "is_letter": true,
-      "delivery_days": 10
-    },
-    {
-      "method": "Neregistruota pirmenybinė (Priority Letter M)",
-      "tracked": false,
-      "max_value": 25,
-      "max_weight_g": 2000,
-      "price": 8.35,
-      "is_letter": true,
-      "delivery_days": 10
-    },
-    {
-      "method": "Registruota pirmenybinė (Registered Priority Letter S)",
+      "method": "Registruota pirmenybinė (Registered Priority Letter)",
       "tracked": true,
       "max_value": 100,
       "max_weight_g": 50,
-      "price": 6.75,
+      "price": 7.05,
       "is_letter": true,
       "delivery_days": 10
     },
     {
-      "method": "Registruota pirmenybinė (Registered Priority Letter S)",
+      "method": "Registruota pirmenybinė (Registered Priority Letter)",
       "tracked": true,
       "max_value": 100,
       "max_weight_g": 100,
-      "price": 6.85,
-      "is_letter": true,
-      "delivery_days": 10
-    },
-    {
-      "method": "Registruota pirmenybinė (Registered Priority Letter S)",
-      "tracked": true,
-      "max_value": 100,
-      "max_weight_g": 500,
-      "price": 7.5,
-      "is_letter": true,
-      "delivery_days": 10
-    },
-    {
-      "method": "Registruota pirmenybinė (Registered Priority Letter M)",
-      "tracked": true,
-      "max_value": 100,
-      "max_weight_g": 500,
-      "price": 7.65,
-      "is_letter": true,
-      "delivery_days": 10
-    },
-    {
-      "method": "Registruota pirmenybinė (Registered Priority Letter M)",
-      "tracked": true,
-      "max_value": 100,
-      "max_weight_g": 1000,
-      "price": 8.85,
-      "is_letter": true,
-      "delivery_days": 10
-    },
-    {
-      "method": "Registruota pirmenybinė (Registered Priority Letter M)",
-      "tracked": true,
-      "max_value": 100,
-      "max_weight_g": 2000,
-      "price": 11.15,
+      "price": 7.2,
       "is_letter": true,
       "delivery_days": 10
     },
@@ -2165,7 +3430,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 2000,
-      "price": 16.8,
+      "price": 14.25,
       "is_letter": false,
       "delivery_days": 10
     },
@@ -2174,7 +3439,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 5000,
-      "price": 24,
+      "price": 21.45,
       "is_letter": false,
       "delivery_days": 10
     },
@@ -2183,18 +3448,99 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 10000,
-      "price": 36,
+      "price": 33.45,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 10
     }
   ],
-  "Luxemburg": [
+  "Luxembourg": [
     {
       "method": "Priority Letter (XS)",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 2,
+      "price": 2.0,
       "is_letter": true,
       "delivery_days": 7
     },
@@ -2203,7 +3549,7 @@
       "tracked": true,
       "max_value": 105,
       "max_weight_g": 2000,
-      "price": 13,
+      "price": 13.0,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -2212,7 +3558,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 10000,
-      "price": 23,
+      "price": 23.0,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -2221,7 +3567,16 @@
       "tracked": true,
       "max_value": 2500,
       "max_weight_g": 10000,
-      "price": 38,
+      "price": 38.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -2230,7 +3585,79 @@
       "tracked": true,
       "max_value": 5000,
       "max_weight_g": 10000,
-      "price": 63,
+      "price": 63.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 7
     }
@@ -2280,6 +3707,87 @@
       "price": 122.5,
       "is_letter": false,
       "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
+      "is_letter": false,
+      "delivery_days": 7
     }
   ],
   "Netherlands": [
@@ -2289,15 +3797,6 @@
       "max_value": 25,
       "max_weight_g": 20,
       "price": 2.41,
-      "is_letter": true,
-      "delivery_days": 6
-    },
-    {
-      "method": "International Registered Mail",
-      "tracked": true,
-      "max_value": 50,
-      "max_weight_g": 50,
-      "price": 8.4,
       "is_letter": true,
       "delivery_days": 6
     },
@@ -2392,6 +3891,24 @@
       "delivery_days": 6
     },
     {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
       "method": "Insured Delivery (Verzekerd pakket € 5.500)",
       "tracked": true,
       "max_value": 5500,
@@ -2426,6 +3943,69 @@
       "price": 52.2,
       "is_letter": false,
       "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
+      "is_letter": false,
+      "delivery_days": 6
     }
   ],
   "Norway": [
@@ -2434,7 +4014,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 5.98,
+      "price": 6.03,
       "is_letter": true,
       "delivery_days": 13
     },
@@ -2443,7 +4023,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 31.36,
+      "price": 31.67,
       "is_letter": true,
       "delivery_days": 13
     },
@@ -2452,7 +4032,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 1000,
-      "price": 20.85,
+      "price": 21.05,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2461,7 +4041,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 1000,
-      "price": 30.48,
+      "price": 30.77,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2470,7 +4050,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 2000,
-      "price": 22.27,
+      "price": 22.48,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2479,7 +4059,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 2000,
-      "price": 32.93,
+      "price": 33.25,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2488,7 +4068,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 5000,
-      "price": 26.52,
+      "price": 26.77,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2497,7 +4077,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 5000,
-      "price": 40.29,
+      "price": 40.69,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2506,7 +4086,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 10000,
-      "price": 33.59,
+      "price": 33.92,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2515,7 +4095,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 10000,
-      "price": 52.56,
+      "price": 53.08,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2524,7 +4104,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 15000,
-      "price": 40.67,
+      "price": 41.07,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2533,7 +4113,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 15000,
-      "price": 64.83,
+      "price": 65.47,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2542,7 +4122,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 20000,
-      "price": 47.75,
+      "price": 48.22,
       "is_letter": false,
       "delivery_days": 13
     },
@@ -2551,7 +4131,88 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 20000,
-      "price": 77.1,
+      "price": 77.86,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 99.87,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 149.79,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 249.62,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 449.29,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1048.3,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2046.65,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4043.34,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10033.41,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20016.86,
       "is_letter": false,
       "delivery_days": 13
     }
@@ -2562,16 +4223,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 2.75,
-      "is_letter": true,
-      "delivery_days": 9
-    },
-    {
-      "method": "Poczta Polska International Letter",
-      "tracked": false,
-      "max_value": 25,
-      "max_weight_g": 50,
-      "price": 6,
+      "price": 2.67,
       "is_letter": true,
       "delivery_days": 9
     },
@@ -2580,7 +4232,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 100,
-      "price": 3.81,
+      "price": 3.7,
       "is_letter": true,
       "delivery_days": 9
     },
@@ -2589,7 +4241,25 @@
       "tracked": true,
       "max_value": 90,
       "max_weight_g": 1000,
-      "price": 17.1,
+      "price": 16.57,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "DPD Pickup Point",
+      "tracked": true,
+      "max_value": 100,
+      "max_weight_g": 3000,
+      "price": 17.27,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "DPD Pickup Point + Return to Sender",
+      "tracked": true,
+      "max_value": 100,
+      "max_weight_g": 3000,
+      "price": 20.56,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2598,7 +4268,7 @@
       "tracked": true,
       "max_value": 130,
       "max_weight_g": 5000,
-      "price": 27.81,
+      "price": 26.92,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2607,7 +4277,16 @@
       "tracked": true,
       "max_value": 160,
       "max_weight_g": 10000,
-      "price": 36.33,
+      "price": 35.16,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "DPD Pickup Point",
+      "tracked": true,
+      "max_value": 200,
+      "max_weight_g": 10000,
+      "price": 19.62,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2616,7 +4295,7 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 15000,
-      "price": 47.29,
+      "price": 45.74,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2625,7 +4304,52 @@
       "tracked": true,
       "max_value": 240,
       "max_weight_g": 20000,
-      "price": 58.24,
+      "price": 56.33,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "DPD Pickup Point (2000 PLN)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 3000,
+      "price": 17.51,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "DPD Pickup Point (2000 PLN)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 10000,
+      "price": 19.86,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "DPD Pickup Point (5000 PLN)",
+      "tracked": true,
+      "max_value": 1000,
+      "max_weight_g": 3000,
+      "price": 18.21,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "DPD Pickup Point (5000 PLN)",
+      "tracked": true,
+      "max_value": 1000,
+      "max_weight_g": 10000,
+      "price": 20.57,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 110.31,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2634,7 +4358,7 @@
       "tracked": true,
       "max_value": 4000,
       "max_weight_g": 1000,
-      "price": 44.73,
+      "price": 43.27,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2643,7 +4367,7 @@
       "tracked": true,
       "max_value": 4000,
       "max_weight_g": 3000,
-      "price": 48.63,
+      "price": 47.04,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2652,7 +4376,7 @@
       "tracked": true,
       "max_value": 4000,
       "max_weight_g": 5000,
-      "price": 52.04,
+      "price": 50.33,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2661,7 +4385,7 @@
       "tracked": true,
       "max_value": 4000,
       "max_weight_g": 10000,
-      "price": 63.48,
+      "price": 61.39,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2670,7 +4394,7 @@
       "tracked": true,
       "max_value": 4000,
       "max_weight_g": 15000,
-      "price": 78.81,
+      "price": 76.22,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2679,45 +4403,108 @@
       "tracked": true,
       "max_value": 4000,
       "max_weight_g": 20000,
-      "price": 101.21,
+      "price": 97.86,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 165.5,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 275.88,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 496.64,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1158.91,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2262.7,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4470.29,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 11093.05,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 22130.97,
       "is_letter": false,
       "delivery_days": 9
     }
   ],
   "Portugal": [
     {
-      "method": "Letter (Correio Azul)",
-      "tracked": false,
-      "max_value": 25,
-      "max_weight_g": 20,
-      "price": 5.5,
-      "is_letter": true,
-      "delivery_days": 9
-    },
-    {
       "method": "Letter (Correio Normal)",
       "tracked": false,
       "max_value": 25,
-      "max_weight_g": 50,
-      "price": 2.85,
+      "max_weight_g": 100,
+      "price": 3.15,
       "is_letter": true,
       "delivery_days": 9
     },
     {
       "method": "Letter (Correio Azul)",
-      "tracked": false,
-      "max_value": 25,
-      "max_weight_g": 50,
-      "price": 5.8,
+      "tracked": true,
+      "max_value": 30,
+      "max_weight_g": 20,
+      "price": 5.7,
       "is_letter": true,
       "delivery_days": 9
     },
     {
-      "method": "Registered Letter (Correio Registado)",
+      "method": "Letter (Correio Azul)",
       "tracked": true,
-      "max_value": 100,
+      "max_value": 50,
       "max_weight_g": 50,
-      "price": 7.2,
+      "price": 6.0,
       "is_letter": true,
       "delivery_days": 9
     },
@@ -2726,7 +4513,7 @@
       "tracked": true,
       "max_value": 100,
       "max_weight_g": 2000,
-      "price": 36.45,
+      "price": 38.2,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2735,7 +4522,7 @@
       "tracked": true,
       "max_value": 100,
       "max_weight_g": 5000,
-      "price": 46.1,
+      "price": 48.2,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2744,7 +4531,7 @@
       "tracked": true,
       "max_value": 100,
       "max_weight_g": 10000,
-      "price": 63,
+      "price": 65.5,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2753,7 +4540,7 @@
       "tracked": true,
       "max_value": 100,
       "max_weight_g": 15000,
-      "price": 81.35,
+      "price": 85.3,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2762,7 +4549,16 @@
       "tracked": true,
       "max_value": 150,
       "max_weight_g": 20000,
-      "price": 97.55,
+      "price": 102.2,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "Insured Parcel (Encomenda Valor 500€)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 2000,
+      "price": 42.75,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2790,6 +4586,15 @@
       "max_value": 500,
       "max_weight_g": 2000,
       "price": 79.97,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "Insured Parcel (Encomenda Valor 500€)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 5000,
+      "price": 52.75,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2830,6 +4635,15 @@
       "delivery_days": 9
     },
     {
+      "method": "Insured Parcel (Encomenda Valor 500€)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 10000,
+      "price": 70.05,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
       "method": "CTT Expresso Economy (Seguro Extra 1000€)",
       "tracked": true,
       "max_value": 500,
@@ -2844,6 +4658,15 @@
       "max_value": 500,
       "max_weight_g": 10000,
       "price": 102.22,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "Insured Parcel (Encomenda Valor 500€)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 15000,
+      "price": 89.85,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -2871,6 +4694,96 @@
       "max_value": 500,
       "max_weight_g": 15000,
       "price": 123.61,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "Insured Parcel (Encomenda Valor 500€)",
+      "tracked": true,
+      "max_value": 500,
+      "max_weight_g": 20000,
+      "price": 106.75,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 9
     }
@@ -2927,6 +4840,87 @@
       "max_value": 1000,
       "max_weight_g": 10000,
       "price": 57.31,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 103.01,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 154.51,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 257.51,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 463.51,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1081.51,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2111.51,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4171.51,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10351.51,
+      "is_letter": false,
+      "delivery_days": 13
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20651.5,
       "is_letter": false,
       "delivery_days": 13
     }
@@ -3021,6 +5015,87 @@
       "price": 48.8,
       "is_letter": false,
       "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 6
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
+      "is_letter": false,
+      "delivery_days": 6
     }
   ],
   "Slovenia": [
@@ -3039,7 +5114,7 @@
       "max_value": 25,
       "max_weight_g": 250,
       "price": 5.82,
-      "is_letter": false,
+      "is_letter": true,
       "delivery_days": 10
     },
     {
@@ -3048,7 +5123,7 @@
       "max_value": 25,
       "max_weight_g": 500,
       "price": 7.27,
-      "is_letter": false,
+      "is_letter": true,
       "delivery_days": 10
     },
     {
@@ -3057,7 +5132,7 @@
       "max_value": 25,
       "max_weight_g": 1000,
       "price": 9.62,
-      "is_letter": false,
+      "is_letter": true,
       "delivery_days": 10
     },
     {
@@ -3066,7 +5141,7 @@
       "max_value": 25,
       "max_weight_g": 2000,
       "price": 13.28,
-      "is_letter": false,
+      "is_letter": true,
       "delivery_days": 10
     },
     {
@@ -3075,7 +5150,7 @@
       "max_value": 150,
       "max_weight_g": 250,
       "price": 7.85,
-      "is_letter": false,
+      "is_letter": true,
       "delivery_days": 10
     },
     {
@@ -3084,7 +5159,7 @@
       "max_value": 150,
       "max_weight_g": 500,
       "price": 8.73,
-      "is_letter": false,
+      "is_letter": true,
       "delivery_days": 10
     },
     {
@@ -3093,7 +5168,7 @@
       "max_value": 150,
       "max_weight_g": 1000,
       "price": 10.4,
-      "is_letter": false,
+      "is_letter": true,
       "delivery_days": 10
     },
     {
@@ -3102,7 +5177,7 @@
       "max_value": 150,
       "max_weight_g": 2000,
       "price": 13.88,
-      "is_letter": false,
+      "is_letter": true,
       "delivery_days": 10
     },
     {
@@ -3212,6 +5287,87 @@
       "price": 63.66,
       "is_letter": false,
       "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 10
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
+      "is_letter": false,
+      "delivery_days": 10
     }
   ],
   "Spain": [
@@ -3301,7 +5457,7 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 15000,
-      "price": 80,
+      "price": 80.0,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -3346,7 +5502,7 @@
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 15000,
-      "price": 85,
+      "price": 85.0,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -3391,7 +5547,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 15000,
-      "price": 90,
+      "price": 90.0,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -3436,7 +5592,16 @@
       "tracked": true,
       "max_value": 2000,
       "max_weight_g": 15000,
-      "price": 100,
+      "price": 100.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.0,
       "is_letter": false,
       "delivery_days": 9
     },
@@ -3481,7 +5646,79 @@
       "tracked": true,
       "max_value": 3000,
       "max_weight_g": 15000,
-      "price": 110,
+      "price": 110.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1050.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2050.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4050.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10050.0,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20050.0,
       "is_letter": false,
       "delivery_days": 9
     }
@@ -3492,25 +5729,7 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 50,
-      "price": 4.48,
-      "is_letter": true,
-      "delivery_days": 7
-    },
-    {
-      "method": "International Registered Letter (Online)",
-      "tracked": true,
-      "max_value": 50,
-      "max_weight_g": 50,
-      "price": 15.28,
-      "is_letter": true,
-      "delivery_days": 7
-    },
-    {
-      "method": "International Registered Letter (Online)",
-      "tracked": true,
-      "max_value": 100,
-      "max_weight_g": 100,
-      "price": 17.36,
+      "price": 4.33,
       "is_letter": true,
       "delivery_days": 7
     },
@@ -3519,7 +5738,7 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 1000,
-      "price": 35.56,
+      "price": 35.6,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3528,7 +5747,7 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 2000,
-      "price": 41.71,
+      "price": 39.89,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3537,7 +5756,7 @@
       "tracked": true,
       "max_value": 200,
       "max_weight_g": 3000,
-      "price": 46.44,
+      "price": 44.09,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3546,7 +5765,7 @@
       "tracked": true,
       "max_value": 400,
       "max_weight_g": 1000,
-      "price": 45.4,
+      "price": 45.09,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3555,7 +5774,7 @@
       "tracked": true,
       "max_value": 400,
       "max_weight_g": 2000,
-      "price": 51.55,
+      "price": 49.38,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3564,63 +5783,144 @@
       "tracked": true,
       "max_value": 400,
       "max_weight_g": 3000,
-      "price": 56.28,
+      "price": 53.57,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 100.2,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 150.29,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 250.46,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 450.8,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1051.82,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2053.51,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4056.91,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10067.09,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20084.06,
       "is_letter": false,
       "delivery_days": 7
     }
   ],
   "Switzerland": [
     {
-      "method": "Large Letter Small Goods (Maxibrief Kleinwaren)",
+      "method": "International Small Goods (Kleinwaren International)",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 100,
-      "price": 5.58,
+      "price": 5.46,
       "is_letter": true,
       "delivery_days": 7
     },
     {
-      "method": "Large Letter Small Goods (Maxibrief Kleinwaren)",
+      "method": "International Small Goods (Kleinwaren International)",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 250,
-      "price": 11.21,
+      "price": 10.94,
       "is_letter": true,
       "delivery_days": 7
     },
     {
-      "method": "Large Letter Small Goods (Maxibrief Kleinwaren)",
+      "method": "International Small Goods (Kleinwaren International)",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 500,
-      "price": 16.83,
+      "price": 16.43,
       "is_letter": true,
       "delivery_days": 7
     },
     {
-      "method": "Registered Large Letter Small Goods (Einschreiben)",
+      "method": "International Small Goods (Kleinwaren International + PRIO Plus)",
       "tracked": true,
-      "max_value": 250,
+      "max_value": 100,
       "max_weight_g": 100,
-      "price": 13.23,
+      "price": 10.94,
       "is_letter": true,
       "delivery_days": 7
     },
     {
-      "method": "Registered Large Letter Small Goods (Einschreiben)",
+      "method": "International Small Goods (Kleinwaren International + PRIO Plus)",
       "tracked": true,
-      "max_value": 250,
+      "max_value": 100,
       "max_weight_g": 250,
-      "price": 18.86,
+      "price": 16.43,
       "is_letter": true,
       "delivery_days": 7
     },
     {
-      "method": "Registered Large Letter Small Goods (Einschreiben)",
+      "method": "International Small Goods (Kleinwaren International + PRIO Plus)",
       "tracked": true,
-      "max_value": 250,
+      "max_value": 100,
       "max_weight_g": 500,
-      "price": 24.48,
+      "price": 21.91,
       "is_letter": true,
       "delivery_days": 7
     },
@@ -3629,7 +5929,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 2000,
-      "price": 41.54,
+      "price": 40.53,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3638,7 +5938,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 5000,
-      "price": 52.78,
+      "price": 51.5,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3647,7 +5947,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 10000,
-      "price": 59.53,
+      "price": 58.08,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3656,7 +5956,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 15000,
-      "price": 67.41,
+      "price": 65.76,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3665,7 +5965,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 20000,
-      "price": 74.16,
+      "price": 72.34,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3674,7 +5974,7 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 25000,
-      "price": 80.91,
+      "price": 78.92,
       "is_letter": false,
       "delivery_days": 7
     },
@@ -3683,7 +5983,88 @@
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 30000,
-      "price": 86.53,
+      "price": 84.41,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 108.19,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 162.31,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 270.55,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 487.03,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1136.45,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2218.84,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4383.6,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10877.88,
+      "is_letter": false,
+      "delivery_days": 7
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 21701.68,
       "is_letter": false,
       "delivery_days": 7
     }
@@ -3693,8 +6074,8 @@
       "method": "Int. Standard Letter",
       "tracked": false,
       "max_value": 25,
-      "max_weight_g": 20,
-      "price": 4.6,
+      "max_weight_g": 100,
+      "price": 4.83,
       "is_letter": true,
       "delivery_days": 9
     },
@@ -3703,268 +6084,340 @@
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 100,
-      "price": 5.05,
+      "price": 4.95,
       "is_letter": true,
       "delivery_days": 9
     },
     {
-      "method": "Int. Tracked & Signed Large Letter (Online)",
-      "tracked": true,
-      "max_value": 100,
-      "max_weight_g": 100,
-      "price": 12.25,
-      "is_letter": true,
-      "delivery_days": 9
-    },
-    {
-      "method": "Int. Standard Small Parcel (Online)",
+      "method": "Int. Standard Small Parcel",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 250,
-      "price": 8.9,
+      "price": 8.94,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Standard Small Parcel (Online)",
+      "method": "Int. Standard Small Parcel",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 500,
-      "price": 11.51,
+      "price": 11.58,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Standard Small Parcel (Online)",
+      "method": "Int. Standard Small Parcel",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 1000,
-      "price": 14.07,
+      "price": 14.15,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Standard Small Parcel (Online)",
+      "method": "Int. Standard Small Parcel",
       "tracked": false,
       "max_value": 25,
       "max_weight_g": 2000,
-      "price": 15.32,
+      "price": 15.41,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Economy Small Parcel (Online)",
+      "method": "Int. Standard Small Parcel",
       "tracked": true,
       "max_value": 100,
       "max_weight_g": 250,
-      "price": 19.49,
+      "price": 19.6,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Economy Small Parcel (Online)",
+      "method": "Int. Standard Small Parcel",
       "tracked": true,
       "max_value": 100,
       "max_weight_g": 500,
-      "price": 26.81,
+      "price": 26.97,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Economy Small Parcel (Online)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 100£)",
       "tracked": true,
       "max_value": 100,
       "max_weight_g": 1000,
-      "price": 35.44,
+      "price": 30.62,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Economy Small Parcel (Online)",
+      "method": "Int. Standard Small Parcel",
+      "tracked": true,
+      "max_value": 100,
+      "max_weight_g": 1000,
+      "price": 35.65,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 100£)",
       "tracked": true,
       "max_value": 100,
       "max_weight_g": 2000,
-      "price": 44.25,
+      "price": 32.24,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 200£)",
+      "method": "Int. Standard Small Parcel",
       "tracked": true,
-      "max_value": 200,
-      "max_weight_g": 1000,
-      "price": 48.18,
-      "is_letter": false,
-      "delivery_days": 9
-    },
-    {
-      "method": "Insured Parcel (Parcelforce globalpriority 200£)",
-      "tracked": true,
-      "max_value": 200,
+      "max_value": 100,
       "max_weight_g": 2000,
-      "price": 52.89,
+      "price": 44.51,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 200£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 100£)",
       "tracked": true,
-      "max_value": 200,
+      "max_value": 100,
       "max_weight_g": 5000,
-      "price": 68.31,
+      "price": 54.57,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 200£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 100£)",
       "tracked": true,
-      "max_value": 200,
+      "max_value": 100,
       "max_weight_g": 10000,
-      "price": 86.88,
+      "price": 70.5,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Tracked Small Parcel (250£ compensation) (Online)",
+      "method": "Int. Tracked Small Parcel (250£ compensation)",
       "tracked": true,
       "max_value": 250,
       "max_weight_g": 250,
-      "price": 15.38,
+      "price": 15.47,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Tracked Small Parcel (250£ compensation) (Online)",
+      "method": "Int. Tracked Small Parcel (250£ compensation)",
       "tracked": true,
       "max_value": 250,
       "max_weight_g": 500,
-      "price": 16.69,
+      "price": 16.79,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Tracked Small Parcel (250£ compensation) (Online)",
+      "method": "Int. Tracked Small Parcel (250£ compensation)",
       "tracked": true,
       "max_value": 250,
       "max_weight_g": 1000,
-      "price": 17.76,
+      "price": 17.86,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Int. Tracked Small Parcel (250£ compensation) (Online)",
+      "method": "Int. Tracked Small Parcel (250£ compensation)",
       "tracked": true,
       "max_value": 250,
       "max_weight_g": 2000,
-      "price": 19.01,
+      "price": 19.12,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 500£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 750£)",
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 1000,
-      "price": 64.24,
+      "price": 39.0,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 500£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 750£)",
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 2000,
-      "price": 68.96,
+      "price": 40.62,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 500£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 750£)",
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 5000,
-      "price": 84.38,
+      "price": 62.96,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 500£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 750£)",
       "tracked": true,
       "max_value": 500,
       "max_weight_g": 10000,
-      "price": 102.95,
+      "price": 78.89,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 1000£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 1000£)",
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 1000,
-      "price": 91.02,
+      "price": 66.55,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 1000£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 1000£)",
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 2000,
-      "price": 95.74,
+      "price": 68.17,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 1000£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 1000£)",
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 5000,
-      "price": 111.16,
+      "price": 90.51,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 1000£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 1000£)",
       "tracked": true,
       "max_value": 1000,
       "max_weight_g": 10000,
-      "price": 129.73,
+      "price": 106.44,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 2500£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 2500£)",
       "tracked": true,
       "max_value": 2500,
       "max_weight_g": 1000,
-      "price": 171.37,
+      "price": 108.47,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 2500£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 2500£)",
       "tracked": true,
       "max_value": 2500,
       "max_weight_g": 2000,
-      "price": 176.08,
+      "price": 110.09,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 2500£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 2500£)",
       "tracked": true,
       "max_value": 2500,
       "max_weight_g": 5000,
-      "price": 191.51,
+      "price": 132.43,
       "is_letter": false,
       "delivery_days": 9
     },
     {
-      "method": "Insured Parcel (Parcelforce globalpriority 2500£)",
+      "method": "Insured Parcel (Parcelforce Globalpriority Europe 2500£)",
       "tracked": true,
       "max_value": 2500,
       "max_weight_g": 10000,
-      "price": 210.08,
+      "price": 148.36,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 2500,
+      "max_weight_g": 20000,
+      "price": 104.52,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 5000,
+      "max_weight_g": 20000,
+      "price": 156.79,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 10000,
+      "max_weight_g": 20000,
+      "price": 261.32,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 20000,
+      "max_weight_g": 20000,
+      "price": 470.38,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 50000,
+      "max_weight_g": 20000,
+      "price": 1097.58,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 100000,
+      "max_weight_g": 20000,
+      "price": 2142.92,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 200000,
+      "max_weight_g": 20000,
+      "price": 4233.58,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 500000,
+      "max_weight_g": 20000,
+      "price": 10505.58,
+      "is_letter": false,
+      "delivery_days": 9
+    },
+    {
+      "method": "SHIPPING COST ESTIMATION for Courier Parcel with Full Insurance",
+      "tracked": true,
+      "max_value": 1000000,
+      "max_weight_g": 20000,
+      "price": 20958.9,
       "is_letter": false,
       "delivery_days": 9
     }
