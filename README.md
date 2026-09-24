@@ -27,6 +27,31 @@ Current status:
 
 Next hardening step: capture a sanitized Cardmarket cart HTML sample and add fixture tests for the extractor selectors.
 
+### KAIKATA inside the extension (2.0.0)
+
+From 2.0.0 KAIKATA itself runs as an extension page (`chrome-extension://…/app/index.html`):
+
+- The toolbar icon opens KAIKATA, or focuses the tab if it is already open.
+- **Transfer to KAIKATA** on the cart page hands the cart over through extension storage (`cartforgeIncomingCartV1`, read once and removed) and reuses an open KAIKATA tab; no URL hash. **Open on website instead** keeps the old website route during the transition.
+- Wants stock loaded in another tab appears in KAIKATA straight away (storage change events instead of re-checking on tab focus), and **Send to Cardmarket** writes the confirmed plan directly to extension storage.
+- The website (GitHub Pages) keeps working as before. `src/host.mjs` picks the transport: extension storage on the extension page, URL hash + postMessage bridge on the website.
+- Scryfall reference prices work from the extension page without extra permissions (the API sends `Access-Control-Allow-Origin: *`).
+
+### Install / update the extension
+
+The web app has no build step; only the extension is packaged. The packaging script copies the app into the extension build:
+
+```bash
+node scripts/package-extension.mjs
+```
+
+This writes `dist/kaikata-extension/` (the unpacked extension, with the app under `app/`) and `dist/kaikata-extension-<version>.zip`. It refuses to run if `CHANGELOG.md` has no entry for the version in `extension/manifest.json`, and needs the system `zip` command (`--no-zip` skips the archive).
+
+- **Yourself:** `chrome://extensions` → Developer mode → **Load unpacked** → select `dist/kaikata-extension/`. After pulling changes, run the script again and click the reload icon on the extension card.
+- **Friends:** send them the ZIP. They unzip it, then **Load unpacked** the unzipped folder (the one with `manifest.json`). To update, replace the folder with the new ZIP's contents and reload the extension.
+
+The extension page bundles Geist (`extension/app-assets/fonts/`, SIL OFL 1.1); the website keeps loading it from Google Fonts.
+
 ### Comparing your cart with sellers' wants stock (extension 1.2.0)
 
 KAIKATA can also consider articles that are **not in your cart yet**, from each cart seller's "Seller's Articles on My Wants List" page (`/Users/<seller>/Offers/Singles?idWantslist=<id>`). Cardmarket warns that cart abuse can lead to account suspension, so keep the cart to one Shopping Wizard result and let the wants stock replace adding alternatives by hand:

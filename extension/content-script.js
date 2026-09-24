@@ -2,6 +2,8 @@
   const LIVE_CARTFORGE_URL = "https://mezzy0710.github.io/KAIKATA/";
   const PANEL_ID = "cartforge-cardmarket-extractor";
   const STORAGE_KEY = "cartforgeConfirmedPlanV3";
+  // Cart handed to the KAIKATA extension page (read once, then removed, by src/host.mjs).
+  const INCOMING_CART_KEY = "cartforgeIncomingCartV1";
   const FILTER_STORAGE_KEY = "cartforgeOverlayFilterV1";
   const MARK_SELECTOR = "[data-cartforge-mark]";
   const Matching = globalThis.CartforgeMatching;
@@ -809,7 +811,7 @@
     css(descEl, { margin: "0 0 14px", color: "#6E6257", fontSize: "13px", lineHeight: "1.5" });
 
     const transferBtn = document.createElement("button");
-    transferBtn.setAttribute("data-cartforge-action", "open-live");
+    transferBtn.setAttribute("data-cartforge-action", "open-app");
     transferBtn.textContent = "Transfer to KAIKATA";
     css(transferBtn, {
       width: "100%",
@@ -851,7 +853,24 @@
     css(summaryEl, { margin: "-2px 0 10px", color: "#6E6257", fontSize: "12px", lineHeight: "1.4" });
     wantsUi.summaryEl = summaryEl;
 
-    body.append(descEl, buildWantsStockSection(), transferBtn, summaryEl, copyBtn, statusEl);
+    // Transition: the website still works, one small link away.
+    const websiteLink = document.createElement("button");
+    websiteLink.setAttribute("data-cartforge-action", "open-live");
+    websiteLink.textContent = "Open on website instead";
+    css(websiteLink, {
+      display: "block",
+      margin: "8px auto 0",
+      border: "0",
+      background: "transparent",
+      color: "#A89D8F",
+      padding: "2px 4px",
+      fontFamily: "inherit",
+      fontSize: "12px",
+      textDecoration: "underline",
+      cursor: "pointer"
+    });
+
+    body.append(descEl, buildWantsStockSection(), transferBtn, summaryEl, copyBtn, websiteLink, statusEl);
     panel.append(logoBubble, header, body);
     document.body.append(panel);
     startWantsStock();
@@ -889,7 +908,6 @@
       }
 
       const payload = extractCartPayload(document);
-      const encoded = encodePayload(payload);
       const itemCount = countItems(payload);
 
       if (!payload.sellers.length || itemCount === 0) {
@@ -899,8 +917,15 @@
 
       saveCartSnapshot(payload);
 
+      if (action === "open-app") {
+        const opened = await openInApp(payload);
+        setStatus(statusEl, opened.ok
+          ? `Transferred: ${payload.sellers.length} seller(s), ${itemCount} item row(s).`
+          : `Could not open KAIKATA (${opened.error}). Try "Open on website instead".`);
+      }
+
       if (action === "open-live") {
-        window.open(buildTargetUrl(LIVE_CARTFORGE_URL, encoded), "_blank", "noopener,noreferrer");
+        window.open(buildTargetUrl(LIVE_CARTFORGE_URL, encodePayload(payload)), "_blank", "noopener,noreferrer");
         setStatus(statusEl, `Transferred: ${payload.sellers.length} seller(s), ${itemCount} item row(s).`);
       }
 
@@ -917,6 +942,17 @@
 
   function setStatus(statusEl, message) {
     statusEl.textContent = message;
+  }
+
+  // KAIKATA runs as an extension page: the cart goes through storage, not a URL hash.
+  async function openInApp(payload) {
+    try {
+      await chrome.storage.local.set({ [INCOMING_CART_KEY]: { payload, storedAt: new Date().toISOString() } });
+      const response = await chrome.runtime.sendMessage({ type: "CARTFORGE_V3_OPEN_APP" });
+      return response?.ok ? response : { ok: false, error: response?.error || "no answer from the extension" };
+    } catch (error) {
+      return { ok: false, error: error?.message || "extension unavailable" };
+    }
   }
 
   function buildTargetUrl(baseUrl, encodedPayload) {

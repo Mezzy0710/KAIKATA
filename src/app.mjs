@@ -18,9 +18,9 @@ import {
   hasHighPricedCards,
   generateHighPriceNote
 } from "./price-verdict.mjs?v=20260509m";
-import { decodeCartForgeHash, decodeCartForgePayload, parseExtractedCartPayload } from "./importer.mjs?v=20260927a";
+import { decodeCartForgePayload, parseExtractedCartPayload } from "./importer.mjs?v=20260927a";
 import { buildConfirmedPlan } from "./confirmed-plan.mjs?v=20260926b";
-import { requestCandidatesFromExtension, sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260927a";
+import { host } from "./host.mjs?v=20260928a";
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
 import { applyShippingOverride } from "./shipping-override.mjs?v=20260925a";
 import { improveSelection } from "./optimizer-search.mjs?v=20260924b";
@@ -123,11 +123,9 @@ async function boot() {
   }
 
   elements.parseButton.addEventListener("click", () => parseCurrentInput({ autoReveal: true }));
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      loadCandidatesFromExtension({ onReturn: true });
-    }
-  });
+  // Extension page: storage change events. Website: coming back to this tab.
+  host.onCandidatesChanged(() => loadCandidatesFromExtension({ onReturn: true }));
+  host.onIncomingCart(() => loadIncomingCart());
   if (elements.loadSampleButton) {
     elements.loadSampleButton.addEventListener("click", loadSampleCart);
   }
@@ -138,7 +136,7 @@ async function boot() {
   elements.desiredCardsReview.addEventListener("click", handleReviewClick);
 
   await loadShippingData();
-  loadCartFromUrlHash();
+  await loadIncomingCart();
   render();
 }
 
@@ -161,7 +159,7 @@ async function sendCurrentConfirmedPlanToExtension() {
   if (!result.ok) {
     return result;
   }
-  return sendConfirmedPlanToExtension(result.plan);
+  return host.storeConfirmedPlan(result.plan);
 }
 
 async function handleConfirmPlan() {
@@ -198,11 +196,12 @@ async function handleConfirmPlan() {
   }
 }
 
-function loadCartFromUrlHash() {
+// Cart sent by the extension: chrome.storage on the extension page, URL hash on the website.
+async function loadIncomingCart() {
   const sourceParam = new URLSearchParams(window.location.search).get("source");
   state.extensionHintFromUrl = sourceParam === "cardmarket-extension";
-  const decoded = decodeCartForgeHash(window.location.hash);
-  if (!decoded.ok) {
+  const payload = await host.loadIncomingCart();
+  if (!payload) {
     if (state.extensionHintFromUrl) {
       state.inputSource = "extension";
       setMessage("Extension opened Kaikata, but no cart payload was found. Try importing again.");
@@ -212,11 +211,10 @@ function loadCartFromUrlHash() {
     return;
   }
 
-  elements.cartInput.value = JSON.stringify(decoded.payload, null, 2);
-  if (decoded.payload?.url && typeof decoded.payload.url === "string") {
-    state.cardmarketCartUrl = decoded.payload.url;
+  elements.cartInput.value = JSON.stringify(payload, null, 2);
+  if (payload?.url && typeof payload.url === "string") {
+    state.cardmarketCartUrl = payload.url;
   }
-  window.history.replaceState(null, "", window.location.pathname + window.location.search);
   parseCurrentInput({ autoReveal: true });
 }
 
@@ -1668,12 +1666,12 @@ function runPlanOptimization() {
 }
 
 // Asks the extension for wants-page captures: after every cart import, and again when
-// the user comes back to this tab (they usually capture sellers in another tab).
+// captures change (extension page) or the user comes back to this tab (website).
 async function loadCandidatesFromExtension({ onReturn = false } = {}) {
   if (!state.parsed.sellers?.length) return;
   const parsedAtRequest = state.parsed;
   // The extension only sends captures < 24 h old from the cart's wants list(s).
-  const response = await requestCandidatesFromExtension({ wantsListIds: state.parsed.wantsListIds || [] });
+  const response = await host.getCandidates({ wantsListIds: state.parsed.wantsListIds || [] });
   if (state.parsed !== parsedAtRequest) return;
   const received = response.ok ? response.sellers || [] : [];
   // Extension 1.1.x flags stale captures instead of filtering them.
