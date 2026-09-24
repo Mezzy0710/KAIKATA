@@ -1478,7 +1478,9 @@ function runOptimizationPlaceholder() {
   }
 
   // optimizeCart is synchronous; yield a frame first so the status and disabled button paint.
-  requestAnimationFrame(() => setTimeout(() => {
+  // Hidden tabs never run animation frames, so there it only yields to the event loop.
+  const afterPaint = (callback) => (document.hidden ? setTimeout(callback, 0) : requestAnimationFrame(() => setTimeout(callback, 0)));
+  afterPaint(() => {
     try {
       state.optimizationStale = false;
       state.optimizationResult = optimizeCart(sellers, offerGroups);
@@ -1499,7 +1501,7 @@ function runOptimizationPlaceholder() {
         button.removeAttribute("aria-busy");
       }
     }
-  }, 0));
+  });
 }
 
 function updateOptimizationPreview() {
