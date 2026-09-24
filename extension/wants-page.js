@@ -26,7 +26,9 @@
   let cancelRequested = false;
 
   const ui = buildPanel();
-  refreshCaptureList();
+  refreshCaptureList().then((count) => {
+    if (count) showNextStep();
+  });
   applyPlanMarks();
 
   // ── Storage ───────────────────────────────────────────────────────────────
@@ -93,7 +95,12 @@
     });
     if (result.offers.length) {
       const saved = await saveCapture(result.offers, result, { merge: false });
-      setStatus(`${result.stoppedReason ? `Stopped: ${result.stoppedReason} ` : ""}Captured ${saved.offers.length} offers from ${result.pagesFetched} page(s).`, Boolean(result.stoppedReason));
+      const hits = result.meta?.hits;
+      const short = !result.stoppedReason && Number.isFinite(hits) && saved.offers.length < hits
+        ? ` Note: the page reports ${hits} hits, so ${hits - saved.offers.length} row(s) were not recognized.`
+        : "";
+      setStatus(`${result.stoppedReason ? `Stopped: ${result.stoppedReason} ` : ""}Captured ${saved.offers.length} offers from ${result.pagesFetched} page(s).${short}`, Boolean(result.stoppedReason || short));
+      showNextStep();
     } else {
       setStatus(`Nothing captured. ${result.stoppedReason || "No offers found."}`, true);
     }
@@ -111,6 +118,7 @@
     }
     const saved = await saveCapture(parsed.offers, { pagesFetched: 1, totalPages: parsed.meta.pages }, { merge: true });
     setStatus(`Captured ${parsed.offers.length} offers from this page (${saved.offers.length} for this seller in total).`);
+    showNextStep();
     refreshCaptureList();
   }
 
@@ -220,6 +228,9 @@
     const status = document.createElement("p");
     status.setAttribute("role", "status");
     css(status, { margin: "8px 0 0", color: "#6E6257", minHeight: "1em" });
+    const nextStep = document.createElement("p");
+    nextStep.textContent = "Next: capture more sellers, or open your Cardmarket cart and send it to KAIKATA. KAIKATA then shows how many captured offers it uses.";
+    css(nextStep, { margin: "8px 0 0", padding: "8px 10px", borderRadius: "8px", background: "rgba(79,122,90,0.10)", color: "#1C1A17", display: "none" });
 
     const listTitle = document.createElement("p");
     listTitle.textContent = "Captured sellers";
@@ -229,7 +240,7 @@
     const clearAll = button("Clear all", false);
     css(clearAll, { ...LINK_BUTTON, marginTop: "4px", color: "#9F2D24" });
 
-    body.append(info, captureBtn, pageBtn, stopBtn, planLine, selectBtn, status, listTitle, list, clearAll);
+    body.append(info, captureBtn, pageBtn, stopBtn, planLine, selectBtn, status, nextStep, listTitle, list, clearAll);
     panel.append(header, body);
     document.body.append(panel);
 
@@ -250,7 +261,7 @@
       collapse.textContent = hidden ? "–" : "+";
     });
 
-    return { captureBtn, pageBtn, stopBtn, selectBtn, planLine, status, list };
+    return { captureBtn, pageBtn, stopBtn, selectBtn, planLine, status, nextStep, list };
   }
 
   function button(label, primary) {
@@ -265,6 +276,10 @@
         : { background: "transparent", color: "#1C1A17", border: "1.5px solid #DED3C2" })
     });
     return el;
+  }
+
+  function showNextStep() {
+    ui.nextStep.style.display = "block";
   }
 
   function setBusy(busy) {
@@ -289,7 +304,7 @@
       empty.textContent = "None yet.";
       css(empty, { color: "#6E6257" });
       ui.list.append(empty);
-      return;
+      return 0;
     }
     entries.forEach(([key, entry]) => {
       const item = document.createElement("li");
@@ -311,6 +326,7 @@
       item.append(label, remove);
       ui.list.append(item);
     });
+    return entries.length;
   }
 
   function formatAge(ms) {

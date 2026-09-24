@@ -60,7 +60,10 @@ const state = {
   cardmarketCartUrl: null,
   // Offers captured by the extension from sellers' wants-list pages (see src/candidates.mjs).
   candidateSellers: [],
-  candidateStats: null
+  candidateStats: null,
+  // "idle" | "checking" | "unavailable" (no extension answer) | "none" | "loaded"
+  candidateStatus: "idle",
+  candidateSignature: ""
 };
 
 const hasDom = typeof document !== "undefined";
@@ -113,6 +116,11 @@ async function boot() {
   }
 
   elements.parseButton.addEventListener("click", () => parseCurrentInput({ autoReveal: true }));
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      loadCandidatesFromExtension({ onReturn: true });
+    }
+  });
   if (elements.loadSampleButton) {
     elements.loadSampleButton.addEventListener("click", loadSampleCart);
   }
@@ -306,6 +314,8 @@ function parseCurrentInput(options = {}) {
   updateOptimizeButton();
   state.candidateSellers = [];
   state.candidateStats = null;
+  state.candidateStatus = "checking";
+  state.candidateSignature = "";
   render();
   loadCandidatesFromExtension();
 
@@ -752,6 +762,7 @@ function renderDesiredCards(offerGroups) {
         <button id="runOptimizationButton" class="primary-button run-button" type="button">${escapeHtml(actionLabel)}</button>
       </div>
     </div>
+    ${candidateStatusTemplate()}
     ${referenceStatusTemplate()}
     ${desiredCardsTableTemplate(offerGroups)}
   `);
@@ -954,6 +965,33 @@ function variantRowTemplate(cardName, variantKey, offer, hasEnriched, showRef) {
       </td>
     </tr>
   `;
+}
+
+// Tells the user whether wants-page captures from the extension are in use.
+function candidateStatusTemplate() {
+  const status = state.candidateStatus;
+  if (status === "checking") {
+    return `<p class="candidate-status">Checking the extension for captured wants-page offers…</p>`;
+  }
+  if (status === "unavailable") {
+    return `<p class="candidate-status">Captured wants-page offers: extension not connected on this page, so only your cart is used.</p>`;
+  }
+  if (status === "none") {
+    return `<p class="candidate-status">No captured wants-page offers. Capture sellers on their "Articles on My Wants List" page to compare offers outside your cart.</p>`;
+  }
+  if (status === "loaded" && state.candidateStats) {
+    const stats = state.candidateStats;
+    const sellerNames = state.candidateSellers.map((capture) => capture.sellerName).join(", ");
+    const staleNote = stats.staleSellers ? ` ${stats.staleSellers} capture(s) are older than 24 h.` : "";
+    return `
+      <p class="candidate-status candidate-status--active">
+        <strong>${escapeHtml(`Using ${stats.afterFilter} captured offer${stats.afterFilter === 1 ? "" : "s"} from ${state.candidateSellers.length} seller${state.candidateSellers.length === 1 ? "" : "s"}`)}</strong>
+        ${escapeHtml(`(${sellerNames}). ${stats.received} captured; ${stats.notInCart} skipped because the card isn't in your cart, ${stats.alreadyInCart} already in your cart.${staleNote}`)}
+        Offers not in your cart are marked <span class="candidate-badge">not in cart</span> when you open a card.
+      </p>
+    `;
+  }
+  return "";
 }
 
 function referenceStatusTemplate() {
@@ -1440,7 +1478,9 @@ function runOptimizationPlaceholder() {
   }
 
   // optimizeCart is synchronous; yield a frame first so the status and disabled button paint.
-  requestAnimationFrame(() => setTimeout(() => {
+  // Hidden tabs never run animation frames, so there it only yields to the event loop.
+  const afterPaint = (callback) => (document.hidden ? setTimeout(callback, 0) : requestAnimationFrame(() => setTimeout(callback, 0)));
+  afterPaint(() => {
     try {
       state.optimizationStale = false;
       state.optimizationResult = optimizeCart(sellers, offerGroups);
@@ -1461,7 +1501,7 @@ function runOptimizationPlaceholder() {
         button.removeAttribute("aria-busy");
       }
     }
-  }, 0));
+  });
 }
 
 function updateOptimizationPreview() {
@@ -1547,12 +1587,30 @@ function offerContext() {
   return context;
 }
 
-async function loadCandidatesFromExtension() {
+// Asks the extension for wants-page captures: after every cart import, and again when
+// the user comes back to this tab (they usually capture sellers in another tab).
+async function loadCandidatesFromExtension({ onReturn = false } = {}) {
   if (!state.parsed.sellers?.length) return;
   const parsedAtRequest = state.parsed;
   const response = await requestCandidatesFromExtension();
-  if (!response.ok || !response.sellers?.length || state.parsed !== parsedAtRequest) return;
-  state.candidateSellers = response.sellers;
+  if (state.parsed !== parsedAtRequest) return;
+  const sellers = response.ok ? response.sellers || [] : [];
+  const signature = sellers.map((capture) => `${capture.sellerName}|${capture.capturedAt}|${capture.offers?.length}`).join(";");
+  if (onReturn && (!response.ok || signature === state.candidateSignature)) return;
+  state.candidateSignature = signature;
+  if (onReturn && state.optimizationResult) {
+    state.optimizationStale = true;
+    updateWorkflowStatus("Needs review", "warning", "Captured offers changed. Re-optimize to use them.");
+  }
+  if (!sellers.length) {
+    state.candidateSellers = [];
+    state.candidateStats = null;
+    state.candidateStatus = response.ok ? "none" : "unavailable";
+    render();
+    return;
+  }
+  state.candidateStatus = "loaded";
+  state.candidateSellers = sellers;
   const { stats } = offerContext();
   console.info("[KAIKATA] wants-page candidates", stats);
   state.optimizationStale = true;
