@@ -68,6 +68,20 @@ Use it to:
 - validate shipping-price plausibility
 - calculate shipping if cart assignments change
 
+`_meta.updatedAt` records when the table was captured; the app shows it in advanced details as "Shipping rates from <date>". Top-level keys starting with `_` are metadata and are ignored by every country lookup.
+
+Shipment weight follows Cardmarket's published letter limits: up to 4 cards = 20 g, up to 17 = 50 g, up to 40 = 100 g. Above 40 cards KAIKATA estimates `11 + 2.22 × cards` g (a linear fit, not a Cardmarket figure).
+
+### Refreshing shipping rates
+
+Refresh about every 3 months, or sooner when a real cart's shipping doesn't match KAIKATA's estimate.
+
+1. Open https://help.cardmarket.com/en/ShippingCosts in a desktop browser.
+2. Open DevTools → Console, paste the contents of `scripts/shipping-refresh-snippet.js` and press Enter. It fetches every origin country → Germany one request at a time and downloads `shipping_data.json`.
+3. Replace the repo's `shipping_data.json` with the download.
+4. Run `bash tests/run-all.sh`. Price assertions in `tests/shipping-costs.mjs` / `tests/shipping-weight.mjs` and the plan snapshots in `tests/optimizer-seller-moves.mjs` may need updating to the new Cardmarket values; review each change.
+5. Bump the `?v=` query on `app.mjs` in `index.html` and commit.
+
 ## Suggested UI flow
 
 1. Paste cart text

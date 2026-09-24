@@ -1,7 +1,6 @@
-import { parseMoney } from "./parser.mjs";
+import { parseMoney } from "./parser.mjs?v=20260924c";
 
 export const DESTINATION_COUNTRY = "Germany";
-export const ESTIMATED_CARD_WEIGHT_G = 1.8;
 export const TRACKED_VALUE_THRESHOLD = 25;
 export const SHIPPING_DATA_INCLUDES_CARDMARKET_FEE = true;
 export const TRUSTEE_VALUE_THRESHOLD = 25;
@@ -104,8 +103,17 @@ export function calculateShippingCost({ shippingRecords, country, cardCount, ord
   };
 }
 
+// Cardmarket's published letter limits (help.cardmarket.com/en/ShippingCosts):
+// up to 20 g = max 4 cards, up to 50 g = max 17 cards, up to 100 g = max 40 cards.
+// Above 40 cards there is no published limit; 11 + 2.22 g/card is a linear fit
+// through those points and only an estimate.
 export function estimateShipmentWeight(cardCount) {
-  return Math.round(Math.max(0, Number(cardCount || 0) * ESTIMATED_CARD_WEIGHT_G) * 10) / 10;
+  const cards = Math.max(0, Number(cardCount || 0));
+  if (cards === 0) return 0;
+  if (cards <= 4) return 20;
+  if (cards <= 17) return 50;
+  if (cards <= 40) return 100;
+  return Math.round((11 + 2.22 * cards) * 10) / 10;
 }
 
 export function calculateTrusteeFee({ articleValue, shippingMethod, tracked = false, isRegistered = false, sellerLifetimeSales = null }) {
