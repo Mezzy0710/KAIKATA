@@ -1,0 +1,1428 @@
+CARTFORGE_CART={
+  "source": "cartforge-cardmarket-extension",
+  "version": 1,
+  "url": "https://www.cardmarket.com/en/Magic/ShoppingCart",
+  "extractedAt": "2026-09-24T12:08:37.254Z",
+  "sellers": [
+    {
+      "sellerName": "Seller01",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 28.09.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-1-1",
+          "cardName": "Fecundity",
+          "setName": "#145",
+          "rarity": "",
+          "condition": "EX",
+          "quantity": 1,
+          "price": "0,39 €",
+          "rawLine": "1x Fecundity \n#145\nEX\n<comment>\n0,39 € \n1"
+        },
+        {
+          "id": "cardmarket-1-2",
+          "cardName": "Squee, the Immortal (V.1)",
+          "setName": "#22",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,59 €",
+          "rawLine": "1x Squee, the Immortal (V.1) \n#22\nNM\n<comment>\n0,59 € \n1"
+        },
+        {
+          "id": "cardmarket-1-3",
+          "cardName": "Fecundity",
+          "setName": "#145",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "150,39 €",
+          "rawLine": "1xFecundityFecundity#145EX00150,39 €1"
+        },
+        {
+          "id": "cardmarket-1-4",
+          "cardName": "Squee, the Immortal (V.1)",
+          "setName": "#22",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,59 €",
+          "rawLine": "1xSquee, the Immortal (V.1)Squee, the Immortal (V.1)#22NM0158.E We buy your Collections!0,59 €1"
+        }
+      ],
+      "rawText": "Seller01\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n2 Articles\nArticle Value\n0,98 €\nShipping\n1,25 €\nTotal\n2,23 €\nSelect shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 28.09.2026 \nTrustee Service \nYes\nNo\nUse Trustee service\nInformation on our Trustee Service.\nMore articles from this seller\nSeller's Articles on My Wants List\nGeneral Terms and Conditions\nMagic the Gathering Singles (2)\nName Info. Price \n1x Fecundity \n#145\nEX\n<comment>\n0,39 € \n1\n1x Squee, the Immortal (V.1) \n#22\nNM\n<comment>\n0,59 € \n1"
+    },
+    {
+      "sellerName": "Seller02",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (5,99 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 28.09.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-2-1",
+          "cardName": "Squee, the Immortal (V.1)",
+          "setName": "#22",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,49 €",
+          "rawLine": "1x Squee, the Immortal (V.1) \n#22\nNM\n<comment>\n0,49 € \n1"
+        },
+        {
+          "id": "cardmarket-2-2",
+          "cardName": "Food Chain",
+          "setName": "#133",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "15,80 €",
+          "rawLine": "1x Food Chain \n#133\nNM\n<comment>\n15,80 € \n1"
+        },
+        {
+          "id": "cardmarket-2-3",
+          "cardName": "Squee, the Immortal (V.1)",
+          "setName": "#22",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,49 €",
+          "rawLine": "1xSquee, the Immortal (V.1)Squee, the Immortal (V.1)#22NMWe buy your single cards, collections and sealed products0,49 €1"
+        },
+        {
+          "id": "cardmarket-2-4",
+          "cardName": "Food Chain",
+          "setName": "#133",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "15,80 €",
+          "rawLine": "1xFood ChainFood Chain#133NMWe buy your single cards, collections and sealed products15,80 €1"
+        }
+      ],
+      "rawText": "Seller02\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n2 Articles\nArticle Value\n16,29 €\nShipping\n1,25 €\nTotal\n17,54 €\nSelect shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (5,99 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 28.09.2026 \nTrustee Service \nYes\nNo"
+    },
+    {
+      "sellerName": "Seller03",
+      "sellerCountry": "Spain",
+      "shippingMethod": "Select shipping method \nCarta ordinaria (Priority Letter) (2,60 €) max. Weight: 50g\nNo tracking\nLetter (2,60 €)\nTracked Parcel (8,55 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 01.10.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-3-1",
+          "cardName": "Fecundity",
+          "setName": "#165",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,25 €",
+          "rawLine": "1x Fecundity \n#165\nNM\n0,25 € \n1"
+        },
+        {
+          "id": "cardmarket-3-2",
+          "cardName": "Arcane Signet",
+          "setName": "#127",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,49 €",
+          "rawLine": "1x Arcane Signet \n#127\nNM\n0,49 € \n1"
+        },
+        {
+          "id": "cardmarket-3-3",
+          "cardName": "Sol Ring (V.3)",
+          "setName": "#213",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "1,99 €",
+          "rawLine": "1x Sol Ring (V.3) \n#213\nNM\n1,99 € \n1"
+        },
+        {
+          "id": "cardmarket-3-4",
+          "cardName": "Fecundity",
+          "setName": "#165",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,25 €",
+          "rawLine": "1xFecundityFecundity#165NM0,25 €1"
+        },
+        {
+          "id": "cardmarket-3-5",
+          "cardName": "Arcane Signet",
+          "setName": "#127",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,49 €",
+          "rawLine": "1xArcane SignetArcane Signet#127NM0,49 €1"
+        },
+        {
+          "id": "cardmarket-3-6",
+          "cardName": "Sol Ring (V.3)",
+          "setName": "#213",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "1,99 €",
+          "rawLine": "1xSol Ring (V.3)Sol Ring (V.3)#213NM1,99 €1"
+        }
+      ],
+      "rawText": "Seller03\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n3 Articles\nArticle Value\n2,73 €\nShipping\n2,60 €\nTotal\n5,33 €\nSelect shipping method \nCarta ordinaria (Priority Letter) (2,60 €) max. Weight: 50g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller04",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nFree registered shipping over 100€ B (0,00 €) max. Weight: 3000g\nTracked\nTracked Parcel (0,00 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 30.09.2026",
+      "trackingStatus": "tracked",
+      "articleValue": null,
+      "shippingValue": "0,00 €",
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-4-1",
+          "cardName": "Food Chain",
+          "setName": "#133",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "19,99 €",
+          "rawLine": "1x Food Chain \n#133\nNM\n19,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-2",
+          "cardName": "Grave Pact",
+          "setName": "#65",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "25,99 €",
+          "rawLine": "1x Grave Pact \n#65\nNM\n25,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-3",
+          "cardName": "Command Tower (V.2)",
+          "setName": "#234",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,25 €",
+          "rawLine": "1x Command Tower (V.2) \n#234\nNM\n0,25 € \n1"
+        },
+        {
+          "id": "cardmarket-4-4",
+          "cardName": "Korvold, Fae-Cursed King",
+          "setName": "#120",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 2,
+          "price": "0,99 €",
+          "rawLine": "2x Korvold, Fae-Cursed King \n#120\nNM\n0,99 € \n1\n2"
+        },
+        {
+          "id": "cardmarket-4-5",
+          "cardName": "Beledros Witherbloom",
+          "setName": "#247",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "1,99 €",
+          "rawLine": "1x Beledros Witherbloom \n#247\nNM\n1,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-6",
+          "cardName": "Ignoble Hierarch",
+          "setName": "#234",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,99 €",
+          "rawLine": "1x Ignoble Hierarch \n#234\nNM\n0,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-7",
+          "cardName": "Agate Instigator",
+          "setName": "#21",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "7,99 €",
+          "rawLine": "1x Agate Instigator \n#21\nNM\n7,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-8",
+          "cardName": "Chatterfang, Squirrel General",
+          "setName": "#209",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "7,99 €",
+          "rawLine": "1x Chatterfang, Squirrel General \n#209\nNM\n7,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-9",
+          "cardName": "Fellwar Stone",
+          "setName": "#285",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,99 €",
+          "rawLine": "1x Fellwar Stone \n#285\nNM\n0,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-10",
+          "cardName": "Pitiless Plunderer",
+          "setName": "#281",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "2,99 €",
+          "rawLine": "1x Pitiless Plunderer \n#281\nNM\n2,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-11",
+          "cardName": "Beast Within",
+          "setName": "#169",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,75 €",
+          "rawLine": "1x Beast Within \n#169\nNM\n0,75 € \n1"
+        },
+        {
+          "id": "cardmarket-4-12",
+          "cardName": "Enduring Vitality",
+          "setName": "#176",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "9,99 €",
+          "rawLine": "1x Enduring Vitality \n#176\nNM\n9,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-13",
+          "cardName": "Assassin's Trophy",
+          "setName": "#55",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,99 €",
+          "rawLine": "1x Assassin's Trophy \n#55\nNM\n0,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-14",
+          "cardName": "Lagomos, Hand of Hatred (V.1)",
+          "setName": "#304",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,25 €",
+          "rawLine": "1x Lagomos, Hand of Hatred (V.1) \n#304\nNM\n0,25 € \n1"
+        },
+        {
+          "id": "cardmarket-4-15",
+          "cardName": "Morbid Opportunist",
+          "setName": "#183",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,25 €",
+          "rawLine": "1x Morbid Opportunist \n#183\nNM\n0,25 € \n1"
+        },
+        {
+          "id": "cardmarket-4-16",
+          "cardName": "Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel (V.3)",
+          "setName": "#451",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "49,99 €",
+          "rawLine": "1x Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel (V.3) \n#451\nNM\n49,99 € \n1"
+        },
+        {
+          "id": "cardmarket-4-17",
+          "cardName": "Pest Rescuer",
+          "setName": "#42",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "1,49 €",
+          "rawLine": "1x Pest Rescuer \n#42\nNM\n1,49 € \n1"
+        },
+        {
+          "id": "cardmarket-4-18",
+          "cardName": "Food Chain",
+          "setName": "#133",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "19,99 €",
+          "rawLine": "1xFood ChainFood Chain#133NM19,99 €1"
+        },
+        {
+          "id": "cardmarket-4-19",
+          "cardName": "Grave Pact",
+          "setName": "#65",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "25,99 €",
+          "rawLine": "1xGrave PactGrave Pact#65NM25,99 €1"
+        },
+        {
+          "id": "cardmarket-4-20",
+          "cardName": "Command Tower (V.2)",
+          "setName": "#234",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,25 €",
+          "rawLine": "1xCommand Tower (V.2)Command Tower (V.2)#234NM0,25 €1"
+        },
+        {
+          "id": "cardmarket-4-21",
+          "cardName": "Korvold, Fae-Cursed King",
+          "setName": "#120",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,99 €",
+          "rawLine": "2xKorvold, Fae-Cursed KingKorvold, Fae-Cursed King#120NM0,99 €12"
+        },
+        {
+          "id": "cardmarket-4-22",
+          "cardName": "Beledros Witherbloom",
+          "setName": "#247",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "1,99 €",
+          "rawLine": "1xBeledros WitherbloomBeledros Witherbloom#247NM1,99 €1"
+        },
+        {
+          "id": "cardmarket-4-23",
+          "cardName": "Ignoble Hierarch",
+          "setName": "#234",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,99 €",
+          "rawLine": "1xIgnoble HierarchIgnoble Hierarch#234NM0,99 €1"
+        },
+        {
+          "id": "cardmarket-4-24",
+          "cardName": "Agate Instigator",
+          "setName": "#21",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "7,99 €",
+          "rawLine": "1xAgate InstigatorAgate Instigator#21NM7,99 €1"
+        },
+        {
+          "id": "cardmarket-4-25",
+          "cardName": "Chatterfang, Squirrel General",
+          "setName": "#209",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "7,99 €",
+          "rawLine": "1xChatterfang, Squirrel GeneralChatterfang, Squirrel General#209NM7,99 €1"
+        },
+        {
+          "id": "cardmarket-4-26",
+          "cardName": "Fellwar Stone",
+          "setName": "#285",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,99 €",
+          "rawLine": "1xFellwar StoneFellwar Stone#285NM0,99 €1"
+        },
+        {
+          "id": "cardmarket-4-27",
+          "cardName": "Pitiless Plunderer",
+          "setName": "#281",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "2,99 €",
+          "rawLine": "1xPitiless PlundererPitiless Plunderer#281NM2,99 €1"
+        },
+        {
+          "id": "cardmarket-4-28",
+          "cardName": "Beast Within",
+          "setName": "#169",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,75 €",
+          "rawLine": "1xBeast WithinBeast Within#169NM0,75 €1"
+        },
+        {
+          "id": "cardmarket-4-29",
+          "cardName": "Enduring Vitality",
+          "setName": "#176",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "9,99 €",
+          "rawLine": "1xEnduring VitalityEnduring Vitality#176NM9,99 €1"
+        },
+        {
+          "id": "cardmarket-4-30",
+          "cardName": "Assassin's Trophy",
+          "setName": "#55",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,99 €",
+          "rawLine": "1xAssassin's TrophyAssassin's Trophy#55NM0,99 €1"
+        },
+        {
+          "id": "cardmarket-4-31",
+          "cardName": "Lagomos, Hand of Hatred (V.1)",
+          "setName": "#304",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,25 €",
+          "rawLine": "1xLagomos, Hand of Hatred (V.1)Lagomos, Hand of Hatred (V.1)#304NM0,25 €1"
+        },
+        {
+          "id": "cardmarket-4-32",
+          "cardName": "Morbid Opportunist",
+          "setName": "#183",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,25 €",
+          "rawLine": "1xMorbid OpportunistMorbid Opportunist#183NM0,25 €1"
+        },
+        {
+          "id": "cardmarket-4-33",
+          "cardName": "Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel (V.3)",
+          "setName": "#451",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "49,99 €",
+          "rawLine": "1xSephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel (V.3)Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel (V.3)#451NM49,99 €1"
+        },
+        {
+          "id": "cardmarket-4-34",
+          "cardName": "Pest Rescuer",
+          "setName": "#42",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "1,49 €",
+          "rawLine": "1xPest RescuerPest Rescuer#42NM1,49 €1"
+        }
+      ],
+      "rawText": "Seller04\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n18 Articles\nArticle Value\n134,86 €\nShipping\n0,00 €\nTrustee Service\n0,68 €\nTotal\n135,54 €\nSelect shipping method \nFree registered shipping over 100€ B (0,00 €) max. Weight: 3000g\nTracked"
+    },
+    {
+      "sellerName": "Seller05",
+      "sellerCountry": "Spain",
+      "shippingMethod": "Select shipping method \nCarta ordinaria (Priority Letter) (2,60 €) max. Weight: 50g\nNo tracking\nLetter (2,60 €)\nTracked Parcel (16,04 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 04.10.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-5-1",
+          "cardName": "Warren Soultrader",
+          "setName": "#110",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "13,00 €",
+          "rawLine": "1x Warren Soultrader \n#110\nNM\n13,00 € \n1"
+        },
+        {
+          "id": "cardmarket-5-2",
+          "cardName": "Warren Soultrader",
+          "setName": "#110",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "13,00 €",
+          "rawLine": "1xWarren SoultraderWarren Soultrader#110NM13,00 €1"
+        }
+      ],
+      "rawText": "Seller05\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n13,00 €\nShipping\n2,60 €\nTotal\n15,60 €\nSelect shipping method \nCarta ordinaria (Priority Letter) (2,60 €) max. Weight: 50g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller06",
+      "sellerCountry": "Austria",
+      "shippingMethod": "Select shipping method \nBrief S Priority (1,75 €) max. Weight: 20g\nNo tracking\nLetter (1,75 €)\nTracked Letter (6,85 €)\nTracked Parcel (19,39 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 02.10.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-6-1",
+          "cardName": "Liliana, Dreadhorde General",
+          "setName": "#97",
+          "rarity": "",
+          "condition": "EX",
+          "quantity": 1,
+          "price": "6,50 €",
+          "rawLine": "1x Liliana, Dreadhorde General \n#97\nEX\n6,50 € \n1"
+        },
+        {
+          "id": "cardmarket-6-2",
+          "cardName": "Liliana, Dreadhorde General",
+          "setName": "#97",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "6,50 €",
+          "rawLine": "1xLiliana, Dreadhorde GeneralLiliana, Dreadhorde General#97EX6,50 €1"
+        }
+      ],
+      "rawText": "Seller06\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n6,50 €\nShipping\n1,75 €\nTotal\n8,25 €\nSelect shipping method \nBrief S Priority (1,75 €) max. Weight: 20g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller07",
+      "sellerCountry": "France",
+      "shippingMethod": "Select shipping method \nLettre Internationale (Priority Letter) (2,55 €) max. Weight: 20g\nNo tracking\nLetter (2,55 €)\nTracked Letter (8,15 €)\nTracked Parcel (15,99 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 03.10.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-7-1",
+          "cardName": "Goblin Bombardment",
+          "setName": "#45",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "2,30 €",
+          "rawLine": "1x Goblin Bombardment \n#45\nNM\n2,30 € \n1"
+        },
+        {
+          "id": "cardmarket-7-2",
+          "cardName": "Food Chain",
+          "setName": "#133",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "15,00 €",
+          "rawLine": "1x Food Chain \n#133\nNM\n15,00 € \n1"
+        },
+        {
+          "id": "cardmarket-7-3",
+          "cardName": "Goblin Bombardment",
+          "setName": "#45",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "2,30 €",
+          "rawLine": "1xGoblin BombardmentGoblin Bombardment#45NM2,30 €1"
+        },
+        {
+          "id": "cardmarket-7-4",
+          "cardName": "Food Chain",
+          "setName": "#133",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "15,00 €",
+          "rawLine": "1xFood ChainFood Chain#133NM15,00 €1"
+        }
+      ],
+      "rawText": "Seller07\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n2 Articles\nArticle Value\n17,30 €\nShipping\n2,55 €\nTotal\n19,85 €\nSelect shipping method \nLettre Internationale (Priority Letter) (2,55 €) max. Weight: 20g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller08",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 28.09.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-8-1",
+          "cardName": "Witty Roastmaster",
+          "setName": "#131",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,96 €",
+          "rawLine": "1x Witty Roastmaster \n#131\nNM\n<comment>\n0,96 € \n1"
+        },
+        {
+          "id": "cardmarket-8-2",
+          "cardName": "Arcane Signet (V.1)",
+          "setName": "#191",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,47 €",
+          "rawLine": "1x Arcane Signet (V.1) \n#191\nNM\n<comment>\n0,47 € \n1"
+        },
+        {
+          "id": "cardmarket-8-3",
+          "cardName": "Sol Ring (V.3)",
+          "setName": "#213",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "1,48 €",
+          "rawLine": "1x Sol Ring (V.3) \n#213\nNM\n<comment>\n1,48 € \n1"
+        },
+        {
+          "id": "cardmarket-8-4",
+          "cardName": "Witty Roastmaster",
+          "setName": "#131",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,96 €",
+          "rawLine": "1xWitty RoastmasterWitty Roastmaster#131NMTRINKET MAGE - Best Place for TCG & More!0,96 €1"
+        },
+        {
+          "id": "cardmarket-8-5",
+          "cardName": "Arcane Signet (V.1)",
+          "setName": "#191",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,47 €",
+          "rawLine": "1xArcane Signet (V.1)Arcane Signet (V.1)#191NMTRINKET MAGE - Best Place for TCG & More!0,47 €1"
+        },
+        {
+          "id": "cardmarket-8-6",
+          "cardName": "Sol Ring (V.3)",
+          "setName": "#213",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "1,48 €",
+          "rawLine": "1xSol Ring (V.3)Sol Ring (V.3)#213NMTRINKET MAGE - Best Place for TCG & More!1,48 €1"
+        }
+      ],
+      "rawText": "Seller08\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n3 Articles\nArticle Value\n2,91 €\nShipping\n1,25 €\nTotal\n4,16 €\nSelect shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller09",
+      "sellerCountry": "France",
+      "shippingMethod": "Select shipping method \nLettre Suivie Internationale (Tracked Letter) (8,15 €) max. Weight: 50g\nTracked\nTracked Letter (8,15 €)\nTracked Parcel (15,99 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 04.10.2026",
+      "trackingStatus": "tracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-9-1",
+          "cardName": "Sylvan Library",
+          "setName": "#17",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "22,00 €",
+          "rawLine": "1x Sylvan Library \n#17\nNM\n22,00 € \n1"
+        },
+        {
+          "id": "cardmarket-9-2",
+          "cardName": "Sylvan Library",
+          "setName": "#5",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "22,00 €",
+          "rawLine": "1x Sylvan Library \n#5\nNM\n22,00 € \n1"
+        },
+        {
+          "id": "cardmarket-9-3",
+          "cardName": "Sylvan Library",
+          "setName": "#17",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "22,00 €",
+          "rawLine": "1xSylvan LibrarySylvan Library#17NM22,00 €1"
+        },
+        {
+          "id": "cardmarket-9-4",
+          "cardName": "Sylvan Library",
+          "setName": "#5",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "22,00 €",
+          "rawLine": "1xSylvan LibrarySylvan Library#5NM22,00 €1"
+        }
+      ],
+      "rawText": "Seller09\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n2 Articles\nArticle Value\n44,00 €\nShipping\n8,15 €\nTrustee Service\n0,44 €\nTotal\n52,59 €\nSelect shipping method \nLettre Suivie Internationale (Tracked Letter) (8,15 €) max. Weight: 50g\nTracked"
+    },
+    {
+      "sellerName": "Seller10",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 30.09.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-10-1",
+          "cardName": "Goblin Bombardment (V.1)",
+          "setName": "#279",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "2,50 €",
+          "rawLine": "1x Goblin Bombardment (V.1) \n#279\nNM\n2,50 € \n1"
+        },
+        {
+          "id": "cardmarket-10-2",
+          "cardName": "Goblin Bombardment (V.1)",
+          "setName": "#279",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "2,50 €",
+          "rawLine": "1xGoblin Bombardment (V.1)Goblin Bombardment (V.1)#279NM2,50 €1"
+        }
+      ],
+      "rawText": "Seller10\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n2,50 €\nShipping\n1,25 €\nTotal\n3,75 €\nSelect shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller11",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 28.09.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-11-1",
+          "cardName": "Lagomos, Hand of Hatred (V.1)",
+          "setName": "#304",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,02 €",
+          "rawLine": "1x Lagomos, Hand of Hatred (V.1) \n#304\nNM\n0,02 € \n1"
+        },
+        {
+          "id": "cardmarket-11-2",
+          "cardName": "Lagomos, Hand of Hatred (V.1)",
+          "setName": "#304",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,02 €",
+          "rawLine": "1xLagomos, Hand of Hatred (V.1)Lagomos, Hand of Hatred (V.1)#304NM0,02 €1"
+        }
+      ],
+      "rawText": "Seller11\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n0,02 €\nShipping\n1,25 €\nTotal\n1,27 €\nSelect shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller12",
+      "sellerCountry": "Belgium",
+      "shippingMethod": "Select shipping method \nPriority Letter (3,37 €) max. Weight: 50g\nNo tracking\nLetter (3,37 €)\nTracked Parcel (22,50 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 02.10.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-12-1",
+          "cardName": "Village Rites",
+          "setName": "#117",
+          "rarity": "",
+          "condition": "EX",
+          "quantity": 1,
+          "price": "0,10 €",
+          "rawLine": "1x Village Rites \n#117\nEX\n0,10 € \n1"
+        },
+        {
+          "id": "cardmarket-12-2",
+          "cardName": "Mahadi, Emporium Master (V.2)",
+          "setName": "#429",
+          "rarity": "",
+          "condition": "EX",
+          "quantity": 1,
+          "price": "0,75 €",
+          "rawLine": "1x Mahadi, Emporium Master (V.2) \n#429\nEX\n0,75 € \n1"
+        },
+        {
+          "id": "cardmarket-12-3",
+          "cardName": "Village Rites",
+          "setName": "#117",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,10 €",
+          "rawLine": "1xVillage RitesVillage Rites#117EX0,10 €1"
+        },
+        {
+          "id": "cardmarket-12-4",
+          "cardName": "Mahadi, Emporium Master (V.2)",
+          "setName": "#429",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,75 €",
+          "rawLine": "1xMahadi, Emporium Master (V.2)Mahadi, Emporium Master (V.2)#429EX0,75 €1"
+        }
+      ],
+      "rawText": "Seller12\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n2 Articles\nArticle Value\n0,85 €\nShipping\n3,37 €\nTotal\n4,22 €\nSelect shipping method \nPriority Letter (3,37 €) max. Weight: 50g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller13",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 29.09.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-13-1",
+          "cardName": "Witty Roastmaster",
+          "setName": "#131",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,79 €",
+          "rawLine": "1x Witty Roastmaster \n#131\nNM\n0,79 € \n1"
+        },
+        {
+          "id": "cardmarket-13-2",
+          "cardName": "Witty Roastmaster",
+          "setName": "#131",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,79 €",
+          "rawLine": "1xWitty RoastmasterWitty Roastmaster#131NM0,79 €1"
+        }
+      ],
+      "rawText": "Seller13\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n0,79 €\nShipping\n1,25 €\nTotal\n2,04 €\nSelect shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller14",
+      "sellerCountry": "Spain",
+      "shippingMethod": "Select shipping method \nCarta ordinaria (Priority Letter) (2,60 €) max. Weight: 50g\nNo tracking\nLetter (2,60 €)\nTracked Parcel (16,04 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 06.10.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-14-1",
+          "cardName": "Enduring Courage (V.2)",
+          "setName": "#133",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "1,49 €",
+          "rawLine": "1x Enduring Courage (V.2) \n#133\nNM\n1,49 € \n1"
+        },
+        {
+          "id": "cardmarket-14-2",
+          "cardName": "Liliana, Dreadhorde General",
+          "setName": "#176",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "6,80 €",
+          "rawLine": "1x Liliana, Dreadhorde General \n#176\nNM\n6,80 € \n1"
+        },
+        {
+          "id": "cardmarket-14-3",
+          "cardName": "Marionette Apprentice",
+          "setName": "#100",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,49 €",
+          "rawLine": "1x Marionette Apprentice \n#100\nNM\n0,49 € \n1"
+        },
+        {
+          "id": "cardmarket-14-4",
+          "cardName": "Enduring Courage (V.2)",
+          "setName": "#133",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "1,49 €",
+          "rawLine": "1xEnduring Courage (V.2)Enduring Courage (V.2)#133NM1,49 €1"
+        },
+        {
+          "id": "cardmarket-14-5",
+          "cardName": "Liliana, Dreadhorde General",
+          "setName": "#176",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "6,80 €",
+          "rawLine": "1xLiliana, Dreadhorde GeneralLiliana, Dreadhorde General#176NM6,80 €1"
+        },
+        {
+          "id": "cardmarket-14-6",
+          "cardName": "Marionette Apprentice",
+          "setName": "#100",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,49 €",
+          "rawLine": "1xMarionette ApprenticeMarionette Apprentice#100NM0,49 €1"
+        }
+      ],
+      "rawText": "Seller14\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n3 Articles\nArticle Value\n8,78 €\nShipping\n2,60 €\nTotal\n11,38 €\nSelect shipping method \nCarta ordinaria (Priority Letter) (2,60 €) max. Weight: 50g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller15",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 30.09.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-15-1",
+          "cardName": "Enduring Courage",
+          "setName": "#133",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "1,79 €",
+          "rawLine": "1x Enduring Courage \n#133\nNM\n<comment>\n1,79 € \n1"
+        },
+        {
+          "id": "cardmarket-15-2",
+          "cardName": "Lagomos, Hand of Hatred",
+          "setName": "#205",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,05 €",
+          "rawLine": "1x Lagomos, Hand of Hatred \n#205\nNM\n<comment>\n0,05 € \n1"
+        },
+        {
+          "id": "cardmarket-15-3",
+          "cardName": "Enduring Courage",
+          "setName": "#133",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "1,79 €",
+          "rawLine": "1xEnduring CourageEnduring Courage#133NMWoE1#eng1,79 €1"
+        },
+        {
+          "id": "cardmarket-15-4",
+          "cardName": "Lagomos, Hand of Hatred",
+          "setName": "#205",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,05 €",
+          "rawLine": "1xLagomos, Hand of HatredLagomos, Hand of Hatred#205NMLoR1#Eng0,05 €1"
+        }
+      ],
+      "rawText": "Seller15\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n2 Articles\nArticle Value\n1,84 €\nShipping\n1,25 €\nTotal\n3,09 €\nSelect shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller16",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 28.09.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-16-1",
+          "cardName": "Grave Pact",
+          "setName": "#135",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "22,00 €",
+          "rawLine": "1x Grave Pact \n#135\nNM\n22,00 € \n1"
+        },
+        {
+          "id": "cardmarket-16-2",
+          "cardName": "Grave Pact",
+          "setName": "#135",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "22,00 €",
+          "rawLine": "1xGrave PactGrave Pact#135NM22,00 €1"
+        }
+      ],
+      "rawText": "Seller16\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n22,00 €\nShipping\n1,25 €\nTotal\n23,25 €\nSelect shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller17",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nKompaktbrief + Einschreiben EINWURF (3,95 €) max. Weight: 50g\nTracked\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 29.09.2026",
+      "trackingStatus": "tracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-17-1",
+          "cardName": "Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel",
+          "setName": "#115",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "27,70 €",
+          "rawLine": "1x Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel \n#115\nNM\n27,70 € \n1"
+        },
+        {
+          "id": "cardmarket-17-2",
+          "cardName": "Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel",
+          "setName": "#115",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "27,70 €",
+          "rawLine": "1xSephiroth, Fabled SOLDIER // Sephiroth, One-Winged AngelSephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel#115NM27,70 €1"
+        }
+      ],
+      "rawText": "Seller17\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n27,70 €\nShipping\n3,95 €\nTrustee Service\n0,28 €\nTotal\n31,93 €\nSelect shipping method \nKompaktbrief + Einschreiben EINWURF (3,95 €) max. Weight: 50g\nTracked"
+    },
+    {
+      "sellerName": "Seller18",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 28.09.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-18-1",
+          "cardName": "Tamiyo's Safekeeping",
+          "setName": "#211",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 2,
+          "price": "4,98 €",
+          "rawLine": "2x Tamiyo's Safekeeping \n#211\nNM\n4,98 € \n1\n2"
+        },
+        {
+          "id": "cardmarket-18-2",
+          "cardName": "Morbid Opportunist",
+          "setName": "#124",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 2,
+          "price": "0,15 €",
+          "rawLine": "2x Morbid Opportunist \n#124\nNM\n0,15 € \n1\n2"
+        },
+        {
+          "id": "cardmarket-18-3",
+          "cardName": "Tamiyo's Safekeeping",
+          "setName": "#211",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "4,98 €",
+          "rawLine": "2xTamiyo's SafekeepingTamiyo's Safekeeping#211NM4,98 €12"
+        },
+        {
+          "id": "cardmarket-18-4",
+          "cardName": "Morbid Opportunist",
+          "setName": "#124",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,15 €",
+          "rawLine": "2xMorbid OpportunistMorbid Opportunist#124NM0,15 €12"
+        }
+      ],
+      "rawText": "Seller18\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n4 Articles\nArticle Value\n10,26 €\nShipping\n1,25 €\nTotal\n11,51 €\nSelect shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller19",
+      "sellerCountry": "Czech Republic",
+      "shippingMethod": "Select shipping method \nRegular Letter (2,27 €) max. Weight: 50g\nNo tracking\nLetter (2,27 €)\nTracked Letter (5,20 €)\nTracked Parcel (26,89 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 03.10.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-19-1",
+          "cardName": "Smothering Abomination",
+          "setName": "#226",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,08 €",
+          "rawLine": "1x Smothering Abomination \n#226\nNM\n0,08 € \n1"
+        },
+        {
+          "id": "cardmarket-19-2",
+          "cardName": "Ophiomancer",
+          "setName": "#118",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,80 €",
+          "rawLine": "1x Ophiomancer \n#118\nNM\n0,80 € \n1"
+        },
+        {
+          "id": "cardmarket-19-3",
+          "cardName": "Moldervine Reclamation",
+          "setName": "#320",
+          "rarity": "",
+          "condition": "EX",
+          "quantity": 1,
+          "price": "0,05 €",
+          "rawLine": "1x Moldervine Reclamation \n#320\nEX\n0,05 € \n1"
+        },
+        {
+          "id": "cardmarket-19-4",
+          "cardName": "Marionette Apprentice",
+          "setName": "#100",
+          "rarity": "",
+          "condition": "EX",
+          "quantity": 1,
+          "price": "0,40 €",
+          "rawLine": "1x Marionette Apprentice \n#100\nEX\n0,40 € \n1"
+        },
+        {
+          "id": "cardmarket-19-5",
+          "cardName": "Pest Rescuer",
+          "setName": "#42",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "0,95 €",
+          "rawLine": "1x Pest Rescuer \n#42\nNM\n0,95 € \n1"
+        },
+        {
+          "id": "cardmarket-19-6",
+          "cardName": "Smothering Abomination",
+          "setName": "#226",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,08 €",
+          "rawLine": "1xSmothering AbominationSmothering Abomination#226NM0,08 €1"
+        },
+        {
+          "id": "cardmarket-19-7",
+          "cardName": "Ophiomancer",
+          "setName": "#118",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,80 €",
+          "rawLine": "1xOphiomancerOphiomancer#118NM0,80 €1"
+        },
+        {
+          "id": "cardmarket-19-8",
+          "cardName": "Moldervine Reclamation",
+          "setName": "#320",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,05 €",
+          "rawLine": "1xMoldervine ReclamationMoldervine Reclamation#320EX0,05 €1"
+        },
+        {
+          "id": "cardmarket-19-9",
+          "cardName": "Marionette Apprentice",
+          "setName": "#100",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,40 €",
+          "rawLine": "1xMarionette ApprenticeMarionette Apprentice#100EX0,40 €1"
+        },
+        {
+          "id": "cardmarket-19-10",
+          "cardName": "Pest Rescuer",
+          "setName": "#42",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "0,95 €",
+          "rawLine": "1xPest RescuerPest Rescuer#42NM0,95 €1"
+        }
+      ],
+      "rawText": "Seller19\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n5 Articles\nArticle Value\n2,28 €\nShipping\n2,27 €\nTotal\n4,55 €\nSelect shipping method \nRegular Letter (2,27 €) max. Weight: 50g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller20",
+      "sellerCountry": "Spain",
+      "shippingMethod": "Select shipping method \nCarta ordinaria (Priority Letter) (2,60 €) max. Weight: 50g\nNo tracking\nLetter (2,60 €)\nTracked Parcel (16,04 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 05.10.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-20-1",
+          "cardName": "Purphoros, God of the Forge",
+          "setName": "#14",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "21,00 €",
+          "rawLine": "1x Purphoros, God of the Forge \n#14\nNM\n21,00 € \n1"
+        },
+        {
+          "id": "cardmarket-20-2",
+          "cardName": "Purphoros, God of the Forge",
+          "setName": "#14",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "21,00 €",
+          "rawLine": "1xPurphoros, God of the ForgePurphoros, God of the Forge#14NM21,00 €1"
+        }
+      ],
+      "rawText": "Seller20\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n21,00 €\nShipping\n2,60 €\nTotal\n23,60 €\nSelect shipping method \nCarta ordinaria (Priority Letter) (2,60 €) max. Weight: 50g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller21",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nKompaktbrief + Einschreiben EINWURF (3,95 €) max. Weight: 50g\nTracked\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 27.09.2026",
+      "trackingStatus": "tracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-21-1",
+          "cardName": "Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel",
+          "setName": "#115",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "27,98 €",
+          "rawLine": "1x Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel \n#115\nNM\n<comment>\n27,98 € \n1"
+        },
+        {
+          "id": "cardmarket-21-2",
+          "cardName": "Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel",
+          "setName": "#115",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "27,98 €",
+          "rawLine": "1xSephiroth, Fabled SOLDIER // Sephiroth, One-Winged AngelSephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel#115NMfast shipping !!!27,98 €1"
+        }
+      ],
+      "rawText": "Seller21\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n27,98 €\nShipping\n3,95 €\nTrustee Service\n0,28 €\nTotal\n32,21 €\nSelect shipping method \nKompaktbrief + Einschreiben EINWURF (3,95 €) max. Weight: 50g\nTracked"
+    },
+    {
+      "sellerName": "Seller22",
+      "sellerCountry": "Germany",
+      "shippingMethod": "Select shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking\nLetter (1,25 €)\nTracked Letter (3,95 €)\nTracked Parcel (7,19 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 28.09.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-22-1",
+          "cardName": "Purphoros, God of the Forge",
+          "setName": "#135",
+          "rarity": "",
+          "condition": "NM",
+          "quantity": 1,
+          "price": "23,00 €",
+          "rawLine": "1x Purphoros, God of the Forge \n#135\nNM\n23,00 € \n1"
+        },
+        {
+          "id": "cardmarket-22-2",
+          "cardName": "Purphoros, God of the Forge",
+          "setName": "#135",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "23,00 €",
+          "rawLine": "1xPurphoros, God of the ForgePurphoros, God of the Forge#135NM23,00 €1"
+        }
+      ],
+      "rawText": "Seller22\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n23,00 €\nShipping\n1,25 €\nTotal\n24,25 €\nSelect shipping method \nStandardbrief (1,25 €) max. Weight: 20g\nNo tracking"
+    },
+    {
+      "sellerName": "Seller23",
+      "sellerCountry": "Italy",
+      "shippingMethod": "Select shipping method \nPostapriority Internazionale - Ufficio Postale (4,88 €) max. Weight: 50g\nNo tracking\nLetter (4,88 €)\nTracked Parcel (12,35 €)\nMORE SHIPPING OPTIONS\nEstimated arrival date 11.10.2026",
+      "trackingStatus": "untracked",
+      "articleValue": null,
+      "shippingValue": null,
+      "trusteeValue": null,
+      "total": null,
+      "items": [
+        {
+          "id": "cardmarket-23-1",
+          "cardName": "Grave Pact",
+          "setName": "#135",
+          "rarity": "",
+          "condition": "EX",
+          "quantity": 1,
+          "price": "19,00 €",
+          "rawLine": "1x Grave Pact \n#135\nEX\n19,00 € \n1"
+        },
+        {
+          "id": "cardmarket-23-2",
+          "cardName": "Grave Pact",
+          "setName": "#135",
+          "rarity": "",
+          "condition": "",
+          "quantity": 1,
+          "price": "19,00 €",
+          "rawLine": "1xGrave PactGrave Pact#135EX19,00 €1"
+        }
+      ],
+      "rawText": "Seller23\nREMOVE ARTICLES FROM THIS SELLER \nSummary\nContents\n1 Articles\nArticle Value\n19,00 €\nShipping\n4,88 €\nTotal\n23,88 €\nSelect shipping method \nPostapriority Internazionale - Ufficio Postale (4,88 €) max. Weight: 50g\nNo tracking"
+    }
+  ],
+  "warnings": []
+}

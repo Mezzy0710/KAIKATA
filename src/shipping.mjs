@@ -107,6 +107,9 @@ export function calculateShippingCost({ shippingRecords, country, cardCount, ord
 // up to 20 g = max 4 cards, up to 50 g = max 17 cards, up to 100 g = max 40 cards.
 // Above 40 cards there is no published limit; 11 + 2.22 g/card is a linear fit
 // through those points and only an estimate.
+// Known gap: tiers between those steps are not reachable. Austria's 75 g tracked letter
+// is only picked for up to 17 cards (18–40 cards count as 100 g → parcel), which
+// overestimates rather than underestimates shipping.
 export function estimateShipmentWeight(cardCount) {
   const cards = Math.max(0, Number(cardCount || 0));
   if (cards === 0) return 0;
@@ -233,7 +236,7 @@ function recordNumber(record, keys) {
   return Number.NaN;
 }
 
-function normalizeCountryForLookup(value) {
+export function normalizeCountryForLookup(value) {
   const text = String(value || "").toLowerCase().trim();
   if (!text) {
     return "";

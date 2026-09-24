@@ -40,7 +40,9 @@ TEST_FILES=(
   "tests/parser-seller-name-mapping.mjs"
   "tests/parser-smoke.mjs"
   "tests/price-verdict.mjs"
+  "tests/real-cart.mjs"
   "tests/scryfall-lookup.mjs"
+  "tests/shipping-calibration.mjs"
   "tests/shipping-costs.mjs"
   "tests/shipping-weight.mjs"
 )
