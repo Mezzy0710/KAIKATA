@@ -1,17 +1,22 @@
 // KAIKATA on Cardmarket's "Seller's Articles on My Wants List" pages
 // (/<lang>/<game>/Users/<seller>/Offers/Singles?idWantslist=<id>).
 //
-// - Captures the seller's offers for KAIKATA, only when the user clicks a button:
-//   pages are fetched one at a time, 2–4 s apart, at most 15 pages, and the walk stops at
-//   the first error, login redirect, challenge page or HTTP 429.
+// - Asks once: "Load <seller>'s wanted cards for KAIKATA?" and loads the seller's offers
+//   only when the user clicks: pages are fetched one at a time, 2–4 s apart, at most 15
+//   pages, and the walk stops at the first error, login redirect, challenge page or HTTP 429.
+// - Ends with a result card: how many of the cart's cards this seller has (and how many
+//   cheaper), with "Next seller →" and "Back to cart" (both plain user-clicked links).
 // - With a confirmed plan, marks the articles the plan adds (ADD ×N) and can tick their
 //   checkboxes / amounts. It never submits anything: the user clicks Cardmarket's button.
 (() => {
   const PANEL_ID = "cartforge-wants-panel";
   const CANDIDATES_KEY = "cartforgeCandidatesV1";
+  const SNAPSHOT_KEY = "cartforgeCartSnapshotV1";
   const PLAN_KEY = "cartforgeConfirmedPlanV3";
   const STALE_MS = 24 * 60 * 60 * 1000;
+  const SECONDS_PER_PAGE = 3; // average of the 2–4 s pause
   const Parser = globalThis.CartforgeWantsParser;
+  const Flow = globalThis.CartforgeWantsFlow;
   const LINK_BUTTON = { background: "none", border: "none", padding: "0", cursor: "pointer", fontFamily: "inherit", fontSize: "12px", color: "#6E6257" };
 
   const pageUrl = new URL(location.href);
@@ -22,13 +27,13 @@
   const current = Parser.parseWantsPage(document.documentElement.outerHTML, location.href);
   const meta = current.meta;
   const sellerKey = normalizeSellerName(meta.sellerName);
+  const pagesToLoad = Math.min(Math.max(1, meta.pages || 1), Parser.MAX_PAGES);
   let capturing = false;
   let cancelRequested = false;
 
   const ui = buildPanel();
-  refreshCaptureList().then((count) => {
-    if (count) showNextStep();
-  });
+  showStart();
+  refreshCaptureList();
   applyPlanMarks();
 
   // ── Storage ───────────────────────────────────────────────────────────────
@@ -53,6 +58,8 @@
     });
   }
 
+  // A full load (merge: false) replaces this seller's entry; "this page only" adds to a
+  // fresh entry for the same wants list.
   async function saveCapture(offers, details, { merge }) {
     const all = (await storageGet(CANDIDATES_KEY)) || {};
     const previous = all[sellerKey];
@@ -75,51 +82,139 @@
     return all[sellerKey];
   }
 
-  // ── Capture ───────────────────────────────────────────────────────────────
+  // This seller's capture for this wants list, if it is less than 24 h old.
+  async function freshCapture() {
+    const entry = ((await storageGet(CANDIDATES_KEY)) || {})[sellerKey];
+    if (!entry || entry.wantsListId !== meta.wantsListId) return null;
+    return Date.now() - Date.parse(entry.capturedAt) <= STALE_MS ? entry : null;
+  }
 
-  async function captureSeller() {
+  // ── Load ──────────────────────────────────────────────────────────────────
+
+  async function loadSeller() {
     if (capturing) return;
     capturing = true;
     cancelRequested = false;
-    setBusy(true);
+    showProgress();
     const result = await Parser.walkWantsPages({
       startUrl: location.href,
       fetchPage: (url) => fetch(url, { credentials: "include", redirect: "follow" }),
       sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
       isCancelled: () => cancelRequested,
       onProgress: ({ page, totalPages, offers, waitingMs }) => {
-        setStatus(waitingMs
-          ? `Page ${page} of ${totalPages} done · ${offers} offers · pausing ${Math.round(waitingMs / 100) / 10} s…`
-          : `Page ${page} of ${totalPages} · ${offers} offers`);
+        setProgress(page, totalPages, offers, waitingMs);
       }
     });
+    capturing = false;
     if (result.offers.length) {
       const saved = await saveCapture(result.offers, result, { merge: false });
-      const hits = result.meta?.hits;
-      const short = !result.stoppedReason && Number.isFinite(hits) && saved.offers.length < hits
-        ? ` Note: the page reports ${hits} hits, so ${hits - saved.offers.length} row(s) were not recognized.`
-        : "";
-      setStatus(`${result.stoppedReason ? `Stopped: ${result.stoppedReason} ` : ""}Captured ${saved.offers.length} offers from ${result.pagesFetched} page(s).${short}`, Boolean(result.stoppedReason || short));
-      showNextStep();
+      await showResult(saved, { stoppedReason: result.stoppedReason, pagesFetched: result.pagesFetched });
     } else {
-      setStatus(`Nothing captured. ${result.stoppedReason || "No offers found."}`, true);
+      showStart(`Nothing loaded. ${result.stoppedReason || "No offers found."}`);
     }
-    capturing = false;
-    setBusy(false);
     refreshCaptureList();
   }
 
-  async function capturePage() {
+  async function loadPageOnly() {
     if (capturing) return;
     const parsed = Parser.parseWantsPage(document.documentElement.outerHTML, location.href);
     if (!parsed.offers.length) {
-      setStatus("No offers found on this page.", true);
+      setNote("No offers found on this page.", true);
       return;
     }
     const saved = await saveCapture(parsed.offers, { pagesFetched: 1, totalPages: parsed.meta.pages }, { merge: true });
-    setStatus(`Captured ${parsed.offers.length} offers from this page (${saved.offers.length} for this seller in total).`);
-    showNextStep();
+    await showResult(saved, { pageOnly: parsed.offers.length });
     refreshCaptureList();
+  }
+
+  // ── Views: start prompt → progress → result card ──────────────────────────
+
+  async function showStart(note = "") {
+    const loaded = await freshCapture();
+    ui.prompt.style.display = "block";
+    ui.progress.style.display = "none";
+    ui.result.style.display = "none";
+    if (loaded) {
+      ui.promptTitle.textContent = `${meta.sellerName}'s wanted cards are loaded`;
+      ui.promptInfo.textContent = `Loaded ${formatAge(Date.now() - Date.parse(loaded.capturedAt))} · ${offersText(loaded.offers.length)}`;
+      ui.loadBtn.textContent = "Reload";
+      // Show what the stored stock means for the cart, with the same next steps.
+      await showResult(loaded, { alreadyLoaded: true });
+      ui.prompt.style.display = "block";
+    } else {
+      ui.promptTitle.textContent = `Load ${meta.sellerName}'s wanted cards for KAIKATA?`;
+      const offers = meta.hits !== null ? `${meta.hits} offers on ` : "";
+      const limit = meta.pages > Parser.MAX_PAGES ? ` (first ${Parser.MAX_PAGES} of ${meta.pages})` : "";
+      ui.promptInfo.textContent = `${offers}${pagesToLoad} page${pagesToLoad === 1 ? "" : "s"}${limit} · takes about ${pagesToLoad * SECONDS_PER_PAGE} s`;
+      ui.loadBtn.textContent = "Load";
+    }
+    setNote(note, Boolean(note));
+  }
+
+  function showProgress() {
+    ui.prompt.style.display = "none";
+    ui.result.style.display = "none";
+    ui.progress.style.display = "block";
+    setProgress(0, pagesToLoad, 0, 0);
+  }
+
+  function setProgress(page, totalPages, offers, waitingMs) {
+    const total = Math.max(1, totalPages || pagesToLoad);
+    ui.progressFill.style.width = `${Math.round((Math.min(page, total) / total) * 100)}%`;
+    ui.progressText.textContent = `Page ${Math.max(page, 1)} of ${total} · ${offers} offers${waitingMs ? ` · pausing ${Math.round(waitingMs / 100) / 10} s` : ""}`;
+  }
+
+  async function showResult(saved, { stoppedReason = null, pageOnly = 0, alreadyLoaded = false } = {}) {
+    ui.progress.style.display = "none";
+    ui.prompt.style.display = alreadyLoaded ? "block" : "none";
+    ui.result.style.display = "block";
+    ui.result.replaceChildren();
+
+    if (!alreadyLoaded) {
+      const done = paragraph(pageOnly
+        ? `✓ Loaded ${offersText(pageOnly)} from this page (${saved.offers.length} for this seller).`
+        : `✓ Loaded ${offersText(saved.offers.length)}.`, { fontWeight: "700", color: "#4F7A5A" });
+      ui.result.append(done);
+    }
+    if (stoppedReason) {
+      ui.result.append(paragraph(`Stopped: ${stoppedReason}`, { color: "#9F2D24" }));
+    }
+    // Fewer offers than hits only means unrecognized rows when every page was read.
+    const hits = Number.isFinite(saved.hits) ? saved.hits : meta.hits;
+    const partial = Boolean(stoppedReason || saved.stoppedReason || pageOnly)
+      || (Number(saved.pagesFetched) || 0) < Math.min(Number(saved.totalPages) || 1, Parser.MAX_PAGES);
+    if (!partial && Number.isFinite(hits) && saved.offers.length < hits) {
+      ui.result.append(paragraph(`The page reports ${hits} offers; ${hits - saved.offers.length} row(s) were not recognized.`, { color: "#9F2D24" }));
+    }
+
+    const snapshot = await storageGet(SNAPSHOT_KEY);
+    if (!snapshot || !Flow) {
+      ui.result.append(paragraph("Open your cart once so KAIKATA can compare.", { color: "#6E6257" }));
+    } else {
+      const comparison = Flow.compareStockToCart(snapshot, saved.offers);
+      if (!comparison.found) {
+        ui.result.append(paragraph("None of your cart's cards are in this seller's stock; KAIKATA will ignore it.", { color: "#6E6257" }));
+      } else {
+        const line = document.createElement("p");
+        css(line, { margin: "6px 0 0" });
+        const strong = document.createElement("strong");
+        strong.textContent = `${comparison.found} of your cart's cards are in this seller's stock`;
+        line.append(strong, document.createTextNode(`, ${comparison.cheaper} of them cheaper than in your cart.`));
+        ui.result.append(line);
+      }
+    }
+
+    const actions = document.createElement("div");
+    css(actions, { display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px" });
+    const captures = (await storageGet(CANDIDATES_KEY)) || {};
+    const next = snapshot && Flow ? Flow.nextUnloadedSeller(snapshot, captures, Date.now(), meta.sellerName) : null;
+    if (next && isCardmarketUrl(next.wantsUrl)) {
+      actions.append(linkButton(`Next seller → ${next.sellerName}`, next.wantsUrl, true));
+    } else if (snapshot && Flow) {
+      ui.result.append(paragraph("All cart sellers with a wants link are loaded ✓", { color: "#4F7A5A", fontWeight: "600" }));
+    }
+    actions.append(linkButton("Back to cart", cartUrl(snapshot), !next));
+    ui.result.append(actions);
   }
 
   // ── Planned additions ─────────────────────────────────────────────────────
@@ -178,7 +273,7 @@
       selected += 1;
     });
     const elsewhere = adds.length - selected;
-    setStatus(`Selected ${selected} planned article${selected === 1 ? "" : "s"}${elsewhere ? ` (${elsewhere} on other pages)` : ""}. Now use Cardmarket's own button to put them in your cart.`);
+    setNote(`Selected ${selected} planned article${selected === 1 ? "" : "s"}${elsewhere ? ` (${elsewhere} on other pages)` : ""}. Now use Cardmarket's own button to put them in your cart.`);
   }
 
   // ── Panel ─────────────────────────────────────────────────────────────────
@@ -207,61 +302,93 @@
     header.append(title, collapse);
 
     const body = document.createElement("div");
-    const info = document.createElement("p");
-    css(info, { margin: "0 0 8px", color: "#6E6257" });
-    info.textContent = [
+    const info = paragraph([
       meta.sellerName,
       meta.sellerCountry || "country unknown",
       meta.hits !== null ? `${meta.hits} hits` : "",
-      `${meta.pages} page${meta.pages === 1 ? "" : "s"}${meta.pages > Parser.MAX_PAGES ? ` (first ${Parser.MAX_PAGES} captured)` : ""}`
-    ].filter(Boolean).join(" · ");
+      `${meta.pages} page${meta.pages === 1 ? "" : "s"}`
+    ].filter(Boolean).join(" · "), { margin: "0 0 8px", color: "#6E6257", fontSize: "12px" });
 
-    const captureBtn = button("Capture this seller", true);
+    // Start prompt.
+    const prompt = document.createElement("div");
+    const promptTitle = paragraph("", { margin: "0", fontWeight: "700", fontSize: "13.5px" });
+    const promptInfo = paragraph("", { margin: "2px 0 0", color: "#6E6257", fontSize: "12px" });
+    const promptButtons = document.createElement("div");
+    css(promptButtons, { display: "flex", gap: "6px" });
+    const loadBtn = button("Load", true);
+    const notNowBtn = button("Not now", false);
+    promptButtons.append(loadBtn, notNowBtn);
     const pageBtn = button("Capture this page only", false);
+    css(pageBtn, { ...LINK_BUTTON, display: "block", marginTop: "6px", textDecoration: "underline" });
+    prompt.append(promptTitle, promptInfo, promptButtons, pageBtn);
+
+    // Progress.
+    const progress = document.createElement("div");
+    progress.style.display = "none";
+    const track = document.createElement("div");
+    track.setAttribute("role", "progressbar");
+    css(track, { height: "6px", borderRadius: "999px", background: "#EDE3D4", overflow: "hidden", marginTop: "2px" });
+    const progressFill = document.createElement("div");
+    css(progressFill, { height: "100%", width: "0%", background: "#D84A2B", transition: "width .3s ease" });
+    track.append(progressFill);
+    const progressText = paragraph("", { margin: "6px 0 0", color: "#6E6257", fontSize: "12px" });
+    progressText.setAttribute("role", "status");
     const stopBtn = button("Stop", false);
-    stopBtn.style.display = "none";
+    progress.append(track, progressText, stopBtn);
+
+    // Result card.
+    const result = document.createElement("div");
+    css(result, { marginTop: "8px", padding: "10px 12px", borderRadius: "10px", background: "#FFFFFF", border: "1.5px solid #DED3C2", display: "none" });
+
+    const planLine = paragraph("", { margin: "8px 0 6px", fontWeight: "600", display: "none" });
     const selectBtn = button("Select planned articles on this page", true);
     selectBtn.style.display = "none";
+    const note = paragraph("", { margin: "8px 0 0", color: "#6E6257", minHeight: "0" });
+    note.setAttribute("role", "status");
 
-    const planLine = document.createElement("p");
-    css(planLine, { margin: "8px 0 6px", fontWeight: "600", display: "none" });
-    const status = document.createElement("p");
-    status.setAttribute("role", "status");
-    css(status, { margin: "8px 0 0", color: "#6E6257", minHeight: "1em" });
-    const nextStep = document.createElement("p");
-    nextStep.textContent = "Next: capture more sellers, or open your Cardmarket cart and send it to KAIKATA. KAIKATA then shows how many captured offers it uses.";
-    css(nextStep, { margin: "8px 0 0", padding: "8px 10px", borderRadius: "8px", background: "rgba(79,122,90,0.10)", color: "#1C1A17", display: "none" });
-
-    const listTitle = document.createElement("p");
-    listTitle.textContent = "Captured sellers";
-    css(listTitle, { margin: "10px 0 4px", fontWeight: "600" });
+    // Everything loaded so far, for housekeeping.
+    const details = document.createElement("details");
+    css(details, { marginTop: "10px" });
+    const summary = document.createElement("summary");
+    css(summary, { cursor: "pointer", fontWeight: "600", fontSize: "12px" });
     const list = document.createElement("ul");
-    css(list, { margin: "0", padding: "0", listStyle: "none", maxHeight: "140px", overflowY: "auto" });
+    css(list, { margin: "4px 0 0", padding: "0", listStyle: "none", maxHeight: "140px", overflowY: "auto" });
     const clearAll = button("Clear all", false);
     css(clearAll, { ...LINK_BUTTON, marginTop: "4px", color: "#9F2D24" });
+    details.append(summary, list, clearAll);
 
-    body.append(info, captureBtn, pageBtn, stopBtn, planLine, selectBtn, status, nextStep, listTitle, list, clearAll);
+    body.append(info, prompt, progress, result, planLine, selectBtn, note, details);
     panel.append(header, body);
     document.body.append(panel);
 
-    captureBtn.addEventListener("click", captureSeller);
-    pageBtn.addEventListener("click", capturePage);
+    loadBtn.addEventListener("click", loadSeller);
+    pageBtn.addEventListener("click", loadPageOnly);
+    notNowBtn.addEventListener("click", () => setCollapsed(true));
     stopBtn.addEventListener("click", () => {
       cancelRequested = true;
-      setStatus("Stopping after the current page…");
+      progressText.textContent = "Stopping after the current page…";
     });
     selectBtn.addEventListener("click", selectPlanned);
     clearAll.addEventListener("click", async () => {
       await storageSet(CANDIDATES_KEY, {});
       refreshCaptureList();
+      showStart();
     });
-    collapse.addEventListener("click", () => {
-      const hidden = body.style.display === "none";
-      body.style.display = hidden ? "block" : "none";
-      collapse.textContent = hidden ? "–" : "+";
-    });
+    collapse.addEventListener("click", () => setCollapsed(body.style.display !== "none"));
 
-    return { captureBtn, pageBtn, stopBtn, selectBtn, planLine, status, nextStep, list };
+    function setCollapsed(collapsed) {
+      body.style.display = collapsed ? "none" : "block";
+      collapse.textContent = collapsed ? "+" : "–";
+    }
+
+    return { prompt, promptTitle, promptInfo, loadBtn, progress, progressFill, progressText, result, planLine, selectBtn, note, summary, list };
+  }
+
+  function paragraph(text, styles = {}) {
+    const el = document.createElement("p");
+    el.textContent = text;
+    css(el, { margin: "6px 0 0", ...styles });
+    return el;
   }
 
   function button(label, primary) {
@@ -269,7 +396,7 @@
     el.type = "button";
     el.textContent = label;
     css(el, {
-      display: "block", width: "100%", marginTop: "6px", padding: "7px 12px", borderRadius: "999px",
+      display: "block", width: "100%", marginTop: "8px", padding: "7px 12px", borderRadius: "999px",
       fontFamily: "inherit", fontSize: "12.5px", fontWeight: "600", cursor: "pointer",
       ...(primary
         ? { background: "#D84A2B", color: "#FFFFFF", border: "1.5px solid #D84A2B" }
@@ -278,27 +405,32 @@
     return el;
   }
 
-  function showNextStep() {
-    ui.nextStep.style.display = "block";
+  // A navigation the user clicks (same tab). Never followed automatically.
+  function linkButton(label, href, primary) {
+    const link = document.createElement("a");
+    link.href = href;
+    link.textContent = label;
+    css(link, {
+      display: "block", textAlign: "center", padding: "7px 10px", borderRadius: "999px", fontSize: "12.5px",
+      fontWeight: "600", textDecoration: "none", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+      ...(primary
+        ? { background: "#D84A2B", color: "#FFFFFF", border: "1.5px solid #D84A2B" }
+        : { background: "transparent", color: "#1C1A17", border: "1.5px solid #DED3C2" })
+    });
+    return link;
   }
 
-  function setBusy(busy) {
-    ui.captureBtn.disabled = busy;
-    ui.pageBtn.disabled = busy;
-    ui.captureBtn.style.opacity = busy ? "0.6" : "1";
-    ui.pageBtn.style.opacity = busy ? "0.6" : "1";
-    ui.stopBtn.style.display = busy ? "block" : "none";
-  }
-
-  function setStatus(message, warning = false) {
-    ui.status.textContent = message;
-    ui.status.style.color = warning ? "#9F2D24" : "#6E6257";
+  function setNote(message, warning = false) {
+    ui.note.textContent = message;
+    ui.note.style.display = message ? "block" : "none";
+    ui.note.style.color = warning ? "#9F2D24" : "#6E6257";
   }
 
   async function refreshCaptureList() {
     const all = (await storageGet(CANDIDATES_KEY)) || {};
     ui.list.replaceChildren();
     const entries = Object.entries(all).sort((a, b) => Date.parse(b[1].capturedAt) - Date.parse(a[1].capturedAt));
+    ui.summary.textContent = `Loaded sellers (${entries.length})`;
     if (!entries.length) {
       const empty = document.createElement("li");
       empty.textContent = "None yet.";
@@ -311,7 +443,7 @@
       css(item, { display: "flex", gap: "6px", alignItems: "baseline", padding: "2px 0" });
       const label = document.createElement("span");
       const ageMs = Date.now() - Date.parse(entry.capturedAt);
-      label.textContent = `${entry.sellerName} · ${entry.offers.length} offers · ${formatAge(ageMs)}${ageMs > STALE_MS ? " (stale)" : ""}`;
+      label.textContent = `${entry.sellerName} · ${offersText(entry.offers.length)} · ${formatAge(ageMs)}${ageMs > STALE_MS ? " (stale)" : ""}`;
       css(label, { flex: "1", color: ageMs > STALE_MS ? "#9F2D24" : "#1C1A17" });
       const remove = document.createElement("button");
       remove.type = "button";
@@ -322,6 +454,7 @@
         delete latest[key];
         await storageSet(CANDIDATES_KEY, latest);
         refreshCaptureList();
+        if (key === sellerKey) showStart();
       });
       item.append(label, remove);
       ui.list.append(item);
@@ -329,11 +462,30 @@
     return entries.length;
   }
 
+  // The cart URL from the snapshot, else /<lang>/<game>/ShoppingCart on this site.
+  function cartUrl(snapshot) {
+    if (snapshot?.cartUrl && isCardmarketUrl(snapshot.cartUrl)) return snapshot.cartUrl;
+    const [lang = "en", game = "Magic"] = location.pathname.split("/").filter(Boolean);
+    return `${location.origin}/${lang}/${game}/ShoppingCart`;
+  }
+
+  function isCardmarketUrl(url) {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "https:" && /(^|\.)cardmarket\.com$/i.test(parsed.hostname);
+    } catch {
+      return false;
+    }
+  }
+
+  function offersText(count) {
+    return `${count} offer${count === 1 ? "" : "s"}`;
+  }
+
   function formatAge(ms) {
+    if (Flow) return Flow.formatAge(ms);
     const minutes = Math.max(0, Math.round(ms / 60000));
-    if (minutes < 60) return `${minutes} min ago`;
-    const hours = Math.round(minutes / 60);
-    return hours < 48 ? `${hours} h ago` : `${Math.round(hours / 24)} d ago`;
+    return minutes < 60 ? `${minutes} min ago` : `${Math.round(minutes / 60)} h ago`;
   }
 
   function normalizeSellerName(name) {

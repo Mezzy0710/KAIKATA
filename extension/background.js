@@ -1,9 +1,11 @@
+// Pure wants-stock helpers (classic service worker → globalThis.CartforgeWantsFlow).
+importScripts("cartforge-wants-flow.js");
+
 const PLAN_STORAGE_KEY = "cartforgeConfirmedPlanV3";
 const PLAN_TTL_MS = 24 * 60 * 60 * 1000;
 // v2 adds "add" rows (wants-page offers); v1 plans from older KAIKATA builds still work.
 const SUPPORTED_PLAN_SCHEMA_VERSIONS = [1, 2];
 const CANDIDATES_STORAGE_KEY = "cartforgeCandidatesV1";
-const CANDIDATE_STALE_MS = 24 * 60 * 60 * 1000;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message !== "object") {
@@ -25,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "CARTFORGE_V3_GET_CANDIDATES") {
-    getCandidates()
+    getCandidates(message.wantsListIds)
       .then((result) => sendResponse(result))
       .catch((error) => sendResponse({ ok: false, error: error.message || "Could not read captured offers." }));
     return true;
@@ -104,20 +106,22 @@ function validateConfirmedPlan(plan) {
   return { ok: true };
 }
 
-// Wants-page captures, keyed by normalized seller name (see wants-page.js).
-async function getCandidates() {
+// Wants-page captures, keyed by normalized seller name (see wants-page.js). Only captures
+// < 24 h old from the imported cart's wants list(s) go to KAIKATA; the rest are counted.
+// Without wantsListIds (older KAIKATA, pasted cart) only the age rule applies.
+async function getCandidates(wantsListIds) {
   const stored = await chrome.storage.local.get(CANDIDATES_STORAGE_KEY);
-  const bySeller = stored[CANDIDATES_STORAGE_KEY] || {};
-  const now = Date.now();
-  const sellers = Object.values(bySeller)
-    .filter((entry) => entry && Array.isArray(entry.offers))
-    .map((entry) => ({
-      sellerName: entry.sellerName,
-      sellerCountry: entry.sellerCountry || "",
-      wantsListId: entry.wantsListId || "",
-      capturedAt: entry.capturedAt,
-      stale: !(now - Date.parse(entry.capturedAt) <= CANDIDATE_STALE_MS),
-      offers: entry.offers
-    }));
-  return { ok: true, sellers };
+  const transfer = globalThis.CartforgeWantsFlow.filterCapturesForTransfer(
+    stored[CANDIDATES_STORAGE_KEY] || {},
+    Array.isArray(wantsListIds) ? wantsListIds : []
+  );
+  const sellers = transfer.sellers.map((entry) => ({
+    sellerName: entry.sellerName,
+    sellerCountry: entry.sellerCountry || "",
+    wantsListId: entry.wantsListId || "",
+    capturedAt: entry.capturedAt,
+    stale: false,
+    offers: entry.offers
+  }));
+  return { ok: true, sellers, excluded: transfer.excluded, fallback: transfer.fallback };
 }
