@@ -21,7 +21,10 @@
 
     const message = event.data;
     if (message?.type === CANDIDATES_REQUEST) {
-      relay({ type: CANDIDATES_REQUEST }, CANDIDATES_RESPONSE, message.requestId);
+      const wantsListIds = Array.isArray(message.wantsListIds)
+        ? message.wantsListIds.map(String).filter(Boolean).slice(0, 50)
+        : [];
+      relay({ type: CANDIDATES_REQUEST, wantsListIds }, CANDIDATES_RESPONSE, message.requestId);
       return;
     }
     if (!message || message.type !== STORE_REQUEST) {

@@ -18,9 +18,9 @@ import {
   hasHighPricedCards,
   generateHighPriceNote
 } from "./price-verdict.mjs?v=20260509m";
-import { decodeCartForgeHash, decodeCartForgePayload, parseExtractedCartPayload } from "./importer.mjs?v=20260925a";
+import { decodeCartForgeHash, decodeCartForgePayload, parseExtractedCartPayload } from "./importer.mjs?v=20260927a";
 import { buildConfirmedPlan } from "./confirmed-plan.mjs?v=20260926b";
-import { requestCandidatesFromExtension, sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260926b";
+import { requestCandidatesFromExtension, sendConfirmedPlanToExtension } from "./extension-bridge.mjs?v=20260927a";
 import { escapeHtml, escapeAttribute } from "./utils.mjs";
 import { applyShippingOverride } from "./shipping-override.mjs?v=20260925a";
 import { improveSelection } from "./optimizer-search.mjs?v=20260924b";
@@ -28,6 +28,7 @@ import { createSellerCostCache } from "./optimizer-score-cache.mjs?v=20260924b";
 import { buildSellerShippingRecords } from "./shipping-calibration.mjs?v=20260925a";
 import { cartRow, sellerCartCuts } from "./plan-cuts.mjs?v=20260926a";
 import { addOffersBySeller, mergeCandidateOffers, normalizeSellerName, wantsPageUrl } from "./candidates.mjs?v=20260926b";
+import { captureNotes, describeCandidateImpact, optimizeWithCandidates } from "./candidate-impact.mjs?v=20260927a";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const MAX_OPTIMIZATION_ITERATIONS = 500;
@@ -63,7 +64,13 @@ const state = {
   candidateStats: null,
   // "idle" | "checking" | "unavailable" (no extension answer) | "none" | "loaded"
   candidateStatus: "idle",
-  candidateSignature: ""
+  candidateSignature: "",
+  // Captures the extension did not send: older than 24 h / from another wants list.
+  candidateExcluded: { stale: 0, otherWantsList: 0 },
+  // The cart has no wants-list ids (older extension or pasted cart): age rule only.
+  candidateFallback: false,
+  // Cart-only vs cart + wants stock, from the last optimization (src/candidate-impact.mjs).
+  candidateImpact: null
 };
 
 const hasDom = typeof document !== "undefined";
@@ -316,6 +323,9 @@ function parseCurrentInput(options = {}) {
   state.candidateStats = null;
   state.candidateStatus = "checking";
   state.candidateSignature = "";
+  state.candidateExcluded = { stale: 0, otherWantsList: 0 };
+  state.candidateFallback = false;
+  state.candidateImpact = null;
   render();
   loadCandidatesFromExtension();
 
@@ -715,7 +725,7 @@ function renderOptimizationViews() {
     return;
   }
 
-  elements.optimizationSummary.innerHTML = optimizationSummaryTemplate(state.optimizationResult);
+  elements.optimizationSummary.innerHTML = candidateImpactTemplate() + optimizationSummaryTemplate(state.optimizationResult);
   elements.optimizationSummary.querySelector("#confirmPlanButton")?.addEventListener("click", handleConfirmPlan);
   const warningEntries = buildResultWarnings(state.optimizationResult);
 
@@ -967,31 +977,81 @@ function variantRowTemplate(cardName, variantKey, offer, hasEnriched, showRef) {
   `;
 }
 
-// Tells the user whether wants-page captures from the extension are in use.
+// Review step: is wants stock from the extension in play, and (after optimizing) did it help?
 function candidateStatusTemplate() {
   const status = state.candidateStatus;
   if (status === "checking") {
-    return `<p class="candidate-status">Checking the extension for captured wants-page offers…</p>`;
+    return `<p class="candidate-status">Checking the extension for wants stock…</p>`;
   }
   if (status === "unavailable") {
-    return `<p class="candidate-status">Captured wants-page offers: extension not connected on this page, so only your cart is used.</p>`;
+    return `<p class="candidate-status">Wants stock: extension not connected on this page, so only your cart is used.</p>`;
   }
+  const notes = candidateNotes();
   if (status === "none") {
-    return `<p class="candidate-status">No captured wants-page offers. Capture sellers on their "Articles on My Wants List" page to compare offers outside your cart.</p>`;
+    return `
+      <p class="candidate-status">
+        No wants stock loaded. Tip: load sellers' wants stock from your Cardmarket cart page to compare offers outside your cart.${notes}
+      </p>
+    `;
   }
   if (status === "loaded" && state.candidateStats) {
     const stats = state.candidateStats;
-    const sellerNames = state.candidateSellers.map((capture) => capture.sellerName).join(", ");
-    const staleNote = stats.staleSellers ? ` ${stats.staleSellers} capture(s) are older than 24 h.` : "";
+    const sellers = state.candidateSellers.length;
+    const checked = `${stats.received} offer${stats.received === 1 ? "" : "s"} from ${sellers} seller${sellers === 1 ? "" : "s"}`;
+    const impact = state.optimizationResult && !state.optimizationStale ? state.candidateImpact : null;
+    let lead = `Wants stock loaded: ${checked}`;
+    let rest = ` (${stats.beforeFilter} for cards in your cart). Optimize to see whether it beats your cart.`;
+    if (impact?.state === "improved") {
+      lead = `Wants stock: ${checked} — ${impact.savings === null ? "better plan" : `saves ${formatMoney(impact.savings)}`}`;
+      rest = ".";
+    } else if (impact?.state === "nothing-better") {
+      lead = `Wants stock: ${checked} — nothing beats your cart`;
+      rest = ".";
+    }
     return `
       <p class="candidate-status candidate-status--active">
-        <strong>${escapeHtml(`Using ${stats.afterFilter} captured offer${stats.afterFilter === 1 ? "" : "s"} from ${state.candidateSellers.length} seller${state.candidateSellers.length === 1 ? "" : "s"}`)}</strong>
-        ${escapeHtml(`(${sellerNames}). ${stats.received} captured; ${stats.notInCart} skipped because the card isn't in your cart, ${stats.alreadyInCart} already in your cart.${staleNote}`)}
-        Offers not in your cart are marked <span class="candidate-badge">not in cart</span> when you open a card.
+        <strong>${escapeHtml(lead)}</strong>${escapeHtml(rest)}
+        Offers not in your cart are marked <span class="candidate-badge">not in cart</span> when you open a card.${notes}
       </p>
     `;
   }
   return "";
+}
+
+// Muted notes on captures that were not used, and on the no-wants-list fallback.
+function candidateNotes() {
+  const lines = captureNotes({ excluded: state.candidateExcluded, fallback: state.candidateStatus === "loaded" && state.candidateFallback });
+  const notes = [lines.excludedLine, lines.fallbackLine].filter(Boolean);
+  return notes.map((line) => ` <span class="candidate-status-note">${escapeHtml(line)}</span>`).join("");
+}
+
+// Above the result: what the wants stock changed (or that it changed nothing).
+function candidateImpactTemplate() {
+  const impact = state.candidateImpact;
+  if (!impact) return "";
+  const text = describeCandidateImpact(impact, formatMoney);
+  const muted = [text.excludedLine, text.fallbackLine, text.slowLine]
+    .filter(Boolean)
+    .map((line) => `<p class="candidate-impact-muted">${escapeHtml(line)}</p>`)
+    .join("");
+  if (impact.state === "none") {
+    if (state.candidateStatus === "unavailable") return "";
+    return `
+      <div class="candidate-impact candidate-impact--none">
+        <p class="candidate-impact-tip">${escapeHtml(text.tip)}</p>
+        ${muted}
+      </div>
+    `;
+  }
+  const { headline } = text;
+  return `
+    <section class="candidate-impact candidate-impact--${escapeAttribute(impact.state)}" aria-label="Wants stock comparison">
+      <p class="candidate-impact-eyebrow">Wants stock</p>
+      <p class="candidate-impact-headline">${escapeHtml(headline.lead)}<strong>${escapeHtml(headline.strong)}</strong>${escapeHtml(headline.tail)}</p>
+      <p class="candidate-impact-detail">${escapeHtml(text.detail)}</p>
+      ${muted}
+    </section>
+  `;
 }
 
 function referenceStatusTemplate() {
@@ -1483,7 +1543,7 @@ function runOptimizationPlaceholder() {
   afterPaint(() => {
     try {
       state.optimizationStale = false;
-      state.optimizationResult = optimizeCart(sellers, offerGroups);
+      state.optimizationResult = runPlanOptimization();
       state.inputCollapsed = true;
       updateWorkflowStatus(
         state.optimizationResult.warnings.length ? "Plan needs review" : "Ready to buy",
@@ -1551,8 +1611,7 @@ function attachUnresolvedResolverHandlers() {
       seller.shippingCostOverride = null;
     }
 
-    const context = offerContext();
-    state.optimizationResult = optimizeCart(context.sellers, context.offerGroups);
+    state.optimizationResult = runPlanOptimization();
     updateWorkflowStatus("Plan updated", "good", "Shipping resolved. Review the updated plan.");
     render();
 
@@ -1587,17 +1646,48 @@ function offerContext() {
   return context;
 }
 
+// Optimizes the cart alone and, with wants stock, cart + stock; shows the stock plan
+// only when it beats the cart (src/candidate-impact.mjs). Returns the plan to show.
+function runPlanOptimization() {
+  const sellers = state.parsed.sellers || [];
+  const cart = { sellers, offerGroups: buildOfferGroups(sellers) };
+  const merged = state.candidateSellers.length ? offerContext() : null;
+  const { result, impact } = optimizeWithCandidates({
+    cart,
+    merged,
+    optimize: optimizeCart,
+    captures: state.candidateSellers,
+    excluded: state.candidateExcluded,
+    fallback: state.candidateFallback
+  });
+  state.candidateImpact = impact;
+  if (impact.timings?.candidateMs !== null) {
+    console.info("[KAIKATA] cart-only vs cart + wants stock", impact.state, impact.timings);
+  }
+  return result;
+}
+
 // Asks the extension for wants-page captures: after every cart import, and again when
 // the user comes back to this tab (they usually capture sellers in another tab).
 async function loadCandidatesFromExtension({ onReturn = false } = {}) {
   if (!state.parsed.sellers?.length) return;
   const parsedAtRequest = state.parsed;
-  const response = await requestCandidatesFromExtension();
+  // The extension only sends captures < 24 h old from the cart's wants list(s).
+  const response = await requestCandidatesFromExtension({ wantsListIds: state.parsed.wantsListIds || [] });
   if (state.parsed !== parsedAtRequest) return;
-  const sellers = response.ok ? response.sellers || [] : [];
-  const signature = sellers.map((capture) => `${capture.sellerName}|${capture.capturedAt}|${capture.offers?.length}`).join(";");
+  const received = response.ok ? response.sellers || [] : [];
+  // Extension 1.1.x flags stale captures instead of filtering them.
+  const staleFlagged = received.filter((capture) => capture.stale).length;
+  const sellers = received.filter((capture) => !capture.stale);
+  const excluded = {
+    stale: (Number(response.excluded?.stale) || 0) + staleFlagged,
+    otherWantsList: Number(response.excluded?.otherWantsList) || 0
+  };
+  const signature = `${sellers.map((capture) => `${capture.sellerName}|${capture.capturedAt}|${capture.offers?.length}`).join(";")}#${excluded.stale}/${excluded.otherWantsList}`;
   if (onReturn && (!response.ok || signature === state.candidateSignature)) return;
   state.candidateSignature = signature;
+  state.candidateExcluded = excluded;
+  state.candidateFallback = Boolean(response.ok && (response.fallback ?? !(state.parsed.wantsListIds || []).length));
   if (onReturn && state.optimizationResult) {
     state.optimizationStale = true;
     updateWorkflowStatus("Needs review", "warning", "Captured offers changed. Re-optimize to use them.");
@@ -1728,6 +1818,9 @@ function optimizeCart(sellers, offerGroups) {
     statusLabel,
     currentTotal,
     selectedTotal: score.total,
+    // The optimizer's own ranking keys, so two plans can be compared like isBetterScore does.
+    unresolvedCount: score.unresolvedCount,
+    resolvedTotal: score.resolvedTotal,
     cardTotal: score.cardTotal,
     fixedTotal: score.fixedTotal,
     trusteeTotal: score.trusteeTotal,

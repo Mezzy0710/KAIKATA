@@ -22,6 +22,7 @@ A client-side web app that optimizes Cardmarket shopping carts for the lowest to
 ✅ **Browser extension**: Extracts structured cart data from Cardmarket, opens in KAIKATA
 ✅ **Cart row marks** (extension 1.0.3): after a plan is confirmed, every article row on the Cardmarket cart gets KEEP / REMOVE / KEEP n OF m / REVIEW / ? (`extension/cartforge-matching.js`, pure, loaded before `content-script.js`). Rows are matched by card name + collector number + condition + price; unmatched rows are never marked REMOVE. The panel shows a live cut counter and an "All / Only removals" filter. `visibleText` strips mark text, so extraction reads the same data with or without marks
 ✅ **Wants-page candidates** (extension 1.1.0): `extension/wants-page.js` + pure `extension/cartforge-wants-parser.js` (tiny HTML tree parser + sequential page walker: 2–4 s pauses, ≤15 pages, stop on non-200/429/login/challenge) capture sellers' "Articles on My Wants List" into `chrome.storage.local` `cartforgeCandidatesV1`. KAIKATA fetches them via the bridge (`CARTFORGE_V3_GET_CANDIDATES`, not the URL hash) after a cart import. `src/candidates.mjs` merges them into the offer groups: only cards already in the cart, existing sellers keep their index/calibration, new sellers are appended, prefilter ≤3 per (card, seller) after variant preferences. Candidate offers have `source: "candidate"` and `itemIndex: "cand:<idArticle>"`. Confirmed plan schema v2 adds `decision: "add"` rows (cart fingerprint unchanged); the extension accepts v1 and v2. Cart-only plans are unchanged
+✅ **Guided wants-stock flow** (extension 1.2.0): pure `extension/cartforge-wants-flow.js` (loaded on the cart page, the wants pages, and via `importScripts` in `background.js`). Cart extraction reads each seller's wants link (href `/Users/<seller>/Offers/Singles?…&idWantslist=<id>`, id taken from the link) into `seller.wantsUrl` / `seller.wantsListId` and `payload.wantsListIds`, and stores `cartforgeCartSnapshotV1` (card names = KAIKATA's `normalizeOfferKey`). Cart panel: **Wants stock** checklist (loaded X of Y, links, "Next seller →", extra sellers) + a send summary. Wants page: prompt → progress bar → result card with K (cart cards in stock) / J (cheaper than the lowest cart price), "Next seller →", "Back to cart"; "Reload" when loaded < 24 h. Transfer rule (`filterCapturesForTransfer`): captures < 24 h old whose `wantsListId` is in the cart's `wantsListIds`; the rest are counted as `excluded: { stale, otherWantsList }`; no ids → 24 h rule only (`fallback`). KAIKATA sends the ids with `CARTFORGE_V3_GET_CANDIDATES`. `src/candidate-impact.mjs` (pure, optimizer injected) runs cart-only and cart + stock, shows the stock plan only when strictly better (optimizer ranking: fewer unresolved sellers, then lower total), else the cart-only plan unchanged; impact card: improved (€D, adds, new sellers, removals vs the cart-only plan) / nothing better / none (tip). `optimizeCart` results now carry `unresolvedCount` / `resolvedTotal`. Second run on the real cart + 8 sellers / 1,480 offers: ~70 ms
 ✅ **Cut lists in the web app**: "Sellers not in plan" lists each dropped seller's cards; kept sellers show "Remove from this seller:" (`src/plan-cuts.mjs`, matched by itemIndex)
 ✅ **Extension + paste flows**: Both normalize into the same review and optimization model
 ✅ **Optimizer search** (`src/optimizer-search.mjs`): local search with single-card moves, seller removal and seller addition (addition is followed by a removal pass). Matches the brute-force optimum on ~99% of a seeded 300-cart fuzz set; 500-iteration safety limit
@@ -114,6 +115,8 @@ None. All PRs closed/merged as of May 15, 2026.
 - ✅ Extension row matching vs the real-cart plan, twin rows, mark text stripping (`extension-row-matching.mjs`)
 - ✅ Wants-page parser (synthetic fixture `wants-page-sample.html`) + walker limits with fake fetch/sleep (`wants-parser.mjs`)
 - ✅ Candidates: add at existing seller, ignored non-cart cards, new seller replacing small sellers, cart-only unchanged, calibration weight fallback, plan v2 add rows, 3×220 offers < 1 s (`candidates.mjs`)
+- ✅ Wants flow: wants link from a cart seller block (fixture `cart-seller-block.html`), snapshot normalization = `normalizeOfferKey`, transfer filter + fallback, background `GET_CANDIDATES` via a fake `chrome`, checklist / next seller / send summary, K/J comparison (`wants-flow.mjs`)
+- ✅ Candidate impact: real cart + one cheaper stock offer → improved (€8.18, add 1, remove 1), dearer stock → cart-only plan unchanged, no stock → €211.37 / 13 sellers, slow-run flag (`candidate-impact.mjs`)
 - ⚠️ Scryfall: integration test (requires network, excluded from CI)
 
 ### CI/CD Gaps
@@ -141,13 +144,15 @@ None. All PRs closed/merged as of May 15, 2026.
 │   ├── shipping-calibration.mjs    # Cart-observed shipping → per-seller calibrated rows (pure)
 │   ├── plan-cuts.mjs               # Which cart rows to remove/reduce per seller
 │   ├── candidates.mjs              # Wants-page offers → extra optimizer candidates (pure)
+│   ├── candidate-impact.mjs        # Cart-only vs cart + wants stock: which plan to show, impact card copy (pure)
 │   ├── scryfall.mjs                # Reference price lookups (external API)
 │   └── price-verdict.mjs           # Price comparison logic
 │
 ├── extension/                      # Browser extension (extracts from Cardmarket, marks cart rows)
 │   ├── cartforge-matching.js       # Pure row ↔ plan matching, loaded before content-script.js
 │   ├── cartforge-wants-parser.js   # Pure wants-page parser + sequential page walker
-│   ├── wants-page.js               # Wants-page panel: capture, ADD ×N marks, select planned
+│   ├── cartforge-wants-flow.js     # Pure wants-stock helpers: wants links, cart snapshot, transfer filter, K/J
+│   ├── wants-page.js               # Wants-page panel: load prompt, progress, result card, ADD ×N marks
 │
 └── tests/
     ├── fixtures/                   # Sample cart data
@@ -195,6 +200,8 @@ node tests/extension-row-matching.mjs
 node tests/ui-dropped-sellers.mjs
 node tests/wants-parser.mjs
 node tests/candidates.mjs
+node tests/wants-flow.mjs
+node tests/candidate-impact.mjs
 
 # New real-cart fixture (keep the raw capture in _private/, never commit it)
 # node scripts/anonymize-cart.mjs _private/<cart>.txt tests/fixtures/<name>.txt
@@ -215,5 +222,5 @@ open index.html
 
 ---
 
-Last Updated: September 26, 2026 (wants-page candidates)
+Last Updated: September 2026 (guided wants-stock flow)
 Branch: `main`

@@ -29,9 +29,17 @@ export function parseExtractedCartPayload(rawInput, shippingData = null) {
       },
       source: decoded.payload.source || "cartforge-extracted-cart",
       sourceUrl: decoded.payload.url || decoded.payload.sourceUrl || "",
-      extractedAt: decoded.payload.extractedAt || ""
+      extractedAt: decoded.payload.extractedAt || "",
+      // The cart's wants list(s), read from each seller's wants link (extension ≥ 1.2).
+      // Empty for older payloads: wants stock then falls back to the 24 h rule only.
+      wantsListIds: readWantsListIds(decoded.payload, sellers)
     }
   };
+}
+
+function readWantsListIds(payload, sellers) {
+  const ids = Array.isArray(payload.wantsListIds) ? payload.wantsListIds : sellers.map((seller) => seller.wantsListId);
+  return [...new Set(ids.map((id) => cleanupValue(id)).filter(Boolean))];
 }
 
 export function decodeCartForgeHash(hashValue) {
@@ -107,6 +115,8 @@ function normalizeSellers(sellers, warnings, shippingIndex, extractedAt = null) 
       sellerProfileUrl: cleanupValue(seller.sellerProfileUrl || seller.profileUrl || ""),
       shipmentId: cleanupValue(seller.shipmentId || seller.idShipment || ""),
       sellerType: cleanupValue(seller.sellerType || seller.type || ""),
+      wantsUrl: cleanupValue(seller.wantsUrl || ""),
+      wantsListId: cleanupValue(seller.wantsListId || ""),
       shippingMethod,
       shippingMethodRaw: cleanupValue(seller.shippingMethodRaw || shippingMethod),
       // Full dropdown as seen in the cart (selected method + category prices).
