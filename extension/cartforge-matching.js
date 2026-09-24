@@ -19,7 +19,7 @@
     return String(value || "")
       .toLowerCase()
       .normalize("NFKD")
-      .replace(/[̀-ͯ]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, " ")
       .replace(/\s+/g, " ")
       .trim();
@@ -102,7 +102,8 @@
       if (planRow.decision === "manual_review") {
         return { status: "review", keepQty: null, cartQty, planRow };
       }
-      if (planRow.decision === "selected") {
+      // "add" rows (schema v2) are wants-page articles the plan buys: once in the cart they are kept.
+      if (planRow.decision === "selected" || planRow.decision === "add") {
         const keepQty = Number(planRow.selectedQuantity || planRow.quantity || 1);
         // Compared with the live cart quantity, so a row the user already reduced reads as done.
         return { status: cartQty > keepQty ? "reduce" : "keep", keepQty, cartQty, planRow };

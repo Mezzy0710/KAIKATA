@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "KAIKATA",
   "description": "Extracts structured shopping-cart data from Cardmarket and opens it in KAIKATA.",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -40,6 +40,14 @@
         "https://*.cardmarket.com/*/*/ShoppingCart/Checkout/*"
       ],
       "js": ["cartforge-matching.js", "content-script.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.cardmarket.com/*/*/Users/*/Offers/Singles*",
+        "https://*.cardmarket.com/*/*/Users/*/Offers/Singles*"
+      ],
+      "js": ["cartforge-wants-parser.js", "wants-page.js"],
       "run_at": "document_idle"
     }
   ]

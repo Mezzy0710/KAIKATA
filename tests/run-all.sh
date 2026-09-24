@@ -23,6 +23,7 @@ TOTAL=0
 
 # Test files to run
 TEST_FILES=(
+  "tests/candidates.mjs"
   "tests/correctness-optimizer.mjs"
   "tests/optimizer-dynamic-basket-costs.mjs"
   "tests/correctness-parser.mjs"
@@ -47,6 +48,7 @@ TEST_FILES=(
   "tests/shipping-costs.mjs"
   "tests/shipping-weight.mjs"
   "tests/ui-dropped-sellers.mjs"
+  "tests/wants-parser.mjs"
 )
 
 # Performance test (optional, can be slow)

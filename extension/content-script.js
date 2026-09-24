@@ -6,7 +6,7 @@
   const MARK_SELECTOR = "[data-cartforge-mark]";
   const Matching = globalThis.CartforgeMatching;
   // Panel elements updated after every marking pass (set by renderFloatingPanel).
-  const overlayUi = { counterEl: null, doneEl: null, filter: "all", setFilterButtons: null };
+  const overlayUi = { counterEl: null, doneEl: null, addedEl: null, filter: "all", setFilterButtons: null };
   // Set to true in the browser console to log per-seller extraction diagnostics.
   const CARTFORGE_DEBUG = false;
 
@@ -141,14 +141,19 @@
       return; // cartforge-matching.js failed to load: keep the seller badges only.
     }
     const planSellers = new Map(plan.sellers.map((seller) => [seller.sellerIndex, seller]));
+    const addedRows = new Set();
     document.querySelectorAll("[data-cartforge-section]").forEach((section) => {
       const planSeller = planSellers.get(Number(section.getAttribute("data-cartforge-section")));
       if (planSeller) {
-        markSectionRows(section, planSeller, (plan.rows || []).filter((row) => row.sellerIndex === planSeller.sellerIndex));
+        const matches = markSectionRows(section, planSeller, (plan.rows || []).filter((row) => row.sellerIndex === planSeller.sellerIndex));
+        matches.forEach((match) => {
+          if (match.planRow?.decision === "add") addedRows.add(match.planRow);
+        });
       }
     });
     applyFilter();
     updateCounter();
+    updateAddedCounter(addedRows.size, (plan.rows || []).filter((row) => row.decision === "add").length);
   }
 
   function renderFloatingPanel(plan) {
@@ -246,8 +251,11 @@
     const done = document.createElement("p");
     done.textContent = "Cart matches your plan ✓";
     css(done, { margin: "0 0 10px", color: "#4F7A5A", fontSize: "12.5px", fontWeight: "700", display: "none" });
-    body.append(counter, done);
+    const added = document.createElement("p");
+    css(added, { margin: "0 0 6px", color: "#1C1A17", fontSize: "12.5px", fontWeight: "600", display: "none" });
+    body.append(counter, added, done);
     overlayUi.counterEl = counter;
+    overlayUi.addedEl = added;
     overlayUi.doneEl = done;
 
     const filterWrap = document.createElement("div");
@@ -378,7 +386,7 @@
 
       const rows = rowsBySeller.get(planSeller.sellerIndex) || [];
       const visibleRows = rows.filter(
-        (r) => r.decision === "selected" || r.decision === "manual_review"
+        (r) => r.decision === "selected" || r.decision === "add" || r.decision === "manual_review"
       );
 
       const badgeEl = createSellerBadge(planSeller, visibleRows);
@@ -413,6 +421,7 @@
         mark.remove();
       }
     });
+    return matches;
   }
 
   function markHost(row) {
@@ -525,6 +534,13 @@
       element.style.display = element.getAttribute("data-cartforge-hidden");
       element.removeAttribute("data-cartforge-hidden");
     });
+  }
+
+  // Wants-page articles the plan adds: how many are in the cart now.
+  function updateAddedCounter(added, total) {
+    if (!overlayUi.addedEl) return;
+    overlayUi.addedEl.textContent = total ? `Added: ${added} / ${total}` : "";
+    overlayUi.addedEl.style.display = total ? "block" : "none";
   }
 
   function updateCounter() {

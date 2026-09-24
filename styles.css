@@ -3623,3 +3623,56 @@ input[type="number"] {
   background: rgba(200, 167, 93, 0.06);
   font-family: "IBM Plex Mono", monospace;
 }
+
+/* Wants-page candidates (offers not in the Cardmarket cart yet) */
+.candidate-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 6px;
+  border: 1px solid #C8872E;
+  border-radius: 999px;
+  color: #8A5A14;
+  background: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.seller-add-block {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid #4F7A5A;
+  border-radius: 6px;
+  background: #FFFFFF;
+}
+
+.seller-add-heading {
+  margin: 0 0 4px;
+  color: #3F6149;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.seller-add-list {
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+  color: var(--text);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.seller-add-link {
+  color: #3F6149;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.result-add-summary {
+  margin: 8px 0 0;
+  color: #3F6149;
+  font-weight: 600;
+}
