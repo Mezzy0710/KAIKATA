@@ -1,0 +1,6 @@
+# Local-only files (never committed)
+.claude/settings.local.json
+.claude/worktrees/
+extension.zip
+_private/
+dist/

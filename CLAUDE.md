@@ -186,6 +186,15 @@ None. All PRs closed/merged as of May 15, 2026.
 
 ---
 
+## Git routine
+
+1. Work on a new branch from the latest `origin/main` (`git fetch origin && git checkout -b <branch> origin/main`).
+2. When all tests pass (`bash tests/run-all.sh` and the `tests/*.mjs` loop without scryfall), commit. Never commit `.claude/` (local settings, worktrees), `_private/`, `dist/` or `extension.zip` — `.gitignore` covers them.
+3. Push the branch (`git push -u origin <branch>`) and open a PR against `main` with `gh pr create`; if `gh` is unavailable, print the compare URL `https://github.com/Mezzy0710/KAIKATA/compare/main...<branch>?expand=1`.
+4. Never push to `main`, never merge, never force-push, never delete branches.
+
+---
+
 ## Development Commands
 
 ```bash
