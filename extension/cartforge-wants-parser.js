@@ -274,19 +274,19 @@
     };
   }
 
-  function pageUrlFor(startUrl, page) {
+  function pageUrlFor(startUrl, page, sortBy) {
     const url = new URL(startUrl, "https://www.cardmarket.com");
     url.searchParams.set("site", String(page));
+    if (sortBy) url.searchParams.set("sortBy", sortBy);
     return url.toString();
   }
 
-  // Walks pages 1…Y strictly one request at a time, with a random 2–4 s pause between
-  // requests, at most 15 pages. Stops at the first sign of trouble and keeps what it has.
-  //   fetchPage(url) → Promise<{ status, url, text() }>  (fetch with credentials in the page)
-  //   sleep(ms) → Promise
-  async function walkWantsPages({ startUrl, fetchPage, sleep, random = Math.random, maxPages = MAX_PAGES, onProgress = () => {}, isCancelled = () => false, capturedAt = new Date().toISOString() }) {
-    const limit = Math.min(maxPages, MAX_PAGES);
+  // One sequential pass over pages 1…Y (or fewer, at the first sign of trouble), a random
+  // 2–4 s pause between requests, at most `limit` pages. Shared by the first pass (the
+  // page's default order) and the second, gap-filling pass (sortBy=name_desc).
+  async function walkOnePass({ startUrl, fetchPage, sleep, random, limit, sortBy, pass, onProgress, isCancelled, capturedAt }) {
     const offersById = new Map();
+    let rowsSeen = 0;
     let meta = null;
     let totalPages = 1;
     let pagesFetched = 0;
@@ -295,14 +295,14 @@
     for (let page = 1; page <= Math.min(totalPages, limit); page += 1) {
       if (page > 1) {
         const delay = 2000 + Math.floor(random() * 2001);
-        onProgress({ page: page - 1, totalPages: Math.min(totalPages, limit), offers: offersById.size, waitingMs: delay });
+        onProgress({ page: page - 1, totalPages: Math.min(totalPages, limit), offers: offersById.size, waitingMs: delay, pass });
         await sleep(delay);
       }
       if (isCancelled()) {
         stoppedReason = "Stopped by you.";
         break;
       }
-      const url = pageUrlFor(startUrl, page);
+      const url = pageUrlFor(startUrl, page, sortBy);
       let response;
       try {
         response = await fetchPage(url);
@@ -332,14 +332,78 @@
         meta = parsed.meta;
         totalPages = Math.max(1, parsed.meta.pages || 1);
       }
+      rowsSeen += parsed.offers.length;
       parsed.offers.forEach((offer) => offersById.set(offer.idArticle, offer));
-      onProgress({ page, totalPages: Math.min(totalPages, limit), offers: offersById.size });
+      onProgress({ page, totalPages: Math.min(totalPages, limit), offers: offersById.size, pass });
     }
 
     if (!stoppedReason && totalPages > limit) {
       stoppedReason = `Stopped at the ${limit}-page limit (${totalPages} pages).`;
     }
-    return { meta, offers: [...offersById.values()], pagesFetched, totalPages, stoppedReason };
+    return { meta, offersById, rowsSeen, pagesFetched, totalPages, stoppedReason };
+  }
+
+  // Walks a seller's wants-list pages once in the page's default order, then — only if
+  // that pass finished cleanly and still falls short of the page's own "N Hits" count —
+  // once more sorted Z→A, merging by idArticle. Cardmarket sorts by name with no stable
+  // tie-breaker, so same-name articles at a page boundary repeat in one direction while
+  // others are skipped there; walking the other direction recovers most of them. Never
+  // runs a third pass.
+  //   fetchPage(url) → Promise<{ status, url, text() }>  (fetch with credentials in the page)
+  //   sleep(ms) → Promise
+  async function walkWantsPages({ startUrl, fetchPage, sleep, random = Math.random, maxPages = MAX_PAGES, onProgress = () => {}, isCancelled = () => false, capturedAt = new Date().toISOString() }) {
+    const limit = Math.min(maxPages, MAX_PAGES);
+    const pass1 = await walkOnePass({ startUrl, fetchPage, sleep, random, limit, pass: 1, onProgress, isCancelled, capturedAt });
+
+    const offersById = new Map(pass1.offersById);
+    let rowsSeen = pass1.rowsSeen;
+    let pagesFetched = pass1.pagesFetched;
+    let passes = 1;
+
+    const hits = pass1.meta?.hits;
+    const shouldFillGap = !pass1.stoppedReason && Number.isFinite(hits) && offersById.size < hits;
+    if (shouldFillGap) {
+      const pass2 = await walkOnePass({ startUrl, fetchPage, sleep, random, limit, sortBy: "name_desc", pass: 2, onProgress, isCancelled, capturedAt });
+      passes = 2;
+      rowsSeen += pass2.rowsSeen;
+      pagesFetched += pass2.pagesFetched;
+      pass2.offersById.forEach((offer, id) => {
+        if (!offersById.has(id)) offersById.set(id, offer);
+      });
+    }
+
+    const offers = [...offersById.values()];
+    return {
+      meta: pass1.meta,
+      offers,
+      pagesFetched,
+      totalPages: pass1.totalPages,
+      stoppedReason: pass1.stoppedReason,
+      rowsSeen,
+      unique: offers.length,
+      duplicateRows: rowsSeen - offers.length,
+      passes
+    };
+  }
+
+  // "N of H offers" copy for the wants page's result card. Full (H unknown, or N ≥ H):
+  // the plain success line. Partial (N < H, after a clean walk that still fell short):
+  // explains the gap without implying anything was actually unrecognized.
+  function captureResultText(unique, hits) {
+    const count = Number(unique) || 0;
+    if (!Number.isFinite(hits) || count >= hits) {
+      return { text: `✓ Loaded ${offersLabel(count)}.`, complete: true };
+    }
+    const gap = hits - count;
+    return {
+      text: `Loaded ${count} of ${hits} offers. Cardmarket's page order repeats some offers `
+        + `across pages, so ${gap} couldn't be reached (usually extra copies of cards that were loaded).`,
+      complete: false
+    };
+  }
+
+  function offersLabel(count) {
+    return `${count} offer${count === 1 ? "" : "s"}`;
   }
 
   globalThis.CartforgeWantsParser = {
@@ -347,6 +411,7 @@
     parseHtml,
     parseWantsPage,
     walkWantsPages,
+    captureResultText,
     pageUrlFor,
     parseEuro,
     normalizeCondition

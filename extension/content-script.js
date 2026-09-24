@@ -977,7 +977,8 @@
     });
   }
 
-  function offersText(count) {
+  function offersText(count, hits) {
+    if (Number.isFinite(hits) && count < hits) return `${count}/${hits} offers`;
     return `${count} offer${count === 1 ? "" : "s"}`;
   }
 
@@ -1104,7 +1105,7 @@
       }
       const status = document.createElement("div");
       status.textContent = loaded
-        ? `✓ loaded · ${offersText(row.offerCount)} · ${Flow.formatAge(row.ageMs)}`
+        ? `✓ loaded · ${offersText(row.offerCount, row.hits)} · ${Flow.formatAge(row.ageMs)}`
         : row.status === "stale" ? "loaded over 24 h ago · reload to use it"
           : row.status === "other-list" ? "loaded for another wants list · reload to use it"
             : row.wantsUrl ? "not loaded" : "not loaded · no wants link in the cart";
@@ -1142,7 +1143,7 @@
       css(extras, { margin: "0", padding: "0", listStyle: "none", maxHeight: "90px", overflowY: "auto" });
       checklist.extras.forEach((extra) => {
         const item = document.createElement("li");
-        item.textContent = `${extra.sellerName} · ${offersText(extra.offerCount)} · ${Flow.formatAge(extra.ageMs)}${extra.sameWantsList ? "" : " · other wants list (not sent)"}`;
+        item.textContent = `${extra.sellerName} · ${offersText(extra.offerCount, extra.hits)} · ${Flow.formatAge(extra.ageMs)}${extra.sameWantsList ? "" : " · other wants list (not sent)"}`;
         css(item, { fontSize: "12px", color: "#6E6257", padding: "1px 0" });
         extras.append(item);
       });

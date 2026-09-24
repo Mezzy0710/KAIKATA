@@ -157,6 +157,7 @@
         wantsUrl: seller.wantsUrl || "",
         status,
         offerCount: capture ? offerCount(capture) : 0,
+        hits: capture && Number.isFinite(capture.hits) ? capture.hits : null,
         ageMs: capture ? Math.max(0, now - Date.parse(capture.capturedAt)) : null
       };
     });
@@ -165,6 +166,7 @@
       .map((capture) => ({
         sellerName: capture.sellerName,
         offerCount: offerCount(capture),
+        hits: Number.isFinite(capture.hits) ? capture.hits : null,
         ageMs: Math.max(0, now - Date.parse(capture.capturedAt)),
         sameWantsList: !cartIds.size || cartIds.has(String(capture.wantsListId || ""))
       }));
