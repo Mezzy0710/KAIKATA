@@ -3,6 +3,35 @@
 Versions follow `extension/manifest.json`. `node scripts/package-extension.mjs` refuses to
 package a version without an entry here.
 
+## 2.1.0 — 2026-09-25
+
+Fixes from the live UI review (9 sellers / 16 articles, wants list 24618932).
+
+- An empty wants page ("There are no offers for your selected …", or no rows with the wants
+  filter present, in any language) is a valid result, not a "check or error page". It saves
+  a 0-offer capture that counts as loaded everywhere (checklist, progress header, transfer
+  summary, "Next seller"); the result card says "✓ No extra stock for your wants list here".
+  Opening an empty wants page records it right away (no request needed); the walker stops
+  cleanly after page 1. KAIKATA counts such sellers as "checked, nothing extra".
+- The cart is read once: Cardmarket renders every seller block twice (desktop + hidden
+  mobile layout). Extraction keeps only rendered sections, rows and links (whichever layout
+  the viewport shows), then dedupes by article id, and by card / collector number /
+  condition / price / quantity while a seller's rows exceed its "Contents N Articles".
+  Wants links are deduped. Overlay marks go on the visible rows only (and follow a resize
+  across the breakpoint). The importer's dedupe stays as a safety net.
+- "Check all sellers" on the cart page (click only): page 1 of each unloaded seller's wants
+  page, one at a time, 2–4 s apart, same stop rules as a full load (429 / non-200 / login /
+  check page), Stop available throughout. Empty sellers are saved as "nothing extra";
+  sellers with offers show "H offers on P pages" with "Load →" and move to the top of the
+  checklist (results kept 24 h in `cartforgeWantsCheckV1`, offers are not saved).
+- Cart panel: remembers expanded/collapsed (opens by default on a cart with sellers), max
+  320 px wide, anchored bottom-left so it never covers Cardmarket's right-column summary and
+  "Proceed to checkout"; scrolls within the window. New intro "Step 1: check your sellers'
+  wants stock · Step 2: transfer to KAIKATA"; neutral "Open wants page" links; "Copy to
+  Clipboard" and "Open on website instead" moved under "More".
+- Wants-page panel: never taller than the window (scrolls inside), with the progress
+  header pinned as the first visible element.
+
 ## 2.0.2 — 2026-09-25
 
 - The wants-page panel always shows overall progress at the top: "Wants stock: X of Y

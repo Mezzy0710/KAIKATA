@@ -5,14 +5,22 @@
   // Cart handed to the KAIKATA extension page (read once, then removed, by src/host.mjs).
   const INCOMING_CART_KEY = "cartforgeIncomingCartV1";
   const FILTER_STORAGE_KEY = "cartforgeOverlayFilterV1";
+  // true / false once the user expands or collapses the panel; unset = expanded on a cart.
+  const EXPANDED_STORAGE_KEY = "cartforgePanelExpandedV1";
   const MARK_SELECTOR = "[data-cartforge-mark]";
   const Matching = globalThis.CartforgeMatching;
   // Pure wants-stock helpers (cartforge-wants-flow.js); the panel works without them.
   const Flow = globalThis.CartforgeWantsFlow;
+  // Pure one-read-per-row helpers (cartforge-cart-rows.js); extraction still works without them.
+  const Rows = globalThis.CartforgeCartRows;
+  // Wants-page parser (cartforge-wants-parser.js), for "Check all sellers".
+  const Parser = globalThis.CartforgeWantsParser;
   // Panel elements updated after every marking pass (set by renderFloatingPanel).
   const overlayUi = { counterEl: null, doneEl: null, addedEl: null, filter: "all", setFilterButtons: null };
   // "Wants stock" checklist + send summary (set by the panel builders).
   const wantsUi = { section: null, summaryEl: null, signature: "", snapshotSignature: "", started: false };
+  // "Check all sellers" run state (page 1 of each unloaded seller's wants page).
+  const checkRun = { running: false, cancel: false, text: "", error: "" };
   // Set to true in the browser console to log per-seller extraction diagnostics.
   const CARTFORGE_DEBUG = false;
 
@@ -68,9 +76,12 @@
     Object.assign(el.style, styles);
   }
 
+  // Bottom-left: Cardmarket's cart summary and "Proceed to checkout" sit in the right
+  // column (and its sticky bottom bar on phones is full-width, so a narrow left panel
+  // leaves its button free); the left column only has article rows, which scroll past.
   const PANEL_BASE = {
     position: "fixed",
-    right: "16px",
+    left: "16px",
     bottom: "16px",
     zIndex: "2147483647",
     font: "14px/1.5 'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
@@ -80,6 +91,7 @@
     boxShadow: "0 4px 16px rgba(28,26,23,0.12)",
     overflow: "hidden"
   };
+  const PANEL_WIDTH = "min(320px, calc(100vw - 32px))";
 
   const COLLAPSED = {
     width: "48px",
@@ -92,14 +104,51 @@
   };
 
   const EXPANDED = {
-    width: "288px",
+    width: PANEL_WIDTH,
     height: "auto",
+    maxHeight: "calc(100vh - 32px)",
+    overflowY: "auto",
     borderRadius: "12px",
     cursor: "default",
     display: "block",
     alignItems: "",
     justifyContent: ""
   };
+
+  // Collapsed bubble ↔ expanded panel, remembered in storage for both panels. Without a
+  // stored choice the panel opens when the page has a cart with sellers.
+  function setupExpandToggle({ panel, logoBubble, header, body, collapseBtn, onExpand = () => {} }) {
+    const apply = (expanded) => {
+      logoBubble.style.display = expanded ? "none" : "flex";
+      header.style.display = expanded ? "flex" : "none";
+      body.style.display = expanded ? "block" : "none";
+      css(panel, expanded ? EXPANDED : { ...COLLAPSED, maxHeight: "", overflowY: "" });
+      if (expanded) onExpand();
+    };
+    const remember = (expanded) => {
+      try {
+        chrome.storage.local.set({ [EXPANDED_STORAGE_KEY]: expanded });
+      } catch {
+        // Storage unavailable: the choice lasts for this page only.
+      }
+    };
+    logoBubble.addEventListener("click", () => {
+      apply(true);
+      remember(true);
+    });
+    collapseBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      apply(false);
+      remember(false);
+    });
+    storageGet(EXPANDED_STORAGE_KEY).then((stored) => {
+      if (typeof stored === "boolean") {
+        apply(stored);
+        return;
+      }
+      apply(extractCartPayload(document).sellers.length > 0);
+    });
+  }
 
   // ── Plan overlay ──────────────────────────────────────────────────────────
 
@@ -126,11 +175,14 @@
 
   function observeCartMutations(plan) {
     let debounceTimer = null;
-    const observer = new MutationObserver(() => {
+    const schedule = () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => refreshOverlay(plan), 150);
-    });
+    };
+    const observer = new MutationObserver(schedule);
     observer.observe(document.body, { childList: true, subtree: true });
+    // Crossing Cardmarket's breakpoint swaps the desktop and mobile layouts.
+    window.addEventListener("resize", schedule);
   }
 
   // One marking pass. Idempotent: it only touches the DOM when a mark changes, so the
@@ -318,30 +370,7 @@
     document.body.append(panel);
     startWantsStock();
 
-    // State toggle
-    let expanded = false;
-
-    const expand = () => {
-      expanded = true;
-      logoBubble.style.display = "none";
-      css(panel, EXPANDED);
-      header.style.display = "flex";
-      body.style.display = "block";
-    };
-
-    const collapse = () => {
-      expanded = false;
-      header.style.display = "none";
-      body.style.display = "none";
-      css(panel, COLLAPSED);
-      logoBubble.style.display = "flex";
-    };
-
-    logoBubble.addEventListener("click", expand);
-    collapseBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      collapse();
-    });
+    setupExpandToggle({ panel, logoBubble, header, body, collapseBtn });
 
     // Clear plan — remove storage, badges, and panel
     clearBtn.addEventListener("click", () => {
@@ -413,7 +442,9 @@
   const CARD_NAME_SELECTOR = "a[href*='/Products/Singles/'], a[href*='/Magic/Products/'], [data-card-name], .card-name, .product-name";
 
   function markSectionRows(section, planSeller, planRows) {
-    const rowEls = findItemRows(section);
+    // Only the layout on screen: the hidden twin row would otherwise take a plan row's
+    // quantity and push the visible row to REMOVE.
+    const rowEls = renderedOnly(findItemRows(section));
     const items = rowEls.map((row, rowIndex) => extractItem(row, planSeller.sellerIndex, rowIndex));
     const matches = Matching.matchRowsToPlan(items, planRows, { sellerDecision: planSeller.decision });
     const current = new Set();
@@ -807,8 +838,8 @@
     css(body, { padding: "0 16px 16px" });
 
     const descEl = document.createElement("p");
-    descEl.textContent = "Import your Cardmarket cart into KAIKATA for smart seller cost optimisation.";
-    css(descEl, { margin: "0 0 14px", color: "#6E6257", fontSize: "13px", lineHeight: "1.5" });
+    descEl.textContent = "Step 1: check your sellers' wants stock · Step 2: transfer to KAIKATA";
+    css(descEl, { margin: "0 0 12px", color: "#6E6257", fontSize: "12.5px", lineHeight: "1.45" });
 
     const transferBtn = document.createElement("button");
     transferBtn.setAttribute("data-cartforge-action", "open-app");
@@ -832,13 +863,14 @@
     copyBtn.textContent = "Copy to Clipboard";
     css(copyBtn, {
       width: "100%",
+      marginTop: "6px",
       border: "1.5px solid #DED3C2",
       borderRadius: "999px",
       background: "transparent",
       color: "#6E6257",
-      padding: "9px 14px",
+      padding: "7px 12px",
       fontFamily: "inherit",
-      fontSize: "13px",
+      fontSize: "12.5px",
       fontWeight: "600",
       cursor: "pointer"
     });
@@ -870,36 +902,20 @@
       cursor: "pointer"
     });
 
-    body.append(descEl, buildWantsStockSection(), transferBtn, summaryEl, copyBtn, websiteLink, statusEl);
+    // Rarely needed: copy the payload, or the website route during the transition.
+    const more = document.createElement("details");
+    css(more, { marginTop: "4px" });
+    const moreSummary = document.createElement("summary");
+    moreSummary.textContent = "More";
+    css(moreSummary, { cursor: "pointer", color: "#6E6257", fontSize: "12px", fontWeight: "600" });
+    more.append(moreSummary, copyBtn, websiteLink);
+
+    body.append(descEl, buildWantsStockSection(), transferBtn, summaryEl, more, statusEl);
     panel.append(logoBubble, header, body);
     document.body.append(panel);
     startWantsStock();
 
-    // State toggle
-    let expanded = false;
-
-    const expand = () => {
-      expanded = true;
-      logoBubble.style.display = "none";
-      css(panel, EXPANDED);
-      header.style.display = "flex";
-      body.style.display = "block";
-      refreshWantsStock();
-    };
-
-    const collapse = () => {
-      expanded = false;
-      header.style.display = "none";
-      body.style.display = "none";
-      css(panel, COLLAPSED);
-      logoBubble.style.display = "flex";
-    };
-
-    logoBubble.addEventListener("click", expand);
-    collapseBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      collapse();
-    });
+    setupExpandToggle({ panel, logoBubble, header, body, collapseBtn, onExpand: refreshWantsStock });
 
     panel.addEventListener("click", async (event) => {
       const action = event.target?.dataset?.cartforgeAction;
@@ -1015,7 +1031,7 @@
     // Captures made on wants pages (other tabs) or removed there.
     try {
       chrome.storage.onChanged.addListener((changes, area) => {
-        if (area === "local" && changes[Flow.CANDIDATES_KEY]) refreshWantsStock();
+        if (area === "local" && (changes[Flow.CANDIDATES_KEY] || changes[Flow.CHECKS_KEY])) refreshWantsStock();
       });
     } catch {
       // Storage events unavailable: the list refreshes on cart changes and on expand.
@@ -1031,15 +1047,17 @@
     const hasCart = payload.sellers.length > 0 && countItems(payload) > 0;
     if (hasCart) saveCartSnapshot(payload);
     const captures = (await storageGet(Flow.CANDIDATES_KEY)) || {};
+    const checks = (await storageGet(Flow.CHECKS_KEY)) || {};
     const now = Date.now();
     const snapshot = hasCart ? Flow.buildCartSnapshot(payload, now) : null;
-    const checklist = snapshot ? Flow.sellerChecklist(snapshot, captures, now) : null;
-    const next = snapshot ? Flow.nextUnloadedSeller(snapshot, captures, now) : null;
+    const checklist = snapshot ? Flow.sellerChecklist(snapshot, captures, now, checks) : null;
+    const next = snapshot ? Flow.nextUnloadedSeller(snapshot, captures, now, "", checks) : null;
     const summary = hasCart ? Flow.formatTransferSummary(Flow.summarizeTransfer({ payload, captures, now })) : "";
 
     // Ages are shown in minutes, so re-render at most when something visible changes.
-    const signature = JSON.stringify([checklist, next?.sellerName, summary].map((part) => part ?? null), (key, value) => (
-      key === "ageMs" && Number.isFinite(value) ? Math.round(value / 60000) : value
+    const run = [checkRun.running, checkRun.text, checkRun.error];
+    const signature = JSON.stringify([checklist, next?.sellerName, summary, run].map((part) => part ?? null), (key, value) => (
+      (key === "ageMs" || key === "checkedAt") && Number.isFinite(value) ? Math.round(value / 60000) : value
     ));
     if (signature === wantsUi.signature) return;
     wantsUi.signature = signature;
@@ -1061,6 +1079,128 @@
     }
   }
 
+  function storageSet(key, value) {
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.set({ [key]: value }, () => resolve(true));
+      } catch {
+        resolve(false);
+      }
+    });
+  }
+
+  // Cart sellers "Check all sellers" would fetch: not loaded yet, with a wants link, and
+  // not already known (from an earlier check) to have offers.
+  function sellersToCheck(checklist) {
+    return (checklist?.rows || []).filter((row) => (
+      row.status !== "loaded" && !row.checked && row.wantsUrl && isCardmarketUrl(row.wantsUrl)
+    ));
+  }
+
+  // "Check all sellers" (explicit click only): page 1 of each unloaded seller's wants page,
+  // one request at a time, 2–4 s apart, stopping at the first 429 / error / login / check
+  // page (CartforgeWantsParser.checkSellersFirstPage). An empty page is saved as a 0-offer
+  // capture (loaded, nothing extra); for sellers with offers only "H offers on P pages" is
+  // kept: the user loads those on the seller's own page.
+  async function runCheckAll() {
+    if (!Flow || !Parser || checkRun.running) return;
+    const payload = extractCartPayload(document);
+    const now = Date.now();
+    const snapshot = Flow.buildCartSnapshot(payload, now);
+    const captures = (await storageGet(Flow.CANDIDATES_KEY)) || {};
+    const sellers = sellersToCheck(Flow.sellerChecklist(snapshot, captures, now));
+    if (!sellers.length) return;
+    checkRun.running = true;
+    checkRun.cancel = false;
+    checkRun.error = "";
+    checkRun.text = `Checking ${sellers[0].sellerName} (1 of ${sellers.length})…`;
+    refreshWantsStock();
+
+    // Results are saved as they come (a Stop keeps them), one storage write at a time.
+    let saved = 0;
+    let writes = Promise.resolve();
+    const persistNew = (results) => {
+      writes = writes.then(async () => {
+        while (saved < results.length) {
+          await persistCheck(results[saved], snapshot);
+          saved += 1;
+        }
+      });
+      return writes;
+    };
+    const outcome = await Parser.checkSellersFirstPage({
+      sellers: sellers.map((row) => ({ sellerName: row.sellerName, wantsUrl: row.wantsUrl })),
+      fetchPage: (url) => fetch(url, { credentials: "include", redirect: "follow" }),
+      sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+      isCancelled: () => checkRun.cancel,
+      onProgress: ({ done, total, sellerName, waitingMs, results }) => {
+        persistNew(results);
+        if (!sellerName) return;
+        checkRun.text = waitingMs
+          ? `Checked ${done} of ${total} · pausing ${Math.round(waitingMs / 100) / 10} s`
+          : `Checking ${sellerName} (${done + 1} of ${total})…`;
+        refreshWantsStock();
+      }
+    });
+    await persistNew(outcome.results);
+    const withOffers = outcome.results.filter((result) => result.status === "offers").length;
+    const none = outcome.results.length - withOffers;
+    checkRun.running = false;
+    checkRun.text = `Checked ${outcome.results.length} of ${sellers.length}: ${withOffers} with offers, ${none} with nothing extra.`;
+    checkRun.error = outcome.stoppedReason ? `Stopped: ${outcome.stoppedReason}` : "";
+    wantsUi.signature = "";
+    refreshWantsStock();
+  }
+
+  async function persistCheck(result, snapshot) {
+    const key = Flow.normalizeSellerKey(result.sellerName);
+    const cartSeller = (snapshot.sellers || []).find((seller) => Flow.normalizeSellerKey(seller.sellerName) === key);
+    const wantsListId = result.meta?.wantsListId || cartSeller?.wantsListId || "";
+    const checks = (await storageGet(Flow.CHECKS_KEY)) || {};
+    if (result.status === "none") {
+      const captures = (await storageGet(Flow.CANDIDATES_KEY)) || {};
+      captures[key] = Flow.emptyCapture({ sellerName: result.sellerName, sellerCountry: result.meta?.sellerCountry, wantsListId });
+      await storageSet(Flow.CANDIDATES_KEY, captures);
+      if (checks[key]) {
+        delete checks[key];
+        await storageSet(Flow.CHECKS_KEY, checks);
+      }
+      return;
+    }
+    checks[key] = { sellerName: result.sellerName, wantsListId, checkedAt: new Date().toISOString(), hits: result.hits, pages: result.pages };
+    await storageSet(Flow.CHECKS_KEY, checks);
+  }
+
+  const NEUTRAL_LINK = { color: "#1C1A17", whiteSpace: "nowrap", textDecoration: "underline", textUnderlineOffset: "2px", fontWeight: "500" };
+
+  function smallButton(label, primary) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    css(button, {
+      width: "100%", marginTop: "8px", borderRadius: "999px", padding: "7px 12px", fontFamily: "inherit",
+      fontSize: "12.5px", fontWeight: "600", cursor: "pointer", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+      ...(primary
+        ? { border: "1.5px solid #1C1A17", background: "#1C1A17", color: "#FFF9EF" }
+        : { border: "1.5px solid #DED3C2", background: "transparent", color: "#1C1A17" })
+    });
+    return button;
+  }
+
+  function rowStatusText(row) {
+    if (row.status === "loaded") {
+      return row.empty
+        ? `✓ checked · no extra stock · ${Flow.formatAge(row.ageMs)}`
+        : `✓ loaded · ${offersText(row.offerCount, row.hits)} · ${Flow.formatAge(row.ageMs)}`;
+    }
+    if (row.checked && row.checked.hits > 0) {
+      return `${row.checked.hits} offer${row.checked.hits === 1 ? "" : "s"} on ${row.checked.pages} page${row.checked.pages === 1 ? "" : "s"} · load them on the seller's page`;
+    }
+    if (row.status === "stale") return "loaded over 24 h ago · reload to use it";
+    if (row.status === "other-list") return "loaded for another wants list · reload to use it";
+    return row.wantsUrl ? "not loaded" : "not loaded · no wants link in the cart";
+  }
+
   function renderWantsStock(checklist, next) {
     const section = wantsUi.section;
     section.replaceChildren();
@@ -1079,12 +1219,43 @@
     }
 
     const count = document.createElement("p");
-    count.textContent = `Loaded for ${checklist.loadedCount} of ${checklist.total} seller${checklist.total === 1 ? "" : "s"}`;
+    count.textContent = `Loaded for ${checklist.loadedCount} of ${checklist.total} seller${checklist.total === 1 ? "" : "s"}`
+      + (checklist.emptyCount ? ` · ${checklist.emptyCount} with nothing extra` : "");
     css(count, { margin: "2px 0 6px", color: "#6E6257", fontSize: "12px" });
     section.append(count);
 
+    // "Check all sellers": explicit click, Stop available for the whole run.
+    const toCheck = sellersToCheck(checklist);
+    if (Parser && (checkRun.running || toCheck.length)) {
+      if (checkRun.running) {
+        const stopBtn = smallButton("Stop checking", false);
+        stopBtn.style.marginTop = "0";
+        stopBtn.addEventListener("click", () => {
+          checkRun.cancel = true;
+          checkRun.text = "Stopping after the current seller…";
+          wantsUi.signature = "";
+          refreshWantsStock();
+        });
+        section.append(stopBtn);
+      } else {
+        const checkBtn = smallButton(`Check all sellers (${toCheck.length}, about ${toCheck.length * 3} s)`, false);
+        checkBtn.style.marginTop = "0";
+        checkBtn.title = "Opens page 1 of each seller's wants page in the background, one at a time";
+        checkBtn.addEventListener("click", runCheckAll);
+        section.append(checkBtn);
+      }
+    }
+    [[checkRun.text, "#6E6257"], [checkRun.error, "#9F2D24"]].forEach(([text, color]) => {
+      if (!text) return;
+      const line = document.createElement("p");
+      line.setAttribute("role", "status");
+      line.textContent = text;
+      css(line, { margin: "6px 0 0", color, fontSize: "12px" });
+      section.append(line);
+    });
+
     const list = document.createElement("ul");
-    css(list, { margin: "0", padding: "0", listStyle: "none", maxHeight: "180px", overflowY: "auto" });
+    css(list, { margin: "6px 0 0", padding: "0", listStyle: "none", maxHeight: "200px", overflowY: "auto" });
     checklist.rows.forEach((row) => {
       // Line 1: seller + link; line 2: status.
       const item = document.createElement("li");
@@ -1096,34 +1267,24 @@
       css(name, { flex: "1", minWidth: "0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: "600" });
       top.append(name);
       const loaded = row.status === "loaded";
+      const hasOffers = !loaded && row.checked && row.checked.hits > 0;
       if (row.wantsUrl && isCardmarketUrl(row.wantsUrl)) {
         const link = document.createElement("a");
         link.href = row.wantsUrl; // same tab
-        link.textContent = row.status === "not-loaded" ? "Open wants page" : "Reload";
-        css(link, { color: "#D84A2B", whiteSpace: "nowrap", textDecoration: "none", fontWeight: "600" });
+        link.textContent = hasOffers ? "Load →" : row.status === "not-loaded" ? "Open wants page" : "Reload";
+        css(link, { ...NEUTRAL_LINK, fontWeight: hasOffers ? "700" : "500" });
         top.append(link);
       }
       const status = document.createElement("div");
-      status.textContent = loaded
-        ? `✓ loaded · ${offersText(row.offerCount, row.hits)} · ${Flow.formatAge(row.ageMs)}`
-        : row.status === "stale" ? "loaded over 24 h ago · reload to use it"
-          : row.status === "other-list" ? "loaded for another wants list · reload to use it"
-            : row.wantsUrl ? "not loaded" : "not loaded · no wants link in the cart";
-      css(status, { color: loaded ? "#4F7A5A" : "#A89D8F" });
+      status.textContent = rowStatusText(row);
+      css(status, { color: loaded ? "#4F7A5A" : hasOffers ? "#1C1A17" : "#A89D8F" });
       item.append(top, status);
       list.append(item);
     });
     section.append(list);
 
     if (next && isCardmarketUrl(next.wantsUrl)) {
-      const nextBtn = document.createElement("button");
-      nextBtn.type = "button";
-      nextBtn.textContent = `Next seller → ${next.sellerName}`;
-      css(nextBtn, {
-        width: "100%", marginTop: "8px", border: "1.5px solid #1C1A17", borderRadius: "999px", background: "#1C1A17",
-        color: "#FFF9EF", padding: "7px 12px", fontFamily: "inherit", fontSize: "12.5px", fontWeight: "600", cursor: "pointer",
-        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
-      });
+      const nextBtn = smallButton(`Next seller → ${next.sellerName}`, true);
       nextBtn.addEventListener("click", () => {
         location.assign(next.wantsUrl);
       });
@@ -1155,13 +1316,23 @@
 
   function extractCartPayload(root) {
     const sellerSections = findSellerSections(root);
-    const sellers = sellerSections
+    const extracted = sellerSections
       .map(extractSeller)
       .filter((seller) => seller.items.length || seller.sellerName !== "Unknown seller");
+    const sellers = Rows ? Rows.dedupeSellers(extracted) : extracted;
     const warnings = [];
 
     if (!sellers.length) {
       warnings.push("No seller sections were recognized. Cardmarket may have changed the cart markup.");
+    }
+    if (Rows) {
+      sellers.forEach((seller) => {
+        const contents = Rows.readContentsCount(seller.rawText);
+        const read = Rows.articleCount(seller.items);
+        if (contents !== null && read !== contents) {
+          warnings.push(`${seller.sellerName}: read ${read} article(s), Cardmarket says ${contents}.`);
+        }
+      });
     }
 
     return {
@@ -1181,9 +1352,9 @@
     // Prefer the known Cardmarket shipment-block pattern (section[id^="seller"]).
     // This is the most reliable anchor: it is exactly one element per seller and
     // always contains the flag tooltip with the seller's country.
-    const shipmentBlocks = [
+    const shipmentBlocks = renderedOnly([
       ...root.querySelectorAll('section[id^="seller"], section.shipment-block')
-    ].filter((el) => /(?:€|EUR|\d+[,.]\d{2})/.test(visibleText(el)));
+    ]).filter((el) => /(?:€|EUR|\d+[,.]\d{2})/.test(visibleText(el)));
     if (shipmentBlocks.length) {
       return shipmentBlocks;
     }
@@ -1226,9 +1397,11 @@
 
   function extractSeller(section, sellerIndex) {
     const text = visibleText(section);
-    const rows = findItemRows(section)
-      .map((row, rowIndex) => extractItem(row, sellerIndex, rowIndex))
+    const read = renderedOnly(findItemRows(section))
+      .map((row, rowIndex) => ({ ...extractItem(row, sellerIndex, rowIndex), articleId: readArticleId(row) }))
       .filter((item) => item.cardName || item.price !== null);
+    const rows = (Rows ? Rows.dedupeItems(read, { contentsCount: Rows.readContentsCount(text) }) : read)
+      .map(({ articleId, ...item }) => item);
     const sellerName =
       readFirst(section, [
         "[data-seller-name]",
@@ -1243,7 +1416,7 @@
 
     const sellerCountry = readCountry(section, text);
     const wantsLink = Flow
-      ? Flow.findWantsLink([...section.querySelectorAll("a[href]")].map((a) => ({ text: visibleText(a), href: a.href })), location.href)
+      ? Flow.findWantsLink(sectionLinks(section), location.href)
       : { wantsUrl: "", wantsListId: "" };
 
     if (CARTFORGE_DEBUG) {
@@ -1283,6 +1456,30 @@
       items: rows,
       rawText: text
     };
+  }
+
+  // Rendered = laid out on screen. Rows the "Only removals" filter hid still count.
+  function isRendered(element) {
+    return element.getClientRects().length > 0 || Boolean(element.closest("[data-cartforge-hidden]"));
+  }
+
+  function renderedOnly(elements) {
+    return Rows ? Rows.pickRendered(elements, isRendered) : elements;
+  }
+
+  // Each link once, rendered ones first (both layouts carry the same links).
+  function sectionLinks(section) {
+    const anchors = [...section.querySelectorAll("a[href]")];
+    const ordered = [...anchors.filter(isRendered), ...anchors.filter((a) => !isRendered(a))];
+    const links = ordered.map((a) => ({ text: visibleText(a), href: a.href }));
+    return Rows ? Rows.dedupeLinks(links, location.href) : links;
+  }
+
+  function readArticleId(row) {
+    const id = row.getAttribute("data-article-id") || row.getAttribute("data-id-article") || "";
+    if (id) return id;
+    const match = String(row.id || "").match(/(\d{5,})/);
+    return match ? match[1] : "";
   }
 
   function findItemRows(section) {

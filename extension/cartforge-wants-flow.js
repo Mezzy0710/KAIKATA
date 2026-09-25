@@ -9,6 +9,9 @@
   const STALE_MS = 24 * 60 * 60 * 1000;
   const SNAPSHOT_KEY = "cartforgeCartSnapshotV1";
   const CANDIDATES_KEY = "cartforgeCandidatesV1";
+  // "Check all sellers" results for sellers with offers (page 1 only, never saved as offers).
+  const CHECKS_KEY = "cartforgeWantsCheckV1";
+  const EMPTY_RESULT_TEXT = "✓ No extra stock for your wants list here (everything they have is already in your cart or nothing matches).";
   const PRICE_EPSILON = 0.005;
   const BASE_URL = "https://www.cardmarket.com";
 
@@ -112,6 +115,37 @@
     return Array.isArray(capture?.offers) ? capture.offers.length : 0;
   }
 
+  // A seller whose wants page is Cardmarket's empty result: checked, nothing extra.
+  function isEmptyCapture(capture) {
+    return Array.isArray(capture?.offers) && capture.offers.length === 0;
+  }
+
+  // The 0-offer capture saved for an empty wants page (same shape as a full load).
+  function emptyCapture({ sellerName, sellerCountry = "", wantsListId, now = Date.now() }) {
+    return {
+      sellerName: String(sellerName || ""),
+      sellerCountry: String(sellerCountry || ""),
+      wantsListId: String(wantsListId || ""),
+      capturedAt: new Date(now).toISOString(),
+      hits: 0,
+      totalPages: 1,
+      pagesFetched: 1,
+      stoppedReason: null,
+      unique: 0,
+      passes: 1,
+      empty: true,
+      offers: []
+    };
+  }
+
+  // Check results (CHECKS_KEY) that still apply: < 24 h old and for the seller's wants list.
+  function checkFor(checks, seller, expectedId, now) {
+    const entry = checks?.[normalizeSellerKey(seller.sellerName)];
+    if (!entry || !isFresh({ capturedAt: entry.checkedAt }, now)) return null;
+    if (expectedId && String(entry.wantsListId || "") !== expectedId) return null;
+    return Number.isFinite(entry.hits) ? { hits: entry.hits, pages: Number(entry.pages) || 1, checkedAt: entry.checkedAt } : null;
+  }
+
   // What goes to KAIKATA: captures < 24 h old whose wants list is one of the cart's.
   // Without wantsListIds (older extension, pasted cart) only the age rule applies.
   function filterCapturesForTransfer(captures, wantsListIds, now = Date.now()) {
@@ -135,8 +169,10 @@
   }
 
   // One line per cart seller: loaded / stale / other-list / not-loaded, plus captured
-  // sellers that are not in this cart ("extra sellers").
-  function sellerChecklist(snapshot, captures, now = Date.now()) {
+  // sellers that are not in this cart ("extra sellers"). A 0-offer capture (empty wants
+  // page) is loaded, with `empty: true`. With "Check all sellers" results (`checks`),
+  // not-loaded sellers known to have offers come first, each with `checked: { hits, pages }`.
+  function sellerChecklist(snapshot, captures, now = Date.now(), checks = null) {
     const byName = new Map(captureList(captures).map((capture) => [normalizeSellerKey(capture.sellerName), capture]));
     const cartIds = new Set(uniqueIds(snapshot?.wantsListIds || []));
     const cartNames = new Set();
@@ -152,15 +188,21 @@
           : !cartIds.size || cartIds.has(String(capture.wantsListId || ""));
         status = !isFresh(capture, now) ? "stale" : sameList ? "loaded" : "other-list";
       }
+      const checked = status === "loaded" ? null : checkFor(checks, seller, expectedId, now);
       return {
         sellerName: seller.sellerName,
         wantsUrl: seller.wantsUrl || "",
         status,
+        empty: status === "loaded" && isEmptyCapture(capture),
         offerCount: capture ? offerCount(capture) : 0,
         hits: capture && Number.isFinite(capture.hits) ? capture.hits : null,
-        ageMs: capture ? Math.max(0, now - Date.parse(capture.capturedAt)) : null
+        ageMs: capture ? Math.max(0, now - Date.parse(capture.capturedAt)) : null,
+        checked
       };
     });
+    // Stable: sellers with offers found by "Check all sellers" first, then cart order.
+    const withOffers = (row) => Boolean(row.checked && row.checked.hits > 0);
+    const ordered = [...rows.filter(withOffers), ...rows.filter((row) => !withOffers(row))];
     const extras = captureList(captures)
       .filter((capture) => !cartNames.has(normalizeSellerKey(capture.sellerName)) && isFresh(capture, now))
       .map((capture) => ({
@@ -171,17 +213,19 @@
         sameWantsList: !cartIds.size || cartIds.has(String(capture.wantsListId || ""))
       }));
     return {
-      rows,
+      rows: ordered,
       total: rows.length,
       loadedCount: rows.filter((row) => row.status === "loaded").length,
+      emptyCount: rows.filter((row) => row.empty).length,
       extras
     };
   }
 
-  // First cart seller (in cart order) whose stock is not loaded yet and has a wants link.
-  function nextUnloadedSeller(snapshot, captures, now = Date.now(), skipSellerName = "") {
+  // First cart seller (checklist order: known offers first, then cart order) whose stock
+  // is not loaded yet and has a wants link. 0-offer captures count as loaded.
+  function nextUnloadedSeller(snapshot, captures, now = Date.now(), skipSellerName = "", checks = null) {
     const skip = normalizeSellerKey(skipSellerName);
-    return sellerChecklist(snapshot, captures, now).rows.find((row) => (
+    return sellerChecklist(snapshot, captures, now, checks).rows.find((row) => (
       row.status !== "loaded" && row.wantsUrl && normalizeSellerKey(row.sellerName) !== skip
     )) || null;
   }
@@ -217,14 +261,14 @@
 
   // Result-card follow-up line: how many of the cart's sellers are loaded and who's next,
   // or that every cart seller with a wants link is loaded. Null without a cart to count against.
-  function nextStepLine(snapshot, captures, now = Date.now(), currentSellerName = "") {
+  function nextStepLine(snapshot, captures, now = Date.now(), currentSellerName = "", checks = null) {
     if (!snapshot || !(snapshot.sellers || []).length) return null;
-    const checklist = sellerChecklist(snapshot, captures, now);
+    const checklist = sellerChecklist(snapshot, captures, now, checks);
     if (!checklist.total) return null;
     if (checklist.loadedCount === checklist.total) {
       return { text: "All cart sellers loaded — back to cart to transfer", complete: true, next: null };
     }
-    const next = nextUnloadedSeller(snapshot, captures, now, currentSellerName);
+    const next = nextUnloadedSeller(snapshot, captures, now, currentSellerName, checks);
     return {
       text: next
         ? `That's ${checklist.loadedCount} of ${checklist.total}. Next: ${next.sellerName} →`
@@ -244,6 +288,7 @@
       cartArticles: sellers.reduce((sum, seller) => sum + (seller.items || []).reduce((s, item) => s + (Number(item.quantity) || 1), 0), 0),
       stockSellers: transfer.sellers.length,
       stockOffers: transfer.sellers.reduce((sum, capture) => sum + offerCount(capture), 0),
+      emptySellers: transfer.sellers.filter(isEmptyCapture).length,
       excluded: transfer.excluded,
       fallback: transfer.fallback
     };
@@ -255,9 +300,12 @@
 
   function formatTransferSummary(summary) {
     const cart = `Sends your cart (${plural(summary.cartSellers, "seller")}, ${plural(summary.cartArticles, "article")})`;
-    const stock = summary.stockSellers
-      ? ` + wants stock from ${plural(summary.stockSellers, "seller")} (${plural(summary.stockOffers, "offer")})`
-      : " + no wants stock loaded";
+    const empty = summary.emptySellers || 0;
+    const withOffers = summary.stockSellers - empty;
+    const stock = !summary.stockSellers ? " + no wants stock loaded"
+      : !withOffers ? ` + ${plural(empty, "seller")} checked with nothing extra`
+        : ` + wants stock from ${plural(withOffers, "seller")} (${plural(summary.stockOffers, "offer")})`
+          + (empty ? ` + ${empty} checked with nothing extra` : "");
     const parts = [];
     if (summary.excluded?.stale) parts.push(`${summary.excluded.stale} older than 24 h`);
     if (summary.excluded?.otherWantsList) parts.push(`${summary.excluded.otherWantsList} from another wants list`);
@@ -304,6 +352,8 @@
     STALE_MS,
     SNAPSHOT_KEY,
     CANDIDATES_KEY,
+    CHECKS_KEY,
+    EMPTY_RESULT_TEXT,
     normalizeCardKey,
     normalizeSellerKey,
     parsePrice,
@@ -311,6 +361,8 @@
     findWantsLink,
     buildCartSnapshot,
     isFresh,
+    isEmptyCapture,
+    emptyCapture,
     filterCapturesForTransfer,
     sellerChecklist,
     nextUnloadedSeller,

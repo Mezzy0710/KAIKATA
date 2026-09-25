@@ -25,6 +25,7 @@ TOTAL=0
 TEST_FILES=(
   "tests/candidate-impact.mjs"
   "tests/candidates.mjs"
+  "tests/cart-rows.mjs"
   "tests/correctness-optimizer.mjs"
   "tests/optimizer-dynamic-basket-costs.mjs"
   "tests/correctness-parser.mjs"

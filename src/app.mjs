@@ -28,7 +28,7 @@ import { createSellerCostCache } from "./optimizer-score-cache.mjs?v=20260924b";
 import { buildSellerShippingRecords } from "./shipping-calibration.mjs?v=20260925a";
 import { cartRow, sellerCartCuts } from "./plan-cuts.mjs?v=20260926a";
 import { addOffersBySeller, mergeCandidateOffers, normalizeSellerName, wantsPageUrl } from "./candidates.mjs?v=20260926b";
-import { captureNotes, describeCandidateImpact, optimizeWithCandidates } from "./candidate-impact.mjs?v=20260927a";
+import { captureNotes, checkedText, describeCandidateImpact, optimizeWithCandidates } from "./candidate-impact.mjs?v=20260928a";
 
 const manaClasses = ["mana-w", "mana-u", "mana-b", "mana-r", "mana-g"];
 const MAX_OPTIMIZATION_ITERATIONS = 500;
@@ -994,8 +994,8 @@ function candidateStatusTemplate() {
   }
   if (status === "loaded" && state.candidateStats) {
     const stats = state.candidateStats;
-    const sellers = state.candidateSellers.length;
-    const checked = `${stats.received} offer${stats.received === 1 ? "" : "s"} from ${sellers} seller${sellers === 1 ? "" : "s"}`;
+    const emptySellers = state.candidateSellers.filter((seller) => Array.isArray(seller.offers) && seller.offers.length === 0).length;
+    const checked = checkedText({ offersChecked: stats.received, sellersChecked: state.candidateSellers.length, emptySellers }).replace(/^Checked /, "");
     const impact = state.optimizationResult && !state.optimizationStale ? state.candidateImpact : null;
     let lead = `Wants stock loaded: ${checked}`;
     let rest = ` (${stats.beforeFilter} for cards in your cart). Optimize to see whether it beats your cart.`;

@@ -32,13 +32,18 @@
   let cancelRequested = false;
 
   const ui = buildPanel();
-  showStart();
+  if (current.isEmpty) {
+    // Cardmarket's empty result: nothing to fetch, a valid "no extra stock" answer.
+    saveEmptyCapture().then((saved) => showResult(saved, { emptyPage: true }));
+  } else {
+    showStart();
+  }
   refreshCaptureList();
   refreshHeader();
   applyPlanMarks();
   try {
     chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === "local" && changes[CANDIDATES_KEY]) {
+      if (area === "local" && (changes[CANDIDATES_KEY] || (Flow && changes[Flow.CHECKS_KEY]))) {
         refreshCaptureList();
         refreshHeader();
       }
@@ -96,6 +101,19 @@
     return all[sellerKey];
   }
 
+  // Empty wants page: a 0-offer capture, which counts as loaded ("checked, nothing extra").
+  async function saveEmptyCapture() {
+    const all = (await storageGet(CANDIDATES_KEY)) || {};
+    const entry = Flow
+      ? Flow.emptyCapture({ sellerName: meta.sellerName, sellerCountry: meta.sellerCountry, wantsListId: meta.wantsListId })
+      : { sellerName: meta.sellerName, sellerCountry: meta.sellerCountry || "", wantsListId: meta.wantsListId, capturedAt: new Date().toISOString(), hits: 0, empty: true, offers: [] };
+    all[sellerKey] = entry;
+    await storageSet(CANDIDATES_KEY, all);
+    refreshCaptureList();
+    refreshHeader();
+    return entry;
+  }
+
   // This seller's capture for this wants list, if it is less than 24 h old.
   async function freshCapture() {
     const entry = ((await storageGet(CANDIDATES_KEY)) || {})[sellerKey];
@@ -120,7 +138,9 @@
       }
     });
     capturing = false;
-    if (result.offers.length) {
+    if (result.isEmpty) {
+      await showResult(await saveEmptyCapture(), { emptyPage: true });
+    } else if (result.offers.length) {
       const saved = await saveCapture(result.offers, result, { merge: false });
       await showResult(saved, { stoppedReason: result.stoppedReason, pagesFetched: result.pagesFetched });
     } else {
@@ -150,7 +170,13 @@
     ui.prompt.style.display = "block";
     ui.progress.style.display = "none";
     ui.result.style.display = "none";
-    if (loaded) {
+    if (loaded && !loaded.offers.length) {
+      ui.promptTitle.textContent = `${meta.sellerName} checked: no extra stock`;
+      ui.promptInfo.textContent = `Checked ${formatAge(Date.now() - Date.parse(loaded.capturedAt))}`;
+      ui.loadBtn.textContent = "Check again";
+      await showResult(loaded, { alreadyLoaded: true });
+      ui.prompt.style.display = "block";
+    } else if (loaded) {
       ui.promptTitle.textContent = `${meta.sellerName}'s wanted cards are loaded`;
       ui.promptInfo.textContent = `Loaded ${formatAge(Date.now() - Date.parse(loaded.capturedAt))} · ${offersText(loaded.offers.length)}`;
       ui.loadBtn.textContent = "Reload";
@@ -181,13 +207,16 @@
     ui.progressText.textContent = `${label} · ${offers} offers${waitingMs ? ` · pausing ${Math.round(waitingMs / 100) / 10} s` : ""}`;
   }
 
-  async function showResult(saved, { stoppedReason = null, pageOnly = 0, alreadyLoaded = false } = {}) {
+  async function showResult(saved, { stoppedReason = null, pageOnly = 0, alreadyLoaded = false, emptyPage = false } = {}) {
     ui.progress.style.display = "none";
     ui.prompt.style.display = alreadyLoaded ? "block" : "none";
     ui.result.style.display = "block";
     ui.result.replaceChildren();
+    const empty = emptyPage || !saved.offers.length;
 
-    if (!alreadyLoaded && pageOnly) {
+    if (empty) {
+      ui.result.append(paragraph(Flow ? Flow.EMPTY_RESULT_TEXT : "✓ No extra stock for your wants list here.", { fontWeight: "700", color: "#4F7A5A", margin: "0" }));
+    } else if (!alreadyLoaded && pageOnly) {
       ui.result.append(paragraph(`✓ Loaded ${offersText(pageOnly)} from this page (${saved.offers.length} for this seller).`, { fontWeight: "700", color: "#4F7A5A" }));
     } else if (!pageOnly) {
       // Cardmarket's paging repeats some rows and skips others; the walker tries a
@@ -206,7 +235,9 @@
     }
 
     const snapshot = await storageGet(SNAPSHOT_KEY);
-    if (!snapshot || !Flow) {
+    if (empty) {
+      // Nothing to compare.
+    } else if (!snapshot || !Flow) {
       ui.result.append(paragraph("Open your cart once so KAIKATA can compare.", { color: "#6E6257" }));
     } else {
       const comparison = Flow.compareStockToCart(snapshot, saved.offers);
@@ -225,7 +256,8 @@
     const actions = document.createElement("div");
     css(actions, { display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px" });
     const captures = (await storageGet(CANDIDATES_KEY)) || {};
-    const step = snapshot && Flow ? Flow.nextStepLine(snapshot, captures, Date.now(), meta.sellerName) : null;
+    const checks = Flow ? (await storageGet(Flow.CHECKS_KEY)) || {} : {};
+    const step = snapshot && Flow ? Flow.nextStepLine(snapshot, captures, Date.now(), meta.sellerName, checks) : null;
     if (step) {
       ui.result.append(paragraph(step.text, step.complete
         ? { color: "#4F7A5A", fontWeight: "600" }
@@ -304,13 +336,18 @@
     const panel = document.createElement("div");
     panel.id = PANEL_ID;
     panel.className = "cartforge-wants-panel";
+    // Never taller than the window: the panel scrolls, its top block (progress header,
+    // then title) stays pinned, so overall progress is always the first thing visible.
     css(panel, {
-      position: "fixed", right: "16px", bottom: "16px", zIndex: "2147483647", width: "300px",
+      position: "fixed", right: "16px", bottom: "16px", zIndex: "2147483647", width: "min(300px, calc(100vw - 32px))",
+      maxHeight: "calc(100vh - 32px)", overflowY: "auto", boxSizing: "border-box",
       font: "13px/1.45 'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", color: "#1C1A17",
       background: "#FFF9EF", border: "1.5px solid #DED3C2", borderRadius: "12px",
-      boxShadow: "0 4px 16px rgba(28,26,23,0.12)", padding: "12px 14px"
+      boxShadow: "0 4px 16px rgba(28,26,23,0.12)", padding: "0"
     });
 
+    const top = document.createElement("div");
+    css(top, { position: "sticky", top: "0", zIndex: "1", background: "#FFF9EF", padding: "12px 14px 0" });
     const header = document.createElement("div");
     css(header, { display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" });
     const title = document.createElement("strong");
@@ -324,6 +361,7 @@
     header.append(title, collapse);
 
     const body = document.createElement("div");
+    css(body, { padding: "0 14px 12px" });
     const progressHeader = paragraph("", {
       margin: "0 0 8px", padding: "6px 8px", borderRadius: "8px", fontWeight: "700", fontSize: "12px",
       color: "#1C1A17", background: "rgba(79,122,90,0.10)", display: "none"
@@ -383,8 +421,9 @@
     css(clearAll, { ...LINK_BUTTON, marginTop: "4px", color: "#9F2D24" });
     details.append(summary, list, clearAll);
 
-    body.append(progressHeader, info, prompt, progress, result, planLine, selectBtn, note, details);
-    panel.append(header, body);
+    top.append(progressHeader, header);
+    body.append(info, prompt, progress, result, planLine, selectBtn, note, details);
+    panel.append(top, body);
     document.body.append(panel);
 
     loadBtn.addEventListener("click", loadSeller);

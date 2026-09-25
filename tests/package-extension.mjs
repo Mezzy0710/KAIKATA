@@ -31,6 +31,7 @@ try {
     "background.js",
     "content-script.js",
     "cartforge-wants-flow.js",
+    "cartforge-cart-rows.js",
     "app-assets/fonts.css",
     "app-assets/fonts/Geist-Variable.woff2",
     "app-assets/fonts/OFL.txt",

@@ -5,7 +5,7 @@ import vm from "node:vm";
 // Load the extension's parser as Chrome does (classic script → globalThis).
 const sandbox = { URL };
 vm.runInNewContext(await readFile(new URL("../extension/cartforge-wants-parser.js", import.meta.url), "utf8"), sandbox);
-const { parseWantsPage, walkWantsPages, pageUrlFor, captureResultText, MAX_PAGES } = sandbox.CartforgeWantsParser;
+const { parseWantsPage, walkWantsPages, checkSellersFirstPage, pageUrlFor, captureResultText, MAX_PAGES } = sandbox.CartforgeWantsParser;
 
 const html = await readFile(new URL("./fixtures/wants-page-sample.html", import.meta.url), "utf8");
 const PAGE_URL = "https://www.cardmarket.com/en/Magic/Users/SampleSeller/Offers/Singles?sortBy=name_asc&idWantslist=25431729";
@@ -64,6 +64,24 @@ assert.equal(noCountry.meta.sellerCountry, "");
 // Challenge / empty pages.
 assert.equal(parseWantsPage("<html><body><h1>Just a moment...</h1></body></html>", PAGE_URL).isChallenge, true);
 assert.equal(parseWantsPage("<html><body><p>0 Hits</p></body></html>", PAGE_URL).isChallenge, false, "An empty result is not a challenge.");
+assert.equal(parseWantsPage("<html><body><p>0 Hits</p></body></html>", PAGE_URL).isEmpty, true);
+assert.equal(page.isEmpty, false);
+
+// Cardmarket's empty result: no rows, no "Hits", "There are no offers for your selected …".
+const emptyHtml = await readFile(new URL("./fixtures/wants-page-empty.html", import.meta.url), "utf8");
+const emptyPage = parseWantsPage(emptyHtml, PAGE_URL, CAPTURED_AT);
+assert.equal(emptyPage.isEmpty, true);
+assert.equal(emptyPage.isChallenge, false);
+assert.equal(emptyPage.offers.length, 0);
+assert.equal(emptyPage.meta.hits, 0);
+assert.equal(emptyPage.meta.pages, 1);
+assert.equal(emptyPage.meta.sellerName, "SampleSeller");
+// Language-tolerant: another language's wording still counts through the wants filter.
+const germanEmpty = parseWantsPage(emptyHtml.replace("There are no offers for your selected filters.", "Keine Angebote gefunden."), PAGE_URL);
+assert.equal(germanEmpty.isEmpty, true);
+assert.equal(germanEmpty.isChallenge, false);
+// Without either signal it stays a check page.
+assert.equal(parseWantsPage("<html><body><form><input name=\"email\"></form></body></html>", PAGE_URL).isChallenge, true);
 
 // --- 2. Walker with injected fetch and sleep.
 function pageHtml(pageNumber, totalPages, hits = null) {
@@ -170,6 +188,24 @@ walk = await walkWantsPages({
 assert.equal(site.calls.length, 1);
 assert.equal(walk.stoppedReason, "Stopped by you.");
 
+// Empty result on page 1: a clean stop after one request, nothing to fill.
+{
+  const calls = [];
+  const emptyWalk = await walkWantsPages({
+    startUrl: PAGE_URL,
+    fetchPage: async (url) => { calls.push(url); return { status: 200, url, text: async () => emptyHtml }; },
+    sleep: recorder().sleep
+  });
+  assert.equal(calls.length, 1, "The walker stops after page 1.");
+  assert.equal(emptyWalk.isEmpty, true);
+  assert.equal(emptyWalk.stoppedReason, null);
+  assert.equal(emptyWalk.offers.length, 0);
+  assert.equal(emptyWalk.pagesFetched, 1);
+  assert.equal(emptyWalk.passes, 1);
+  assert.equal(emptyWalk.meta.hits, 0);
+}
+assert.equal(walk.isEmpty, false);
+
 assert.equal(new URL(pageUrlFor(PAGE_URL, 4)).searchParams.get("site"), "4");
 assert.equal(new URL(pageUrlFor(PAGE_URL, 4, "name_desc")).searchParams.get("sortBy"), "name_desc");
 
@@ -272,5 +308,71 @@ assert.deepEqual({ ...captureResultText(231, 255) }, {
     + "so 24 couldn't be reached (usually extra copies of cards that were loaded).",
   complete: false
 });
+
+// --- 4. "Check all sellers": page 1 only per seller, sequential, 2–4 s apart.
+{
+  const sellerUrl = (name) => `https://www.cardmarket.com/en/Magic/Users/${name}/Offers/Singles?idWantslist=24618932`;
+  const sellers = ["Alpha", "Bravo", "Charlie"].map((sellerName) => ({ sellerName, wantsUrl: sellerUrl(sellerName) }));
+  const calls = [];
+  let inFlight = 0;
+  let maxInFlight = 0;
+  const responses = {
+    Alpha: () => emptyHtml,
+    Bravo: () => html, // 222 hits on 12 pages
+    Charlie: () => gapPage({ ids: ["1"], page: 1, totalPages: 1, hits: 1 })
+  };
+  const fetchPage = async (url) => {
+    inFlight += 1;
+    maxInFlight = Math.max(maxInFlight, inFlight);
+    calls.push(url);
+    await new Promise((resolve) => setTimeout(resolve, 1));
+    inFlight -= 1;
+    const name = new URL(url).pathname.split("/")[4];
+    return { status: 200, url, text: async () => responses[name]() };
+  };
+  const checkTiming = recorder();
+  const check = await checkSellersFirstPage({ sellers, fetchPage, sleep: checkTiming.sleep, random: checkTiming.random });
+  assert.equal(check.stoppedReason, null);
+  assert.deepEqual(JSON.parse(JSON.stringify(check.results.map((row) => [row.sellerName, row.status, row.hits, row.pages]))), [
+    ["Alpha", "none", 0, 1],
+    ["Bravo", "offers", 222, 12],
+    ["Charlie", "offers", 1, 1]
+  ]);
+  assert.ok(calls.every((url) => new URL(url).searchParams.get("site") === "1"), "Only page 1 is fetched.");
+  assert.equal(calls.length, 3);
+  assert.equal(maxInFlight, 1, "Requests never overlap.");
+  assert.equal(checkTiming.sleeps.length, 2);
+  assert.ok(checkTiming.sleeps.every((ms) => ms >= 2000 && ms <= 4000), `Pauses ${checkTiming.sleeps}`);
+
+  // Same stop rules as the walker: the run ends at the first 429.
+  const limited = await checkSellersFirstPage({
+    sellers,
+    fetchPage: async (url) => (url.includes("/Bravo/")
+      ? { status: 429, url, text: async () => "" }
+      : { status: 200, url, text: async () => emptyHtml }),
+    sleep: recorder().sleep
+  });
+  assert.equal(limited.results.length, 1);
+  assert.match(limited.stoppedReason, /Bravo.*429/);
+  const challenged = await checkSellersFirstPage({
+    sellers,
+    fetchPage: async (url) => ({ status: 200, url, text: async () => "<html><body>Checking your browser…</body></html>" }),
+    sleep: recorder().sleep
+  });
+  assert.equal(challenged.results.length, 0);
+  assert.match(challenged.stoppedReason, /check or error page/);
+  const login = await checkSellersFirstPage({
+    sellers,
+    fetchPage: async () => ({ status: 200, url: "https://www.cardmarket.com/en/Magic/Login", text: async () => "" }),
+    sleep: recorder().sleep
+  });
+  assert.match(login.stoppedReason, /login/i);
+
+  // Stop button: checked before each request.
+  let stop = false;
+  const stopped = await checkSellersFirstPage({ sellers, fetchPage, sleep: async () => { stop = true; }, isCancelled: () => stop });
+  assert.equal(stopped.results.length, 1);
+  assert.equal(stopped.stoppedReason, "Stopped by you.");
+}
 
 console.log("wants-parser: all assertions passed");
