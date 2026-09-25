@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { parseExtractedCartPayload } from "../src/importer.mjs";
 import { mergeCandidateOffers } from "../src/candidates.mjs";
-import { describeCandidateImpact, headlineText, optimizeWithCandidates, buildCandidateImpact } from "../src/candidate-impact.mjs";
+import { checkedText, describeCandidateImpact, headlineText, optimizeWithCandidates, buildCandidateImpact } from "../src/candidate-impact.mjs";
 import { __testing } from "../src/app.mjs";
 
 const shippingData = JSON.parse(await readFile(new URL("../shipping_data.json", import.meta.url), "utf8"));
@@ -131,6 +131,23 @@ const unusable = run([captured("Seller04", "Germany", [["Black Lotus", 1]])]);
 assert.equal(unusable.impact.state, "nothing-better");
 assert.equal(unusable.candidateResult, unusable.cartResult);
 assert.equal(unusable.impact.timings.candidateMs, 0);
+
+// Empty wants pages (0-offer captures) count as "checked, nothing extra".
+const withEmpty = run([
+  captured("Seller04", "Germany", [["Grave Pact", 30], ["Food Chain", 18], ["Black Lotus", 1]]),
+  captured("FreshSeller", "Germany", [["Sylvan Library", 40]]),
+  captured("Seller01", "Germany", []),
+  captured("Seller05", "Italy", [])
+]);
+assert.equal(withEmpty.impact.state, "nothing-better");
+assert.equal(withEmpty.impact.emptySellers, 2);
+assert.equal(round(withEmpty.result.selectedTotal), 211.37, "Empty captures change nothing.");
+assert.equal(headlineText(withEmpty.text.headline), "Checked 4 offers from 2 sellers, 2 more checked, nothing extra — nothing beats your cart. Your plan uses only cart items.");
+const onlyEmpty = run([captured("Seller01", "Germany", []), captured("Seller05", "Italy", [])]);
+assert.equal(onlyEmpty.impact.state, "nothing-better");
+assert.equal(headlineText(onlyEmpty.text.headline), "Checked 2 sellers, nothing extra — nothing beats your cart. Your plan uses only cart items.");
+assert.equal(onlyEmpty.text.detail, "");
+assert.equal(checkedText({ offersChecked: 5, sellersChecked: 1, emptySellers: 0 }), "Checked 5 offers from 1 seller");
 
 // Excluded captures and the no-wantsListIds fallback are described.
 const excluded = run([], { excluded: { stale: 2, otherWantsList: 1 } });

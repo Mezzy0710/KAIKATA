@@ -1,0 +1,25 @@
+<!-- Synthetic reproduction of an empty cardmarket.com/en/Magic/Users/<seller>/Offers/Singles?idWantslist=<id>
+     page: the seller has nothing from this wants list (live review 2026-09-25). No article rows,
+     no "Hits" count, the filter form is still there. Seller name and ids are made up. -->
+<!DOCTYPE html>
+<html lang="en">
+<head><title>SampleSeller | Cardmarket</title></head>
+<body>
+  <div class="page-title-container">
+    <h1>SampleSeller <span class="icon" data-bs-original-title="Item location: Italy"></span></h1>
+  </div>
+  <form id="FilterForm" method="get" action="/en/Magic/Users/SampleSeller/Offers/Singles">
+    <label for="idWantslist">Wants List</label>
+    <select name="idWantslist" id="idWantslist">
+      <option value="24618932" selected>Commander deck</option>
+    </select>
+    <input type="hidden" name="sortBy" value="name_asc">
+    <button type="submit">Filter</button>
+  </form>
+  <div class="table article-table">
+    <div class="table-body">
+      <p class="noResults text-center">There are no offers for your selected filters.</p>
+    </div>
+  </div>
+</body>
+</html>

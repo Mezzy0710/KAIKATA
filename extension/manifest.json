@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "KAIKATA",
   "description": "KAIKATA — Cardmarket cart optimizer.",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -47,7 +47,7 @@
         "https://www.cardmarket.com/*/*/ShoppingCart/Checkout/*",
         "https://*.cardmarket.com/*/*/ShoppingCart/Checkout/*"
       ],
-      "js": ["cartforge-matching.js", "cartforge-wants-flow.js", "content-script.js"],
+      "js": ["cartforge-matching.js", "cartforge-cart-rows.js", "cartforge-wants-parser.js", "cartforge-wants-flow.js", "content-script.js"],
       "run_at": "document_idle"
     },
     {

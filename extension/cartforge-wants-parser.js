@@ -249,8 +249,20 @@
     };
   }
 
-  // Parses one wants page. `isChallenge` flags pages that are neither offers nor an
-  // empty result (Cloudflare / login / error pages): no article rows and no "Hits".
+  // Cardmarket's empty result: "There are no offers for your selected …". The wording
+  // is English-only, so the wants filter (a form field named idWantslist) also counts:
+  // Cloudflare, login and error pages never carry it.
+  const EMPTY_TEXT = /There are no offers\b/i;
+
+  function hasWantsFilter(root) {
+    return Boolean(find(root, (node) => (
+      (node.tag === "select" || node.tag === "input") && String(node.attrs.name || "").toLowerCase() === "idwantslist"
+    )));
+  }
+
+  // Parses one wants page. `isEmpty` flags a valid page without offers (nothing on this
+  // wants list in the seller's stock). `isChallenge` flags pages that are neither offers
+  // nor an empty result (Cloudflare / login / error pages).
   function parseWantsPage(html, pageUrl, capturedAt = new Date().toISOString()) {
     const root = parseHtml(html);
     const urlInfo = readPageUrl(pageUrl);
@@ -267,11 +279,27 @@
     };
     const rows = findAll(root, (node) => hasClass("article-row")(node) && /^stockRow\d+$/.test(node.attrs.id || ""));
     const offers = rows.map((row) => parseRow(row, { ...meta, capturedAt }));
+    const isEmpty = rows.length === 0 && (meta.hits === 0 || EMPTY_TEXT.test(pageText) || hasWantsFilter(root));
+    if (isEmpty) {
+      meta.hits = 0;
+      meta.page = 1;
+      meta.pages = 1;
+    }
     return {
       meta,
       offers,
-      isChallenge: rows.length === 0 && !hitsMatch
+      isEmpty,
+      isChallenge: rows.length === 0 && !isEmpty && !hitsMatch
     };
+  }
+
+  // Shared stop rules for every wants-page request: a reason string, or null when the
+  // response is a 200 on a Cardmarket page (not the login page).
+  function responseStopReason(response, page) {
+    if (response.status === 429) return `Cardmarket asked to slow down (HTTP 429) on page ${page}.`;
+    if (response.status !== 200) return `Page ${page} returned HTTP ${response.status}.`;
+    if (/\/login/i.test(String(response.url || ""))) return "Redirected to the login page. Log in on Cardmarket and try again.";
+    return null;
   }
 
   function pageUrlFor(startUrl, page, sortBy) {
@@ -291,6 +319,7 @@
     let totalPages = 1;
     let pagesFetched = 0;
     let stoppedReason = null;
+    let empty = false;
 
     for (let page = 1; page <= Math.min(totalPages, limit); page += 1) {
       if (page > 1) {
@@ -310,24 +339,21 @@
         stoppedReason = `Network error on page ${page}.`;
         break;
       }
-      if (response.status === 429) {
-        stoppedReason = `Cardmarket asked to slow down (HTTP 429) on page ${page}.`;
-        break;
-      }
-      if (response.status !== 200) {
-        stoppedReason = `Page ${page} returned HTTP ${response.status}.`;
-        break;
-      }
-      if (/\/login/i.test(String(response.url || ""))) {
-        stoppedReason = "Redirected to the login page. Log in on Cardmarket and try again.";
-        break;
-      }
+      stoppedReason = responseStopReason(response, page);
+      if (stoppedReason) break;
       const parsed = parseWantsPage(await response.text(), url, capturedAt);
       if (parsed.isChallenge) {
         stoppedReason = `Page ${page} was a check or error page instead of offers.`;
         break;
       }
       pagesFetched += 1;
+      if (parsed.isEmpty) {
+        // A valid page without offers: nothing on later pages either.
+        if (!meta) meta = parsed.meta;
+        empty = page === 1;
+        onProgress({ page, totalPages: 1, offers: offersById.size, pass });
+        break;
+      }
       if (!meta) {
         meta = parsed.meta;
         totalPages = Math.max(1, parsed.meta.pages || 1);
@@ -340,7 +366,7 @@
     if (!stoppedReason && totalPages > limit) {
       stoppedReason = `Stopped at the ${limit}-page limit (${totalPages} pages).`;
     }
-    return { meta, offersById, rowsSeen, pagesFetched, totalPages, stoppedReason };
+    return { meta, offersById, rowsSeen, pagesFetched, totalPages, stoppedReason, empty };
   }
 
   // Walks a seller's wants-list pages once in the page's default order, then — only if
@@ -382,8 +408,64 @@
       rowsSeen,
       unique: offers.length,
       duplicateRows: rowsSeen - offers.length,
-      passes
+      passes,
+      // Page 1 was Cardmarket's empty result: a valid "no stock for this wants list".
+      isEmpty: pass1.empty
     };
+  }
+
+  // "Check all sellers" on the cart page: page 1 only of each seller's wants page, one
+  // request at a time, a random 2–4 s pause in between, same stop rules as the walker
+  // (the whole run stops at the first 429 / non-200 / login / check page).
+  //   sellers: [{ sellerName, wantsUrl }]
+  // Per seller: { status: "none" } (empty result, parsed page 1 included so the caller
+  // can save a 0-offer capture) or { status: "offers", hits, pages }.
+  async function checkSellersFirstPage({ sellers, fetchPage, sleep, random = Math.random, onProgress = () => {}, isCancelled = () => false, capturedAt = new Date().toISOString() }) {
+    const results = [];
+    let stoppedReason = null;
+    for (let index = 0; index < sellers.length; index += 1) {
+      const seller = sellers[index];
+      if (index > 0) {
+        const delay = 2000 + Math.floor(random() * 2001);
+        onProgress({ done: index, total: sellers.length, sellerName: seller.sellerName, waitingMs: delay, results });
+        await sleep(delay);
+      }
+      if (isCancelled()) {
+        stoppedReason = "Stopped by you.";
+        break;
+      }
+      onProgress({ done: index, total: sellers.length, sellerName: seller.sellerName, waitingMs: 0, results });
+      const url = pageUrlFor(seller.wantsUrl, 1);
+      let response;
+      try {
+        response = await fetchPage(url);
+      } catch {
+        stoppedReason = `Network error while checking ${seller.sellerName}.`;
+        break;
+      }
+      const reason = responseStopReason(response, 1);
+      if (reason) {
+        stoppedReason = `${seller.sellerName}: ${reason}`;
+        break;
+      }
+      const parsed = parseWantsPage(await response.text(), url, capturedAt);
+      if (parsed.isChallenge) {
+        stoppedReason = `${seller.sellerName}: the wants page was a check or error page instead of offers.`;
+        break;
+      }
+      results.push(parsed.isEmpty
+        ? { sellerName: seller.sellerName, wantsUrl: seller.wantsUrl, status: "none", hits: 0, pages: 1, meta: parsed.meta }
+        : {
+          sellerName: seller.sellerName,
+          wantsUrl: seller.wantsUrl,
+          status: "offers",
+          hits: Number.isFinite(parsed.meta.hits) ? parsed.meta.hits : parsed.offers.length,
+          pages: Math.max(1, parsed.meta.pages || 1),
+          meta: parsed.meta
+        });
+    }
+    onProgress({ done: results.length, total: sellers.length, sellerName: "", waitingMs: 0, results });
+    return { results, stoppedReason };
   }
 
   // "N of H offers" copy for the wants page's result card. Full (H unknown, or N ≥ H):
@@ -411,6 +493,7 @@
     parseHtml,
     parseWantsPage,
     walkWantsPages,
+    checkSellersFirstPage,
     captureResultText,
     pageUrlFor,
     parseEuro,

@@ -139,7 +139,7 @@ assert.equal(Flow.filterCapturesForTransfer(stored, ["25431729"], NOW + 24 * 360
 
 // Send summary on the cart page counts only what will be transferred.
 const summary = plain(Flow.summarizeTransfer({ payload, captures: stored, now: NOW }));
-assert.deepEqual(summary, { cartSellers: 2, cartArticles: 4, stockSellers: 2, stockOffers: 10, excluded: { stale: 1, otherWantsList: 1 }, fallback: false });
+assert.deepEqual(summary, { cartSellers: 2, cartArticles: 4, stockSellers: 2, stockOffers: 10, emptySellers: 0, excluded: { stale: 1, otherWantsList: 1 }, fallback: false });
 assert.equal(
   Flow.formatTransferSummary(summary),
   "Sends your cart (2 sellers, 4 articles) + wants stock from 2 sellers (10 offers). Not sent: 1 older than 24 h, 1 from another wants list."
@@ -220,6 +220,78 @@ assert.equal(doneStep.next, null);
 
 // No cart snapshot yet: nothing to report.
 assert.equal(Flow.nextStepLine(null, stored, NOW), null);
+
+// --- 2c. Empty wants pages (0-offer captures) and "Check all sellers".
+{
+  const empty = plain(Flow.emptyCapture({ sellerName: "Second", sellerCountry: "Italy", wantsListId: "25431729", now: NOW - 60000 }));
+  assert.deepEqual(empty.offers, []);
+  assert.equal(empty.hits, 0);
+  assert.equal(empty.empty, true);
+  assert.equal(empty.capturedAt, minutesAgo(1));
+  const withEmpty = { ...stored, second: empty };
+
+  // Counts as loaded in the checklist, the progress header and "next seller".
+  const emptyChecklist = plain(Flow.sellerChecklist(twoLinked, withEmpty, NOW));
+  assert.equal(emptyChecklist.loadedCount, 2);
+  assert.equal(emptyChecklist.emptyCount, 1);
+  const secondRow = emptyChecklist.rows.find((row) => row.sellerName === "Second");
+  assert.equal(secondRow.status, "loaded");
+  assert.equal(secondRow.empty, true);
+  assert.equal(secondRow.offerCount, 0);
+  assert.equal(plain(Flow.wantsStockProgress(twoLinked, withEmpty, NOW)).text, "Wants stock: 2 of 3 cart sellers loaded · 4 offers");
+  assert.equal(Flow.nextUnloadedSeller(twoLinked, { second: empty }, NOW, "SampleSeller"), null, "The empty seller is skipped; NoLinkSeller has no link.");
+  assert.equal(Flow.nextUnloadedSeller(twoLinked, { second: empty }, NOW)?.sellerName, "SampleSeller");
+  assert.equal(plain(Flow.nextStepLine(twoLinked, withEmpty, NOW, "Second")).text, "That's 2 of 3.");
+
+  // Transfer summary: sent like any capture, counted as "nothing extra".
+  const emptyPayload = { ...payload, sellers: [...payload.sellers, { sellerName: "Second", wantsListId: "25431729", items: [{ cardName: "Food Chain", quantity: 1 }] }] };
+  const emptySummary = plain(Flow.summarizeTransfer({ payload: emptyPayload, captures: withEmpty, now: NOW }));
+  assert.equal(emptySummary.stockSellers, 3);
+  assert.equal(emptySummary.emptySellers, 1);
+  assert.equal(
+    Flow.formatTransferSummary(emptySummary),
+    "Sends your cart (3 sellers, 5 articles) + wants stock from 2 sellers (10 offers) + 1 checked with nothing extra. Not sent: 1 older than 24 h, 1 from another wants list."
+  );
+  assert.equal(
+    Flow.formatTransferSummary({ ...emptySummary, stockSellers: 2, stockOffers: 0, emptySellers: 2, excluded: {} }),
+    "Sends your cart (3 sellers, 5 articles) + 2 sellers checked with nothing extra."
+  );
+
+  // "Check all sellers": sellers with offers move to the top, cart order otherwise.
+  const fourSellers = {
+    ...twoLinked,
+    sellers: [
+      ...twoLinked.sellers,
+      { sellerName: "Third", wantsUrl: "https://www.cardmarket.com/en/Magic/Users/Third/Offers/Singles?idWantslist=25431729", wantsListId: "25431729", cards: [] },
+      { sellerName: "Fourth", wantsUrl: "https://www.cardmarket.com/en/Magic/Users/Fourth/Offers/Singles?idWantslist=25431729", wantsListId: "25431729", cards: [] }
+    ]
+  };
+  const checks = {
+    fourth: { sellerName: "Fourth", wantsListId: "25431729", checkedAt: minutesAgo(2), hits: 41, pages: 3 },
+    third: { sellerName: "Third", wantsListId: "25431729", checkedAt: minutesAgo(2), hits: 7, pages: 1 },
+    // Stale and other-list checks are ignored.
+    samplesellerx: { sellerName: "SampleSellerX", wantsListId: "25431729", checkedAt: minutesAgo(2), hits: 3, pages: 1 }
+  };
+  const checkedCaptures = { second: empty }; // "none" → saved as a 0-offer capture
+  const ordered = plain(Flow.sellerChecklist(fourSellers, checkedCaptures, NOW, checks));
+  assert.deepEqual(ordered.rows.map((row) => [row.sellerName, row.status, row.checked && `${row.checked.hits}/${row.checked.pages}`]), [
+    ["Third", "not-loaded", "7/1"],
+    ["Fourth", "not-loaded", "41/3"],
+    ["SampleSeller", "not-loaded", null],
+    ["Second", "loaded", null],
+    ["NoLinkSeller", "not-loaded", null]
+  ], "Stable: sellers with offers first (cart order among them), then cart order.");
+  assert.equal(Flow.nextUnloadedSeller(fourSellers, checkedCaptures, NOW, "", checks)?.sellerName, "Third");
+  assert.equal(Flow.nextUnloadedSeller(fourSellers, checkedCaptures, NOW, "")?.sellerName, "SampleSeller", "Without checks: cart order.");
+  const staleChecks = { third: { ...checks.third, checkedAt: minutesAgo(25 * 60) }, fourth: { ...checks.fourth, wantsListId: "1" } };
+  assert.deepEqual(plain(Flow.sellerChecklist(fourSellers, checkedCaptures, NOW, staleChecks)).rows.map((row) => row.sellerName),
+    ["SampleSeller", "Second", "NoLinkSeller", "Third", "Fourth"]);
+  // Once loaded, a checked seller drops its check marker.
+  const loadedThird = { ...checkedCaptures, third: capture("Third", "25431729", minutesAgo(1), 5) };
+  const afterLoad = plain(Flow.sellerChecklist(fourSellers, loadedThird, NOW, checks));
+  assert.equal(afterLoad.rows[0].sellerName, "Fourth");
+  assert.equal(afterLoad.rows.find((row) => row.sellerName === "Third").checked, null);
+}
 
 // --- 3. Wants-page comparison: K cards found, J cheaper than the lowest cart price.
 const cartForCompare = Flow.buildCartSnapshot({

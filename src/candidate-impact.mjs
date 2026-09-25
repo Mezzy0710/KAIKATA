@@ -93,7 +93,9 @@ export function buildCandidateImpact({
     (sameResolution && before.total - after.total > SAVINGS_EPSILON)
   );
 
-  const shared = { ...base, offersChecked, sellersChecked: captures.length, breakdown };
+  // Empty wants pages arrive as 0-offer captures: checked, nothing extra.
+  const emptySellers = captures.filter((capture) => Array.isArray(capture.offers) && capture.offers.length === 0).length;
+  const shared = { ...base, offersChecked, sellersChecked: captures.length, emptySellers, breakdown };
   if (!improved) {
     return { ...shared, state: "nothing-better", before: roundMoney(before.total) };
   }
@@ -135,8 +137,8 @@ export function describeCandidateImpact(impact, formatMoney = (value) => `€${N
     return lines;
   }
 
-  const checked = `Checked ${plural(impact.offersChecked, "offer")} from ${plural(impact.sellersChecked, "seller")}`;
-  lines.detail = `Of ${plural(impact.offersChecked, "offer")}: ${impact.breakdown.inCart} for cards in your cart, ${impact.breakdown.otherCards} for other wants-list cards (ignored), ${impact.breakdown.alreadyInCart} already in your cart.`;
+  const checked = checkedText(impact);
+  lines.detail = impact.offersChecked === 0 ? "" : `Of ${plural(impact.offersChecked, "offer")}: ${impact.breakdown.inCart} for cards in your cart, ${impact.breakdown.otherCards} for other wants-list cards (ignored), ${impact.breakdown.alreadyInCart} already in your cart.`;
 
   if (impact.state === "nothing-better") {
     lines.headline = { lead: `${checked} — `, strong: "nothing beats your cart", tail: ". Your plan uses only cart items." };
@@ -149,6 +151,15 @@ export function describeCandidateImpact(impact, formatMoney = (value) => `€${N
     ? { lead: `${checked} → `, strong: "a plan with fewer sellers needing shipping review", tail: `.${actions}` }
     : { lead: `${checked} → `, strong: `saves ${formatMoney(impact.savings)}`, tail: ` (${formatMoney(impact.before)} → ${formatMoney(impact.after)}).${actions}` };
   return lines;
+}
+
+// "Checked 12 offers from 3 sellers", plus sellers whose wants page was empty:
+// "…, 2 more checked, nothing extra" / "Checked 2 sellers, nothing extra".
+export function checkedText({ offersChecked = 0, sellersChecked = 0, emptySellers = 0 }) {
+  const withOffers = sellersChecked - emptySellers;
+  if (!emptySellers) return `Checked ${plural(offersChecked, "offer")} from ${plural(sellersChecked, "seller")}`;
+  if (!withOffers) return `Checked ${plural(emptySellers, "seller")}, nothing extra`;
+  return `Checked ${plural(offersChecked, "offer")} from ${plural(withOffers, "seller")}, ${emptySellers} more checked, nothing extra`;
 }
 
 // Muted notes: captures the extension did not send, and the no-wants-list fallback.
