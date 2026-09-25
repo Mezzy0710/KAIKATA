@@ -186,6 +186,54 @@
     )) || null;
   }
 
+  // Wants-page panel header, always visible: with a cart snapshot, the cart-scoped count
+  // (same freshness/wants-list rules as sellerChecklist); without one, every fresh capture
+  // there is, with no cart to compare against yet.
+  function wantsStockProgress(snapshot, captures, now = Date.now()) {
+    if (snapshot && (snapshot.sellers || []).length) {
+      const checklist = sellerChecklist(snapshot, captures, now);
+      const offers = checklist.rows
+        .filter((row) => row.status === "loaded")
+        .reduce((sum, row) => sum + row.offerCount, 0);
+      return {
+        hasCart: true,
+        sellersLoaded: checklist.loadedCount,
+        sellersTotal: checklist.total,
+        offers,
+        text: `Wants stock: ${checklist.loadedCount} of ${checklist.total} cart sellers loaded · ${plural(offers, "offer")}`
+      };
+    }
+    const entries = captureList(captures);
+    const offers = entries.reduce((sum, entry) => sum + offerCount(entry), 0);
+    return {
+      hasCart: false,
+      sellersLoaded: entries.length,
+      sellersTotal: null,
+      offers,
+      text: `Wants stock: ${plural(entries.length, "seller")} loaded · ${plural(offers, "offer")} `
+        + "· open your cart once to see which sellers are still missing"
+    };
+  }
+
+  // Result-card follow-up line: how many of the cart's sellers are loaded and who's next,
+  // or that every cart seller with a wants link is loaded. Null without a cart to count against.
+  function nextStepLine(snapshot, captures, now = Date.now(), currentSellerName = "") {
+    if (!snapshot || !(snapshot.sellers || []).length) return null;
+    const checklist = sellerChecklist(snapshot, captures, now);
+    if (!checklist.total) return null;
+    if (checklist.loadedCount === checklist.total) {
+      return { text: "All cart sellers loaded — back to cart to transfer", complete: true, next: null };
+    }
+    const next = nextUnloadedSeller(snapshot, captures, now, currentSellerName);
+    return {
+      text: next
+        ? `That's ${checklist.loadedCount} of ${checklist.total}. Next: ${next.sellerName} →`
+        : `That's ${checklist.loadedCount} of ${checklist.total}.`,
+      complete: false,
+      next
+    };
+  }
+
   // Counts for the send button: the cart plus the captures that will be transferred.
   function summarizeTransfer({ payload, captures, now = Date.now() }) {
     const sellers = payload?.sellers || [];
@@ -266,6 +314,8 @@
     filterCapturesForTransfer,
     sellerChecklist,
     nextUnloadedSeller,
+    wantsStockProgress,
+    nextStepLine,
     summarizeTransfer,
     formatTransferSummary,
     compareStockToCart,

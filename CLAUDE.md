@@ -197,9 +197,10 @@ None. All PRs closed/merged as of May 15, 2026.
 
 1. Work on a new branch from the latest `origin/main` (`git fetch origin && git checkout -b <branch> origin/main`).
 2. When all tests pass (`bash tests/run-all.sh` and the `tests/*.mjs` loop without scryfall), commit. Never commit `.claude/` (local settings, worktrees), `_private/` or `dist/` — `.gitignore` covers them.
-   Extension builds come from `node scripts/package-extension.mjs` (bump `extension/manifest.json` + add a `CHANGELOG.md` entry per release).
-3. Push the branch (`git push -u origin <branch>`) and open a PR against `main` with `gh pr create`; if `gh` is unavailable, print the compare URL `https://github.com/Mezzy0710/KAIKATA/compare/main...<branch>?expand=1`.
-4. Never push to `main`, never merge, never force-push, never delete branches.
+   A change touching `extension/` bumps `extension/manifest.json` and adds a `CHANGELOG.md` entry for the new version first.
+3. After committing, run `node scripts/package-extension.mjs` and report the packaged version (folder + zip size from its output), so `dist/` always matches the branch. It refuses to run without a matching `CHANGELOG.md` entry — that's the signal step 2's version bump is missing.
+4. Push the branch (`git push -u origin <branch>`) and open a PR against `main` with `gh pr create`; if `gh` is unavailable, print the compare URL `https://github.com/Mezzy0710/KAIKATA/compare/main...<branch>?expand=1`.
+5. Never push to `main`, never merge, never force-push, never delete branches.
 
 ---
 
