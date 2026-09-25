@@ -169,6 +169,58 @@ assert.equal(Flow.nextUnloadedSeller(twoLinked, {}, NOW, "SampleSeller")?.seller
 assert.equal(Flow.nextUnloadedSeller(twoLinked, stored, NOW)?.sellerName, "Second");
 assert.equal(Flow.nextUnloadedSeller(snapshot, stored, NOW), null, "NoLinkSeller has no wants link to open.");
 
+// --- 2b. Wants-page panel: progress header and result-card next-step line.
+// With a cart: same counts as the checklist, offers summed only over loaded rows.
+const progress = plain(Flow.wantsStockProgress(snapshot, stored, NOW));
+assert.equal(progress.hasCart, true);
+assert.equal(progress.sellersLoaded, 1);
+assert.equal(progress.sellersTotal, 2);
+assert.equal(progress.offers, 4, "Only SampleSeller's 4 offers; NoLinkSeller isn't loaded.");
+assert.equal(progress.text, "Wants stock: 1 of 2 cart sellers loaded · 4 offers");
+
+// A stale or other-wants-list capture doesn't count toward loaded sellers or offers.
+const staleProgress = plain(Flow.wantsStockProgress(snapshot, { sampleseller: capture("SampleSeller", "25431729", minutesAgo(26 * 60), 9) }, NOW));
+assert.equal(staleProgress.sellersLoaded, 0);
+assert.equal(staleProgress.offers, 0);
+const otherListProgress = plain(Flow.wantsStockProgress(snapshot, { sampleseller: capture("SampleSeller", "1", minutesAgo(1), 9) }, NOW));
+assert.equal(otherListProgress.sellersLoaded, 0);
+assert.equal(otherListProgress.offers, 0);
+
+// Without a cart: every capture there is, regardless of the cart's wants lists.
+const noCartProgress = plain(Flow.wantsStockProgress(null, stored, NOW));
+assert.equal(noCartProgress.hasCart, false);
+assert.equal(noCartProgress.sellersLoaded, 4);
+assert.equal(noCartProgress.offers, 17, "4 + 2 + 5 + 6 offers across all captures.");
+assert.equal(
+  noCartProgress.text,
+  "Wants stock: 4 sellers loaded · 17 offers · open your cart once to see which sellers are still missing"
+);
+assert.equal(Flow.wantsStockProgress(null, {}, NOW).text, "Wants stock: 0 sellers loaded · 0 offers · open your cart once to see which sellers are still missing");
+
+// Result-card next-step line: how many are loaded and who's next.
+const step = plain(Flow.nextStepLine(twoLinked, stored, NOW, "SampleSeller"));
+assert.equal(step.text, "That's 1 of 3. Next: Second →");
+assert.equal(step.complete, false);
+assert.equal(step.next.sellerName, "Second");
+
+// No reachable "next" (the only gap has no wants link), but not complete either.
+const noNextStep = plain(Flow.nextStepLine(snapshot, stored, NOW, "SampleSeller"));
+assert.equal(noNextStep.text, "That's 1 of 2.");
+assert.equal(noNextStep.next, null);
+
+// All loaded: no "next", the completion line instead.
+const allLoadedCaptures = {
+  sampleseller: capture("SampleSeller", "25431729", minutesAgo(5), 4),
+  nolinkseller: capture("NoLinkSeller", "25431729", minutesAgo(5), 1)
+};
+const doneStep = plain(Flow.nextStepLine(snapshot, allLoadedCaptures, NOW, "SampleSeller"));
+assert.equal(doneStep.text, "All cart sellers loaded — back to cart to transfer");
+assert.equal(doneStep.complete, true);
+assert.equal(doneStep.next, null);
+
+// No cart snapshot yet: nothing to report.
+assert.equal(Flow.nextStepLine(null, stored, NOW), null);
+
 // --- 3. Wants-page comparison: K cards found, J cheaper than the lowest cart price.
 const cartForCompare = Flow.buildCartSnapshot({
   sellers: [

@@ -34,7 +34,18 @@
   const ui = buildPanel();
   showStart();
   refreshCaptureList();
+  refreshHeader();
   applyPlanMarks();
+  try {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "local" && changes[CANDIDATES_KEY]) {
+        refreshCaptureList();
+        refreshHeader();
+      }
+    });
+  } catch {
+    // Storage events unavailable: the header still updates after this tab's own loads.
+  }
 
   // ── Storage ───────────────────────────────────────────────────────────────
 
@@ -116,6 +127,7 @@
       showStart(`Nothing loaded. ${result.stoppedReason || "No offers found."}`);
     }
     refreshCaptureList();
+    refreshHeader();
   }
 
   async function loadPageOnly() {
@@ -128,6 +140,7 @@
     const saved = await saveCapture(parsed.offers, { pagesFetched: 1, totalPages: parsed.meta.pages }, { merge: true });
     await showResult(saved, { pageOnly: parsed.offers.length });
     refreshCaptureList();
+    refreshHeader();
   }
 
   // ── Views: start prompt → progress → result card ──────────────────────────
@@ -212,11 +225,15 @@
     const actions = document.createElement("div");
     css(actions, { display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px" });
     const captures = (await storageGet(CANDIDATES_KEY)) || {};
-    const next = snapshot && Flow ? Flow.nextUnloadedSeller(snapshot, captures, Date.now(), meta.sellerName) : null;
+    const step = snapshot && Flow ? Flow.nextStepLine(snapshot, captures, Date.now(), meta.sellerName) : null;
+    if (step) {
+      ui.result.append(paragraph(step.text, step.complete
+        ? { color: "#4F7A5A", fontWeight: "600" }
+        : { color: "#6E6257" }));
+    }
+    const next = step?.next || null;
     if (next && isCardmarketUrl(next.wantsUrl)) {
       actions.append(linkButton(`Next seller → ${next.sellerName}`, next.wantsUrl, true));
-    } else if (snapshot && Flow) {
-      ui.result.append(paragraph("All cart sellers with a wants link are loaded ✓", { color: "#4F7A5A", fontWeight: "600" }));
     }
     actions.append(linkButton("Back to cart", cartUrl(snapshot), !next));
     ui.result.append(actions);
@@ -307,6 +324,10 @@
     header.append(title, collapse);
 
     const body = document.createElement("div");
+    const progressHeader = paragraph("", {
+      margin: "0 0 8px", padding: "6px 8px", borderRadius: "8px", fontWeight: "700", fontSize: "12px",
+      color: "#1C1A17", background: "rgba(79,122,90,0.10)", display: "none"
+    });
     const info = paragraph([
       meta.sellerName,
       meta.sellerCountry || "country unknown",
@@ -362,7 +383,7 @@
     css(clearAll, { ...LINK_BUTTON, marginTop: "4px", color: "#9F2D24" });
     details.append(summary, list, clearAll);
 
-    body.append(info, prompt, progress, result, planLine, selectBtn, note, details);
+    body.append(progressHeader, info, prompt, progress, result, planLine, selectBtn, note, details);
     panel.append(header, body);
     document.body.append(panel);
 
@@ -377,6 +398,7 @@
     clearAll.addEventListener("click", async () => {
       await storageSet(CANDIDATES_KEY, {});
       refreshCaptureList();
+      refreshHeader();
       showStart();
     });
     collapse.addEventListener("click", () => setCollapsed(body.style.display !== "none"));
@@ -386,7 +408,7 @@
       collapse.textContent = collapsed ? "+" : "–";
     }
 
-    return { prompt, promptTitle, promptInfo, loadBtn, progress, progressFill, progressText, result, planLine, selectBtn, note, summary, list };
+    return { progressHeader, prompt, promptTitle, promptInfo, loadBtn, progress, progressFill, progressText, result, planLine, selectBtn, note, details, summary, list };
   }
 
   function paragraph(text, styles = {}) {
@@ -436,6 +458,7 @@
     ui.list.replaceChildren();
     const entries = Object.entries(all).sort((a, b) => Date.parse(b[1].capturedAt) - Date.parse(a[1].capturedAt));
     ui.summary.textContent = `Loaded sellers (${entries.length})`;
+    ui.details.open = entries.length >= 2;
     if (!entries.length) {
       const empty = document.createElement("li");
       empty.textContent = "None yet.";
@@ -444,12 +467,17 @@
       return 0;
     }
     entries.forEach(([key, entry]) => {
+      const isCurrent = key === sellerKey;
       const item = document.createElement("li");
-      css(item, { display: "flex", gap: "6px", alignItems: "baseline", padding: "2px 0" });
+      css(item, {
+        display: "flex", gap: "6px", alignItems: "baseline", padding: "2px 4px",
+        borderRadius: "6px", background: isCurrent ? "rgba(79,122,90,0.12)" : "transparent"
+      });
       const label = document.createElement("span");
       const ageMs = Date.now() - Date.parse(entry.capturedAt);
-      label.textContent = `${entry.sellerName} · ${offersText(entry.offers.length)} · ${formatAge(ageMs)}${ageMs > STALE_MS ? " (stale)" : ""}`;
-      css(label, { flex: "1", color: ageMs > STALE_MS ? "#9F2D24" : "#1C1A17" });
+      label.textContent = `${entry.sellerName}${isCurrent ? " (this seller)" : ""} · ${offersText(entry.offers.length, entry.hits)} · `
+        + `${formatAge(ageMs)}${ageMs > STALE_MS ? " (stale)" : ""}`;
+      css(label, { flex: "1", fontWeight: isCurrent ? "700" : "400", color: ageMs > STALE_MS ? "#9F2D24" : "#1C1A17" });
       const remove = document.createElement("button");
       remove.type = "button";
       remove.textContent = "Remove";
@@ -459,12 +487,32 @@
         delete latest[key];
         await storageSet(CANDIDATES_KEY, latest);
         refreshCaptureList();
+        refreshHeader();
         if (key === sellerKey) showStart();
       });
       item.append(label, remove);
       ui.list.append(item);
     });
     return entries.length;
+  }
+
+  // Progress header, always visible at the top of the panel: cart-scoped once a cart
+  // snapshot exists, every fresh capture otherwise.
+  async function refreshHeader() {
+    if (!Flow) return;
+    const snapshot = await storageGet(SNAPSHOT_KEY);
+    const captures = (await storageGet(CANDIDATES_KEY)) || {};
+    const progress = Flow.wantsStockProgress(snapshot, captures, Date.now());
+    ui.progressHeader.textContent = progress.text;
+    ui.progressHeader.style.display = "block";
+    const mine = progress.hasCart
+      ? Flow.sellerChecklist(snapshot, captures, Date.now()).rows.find((row) => normalizeSellerName(row.sellerName) === sellerKey)
+      : null;
+    const included = Boolean(mine && mine.status === "loaded");
+    css(ui.progressHeader, {
+      background: included ? "rgba(79,122,90,0.20)" : "rgba(79,122,90,0.10)",
+      color: included ? "#4F7A5A" : "#1C1A17"
+    });
   }
 
   // The cart URL from the snapshot, else /<lang>/<game>/ShoppingCart on this site.
@@ -483,7 +531,8 @@
     }
   }
 
-  function offersText(count) {
+  function offersText(count, hits) {
+    if (Number.isFinite(hits) && count < hits) return `${count}/${hits} offers`;
     return `${count} offer${count === 1 ? "" : "s"}`;
   }
 

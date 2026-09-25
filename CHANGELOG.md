@@ -3,6 +3,22 @@
 Versions follow `extension/manifest.json`. `node scripts/package-extension.mjs` refuses to
 package a version without an entry here.
 
+## 2.0.2 — 2026-09-25
+
+- The wants-page panel always shows overall progress at the top: "Wants stock: X of Y
+  cart sellers loaded · N offers" once a cart is known (same counting rules as the cart
+  page's checklist), or a fallback count before a cart has been opened. Updates live,
+  including captures made in another tab.
+- The loaded-sellers list opens by default once 2+ sellers are loaded, highlights the
+  current seller, and shows "N/H offers" for a seller whose captured stock is incomplete.
+- The result card after loading adds "That's X of Y. Next: <seller> →", or "All cart
+  sellers loaded — back to cart to transfer" when complete.
+- Opening KAIKATA from the toolbar icon or "Transfer to KAIKATA" now checks that
+  `app/index.html` exists first; the unpackaged `extension/` source folder shows a static
+  explainer page instead of a broken tab.
+- The Git routine now runs `node scripts/package-extension.mjs` after every commit so
+  `dist/` stays in sync with the branch.
+
 ## 2.0.1 — 2026-09-24
 
 - Wants-page capture recovers offers lost to Cardmarket's unstable paging: when a

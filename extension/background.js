@@ -8,6 +8,8 @@ const SUPPORTED_PLAN_SCHEMA_VERSIONS = [1, 2];
 const CANDIDATES_STORAGE_KEY = "cartforgeCandidatesV1";
 // KAIKATA itself, packaged into app/ by scripts/package-extension.mjs.
 const APP_PATH = "app/index.html";
+// Shown instead of APP_PATH when this is the unpackaged extension/ source folder.
+const NOT_PACKAGED_PATH = "not-packaged.html";
 
 // Toolbar icon: open KAIKATA (no popup).
 chrome.action?.onClicked.addListener(() => {
@@ -141,9 +143,15 @@ async function getCandidates(wantsListIds) {
   return { ok: true, sellers, excluded: transfer.excluded, fallback: transfer.fallback };
 }
 
-// Reuses an open KAIKATA tab (it picks up a new cart from storage) or opens one.
+// Reuses an open KAIKATA tab (it picks up a new cart from storage) or opens one. Falls
+// back to a static explainer page when app/index.html is missing: someone loaded the
+// unpackaged extension/ source folder instead of running scripts/package-extension.mjs.
 async function openOrFocusApp() {
   const appUrl = chrome.runtime.getURL(APP_PATH);
+  if (!(await appIsPackaged(appUrl))) {
+    const tab = await chrome.tabs.create({ url: chrome.runtime.getURL(NOT_PACKAGED_PATH) });
+    return { ok: true, tabId: tab.id, reused: false, packaged: false };
+  }
   const existing = await findAppTab(appUrl);
   if (existing) {
     await chrome.tabs.update(existing.tabId, { active: true });
@@ -154,6 +162,16 @@ async function openOrFocusApp() {
   }
   const tab = await chrome.tabs.create({ url: appUrl });
   return { ok: true, tabId: tab.id, reused: false };
+}
+
+// Whether scripts/package-extension.mjs has copied the web app into app/.
+async function appIsPackaged(appUrl) {
+  try {
+    const response = await fetch(appUrl);
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 // runtime.getContexts lists this extension's own pages without the "tabs" permission.
